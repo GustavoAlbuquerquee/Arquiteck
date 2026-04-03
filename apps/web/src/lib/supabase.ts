@@ -1,11 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Tipos base para multitenant
-export interface TenantEntity {
-  tenant_id: string;
-}
+// Re-export do cliente Supabase da nova estrutura
+export { supabase, getCurrentTenantId } from './supabase/client';
+export type { Database } from './supabase/types';
