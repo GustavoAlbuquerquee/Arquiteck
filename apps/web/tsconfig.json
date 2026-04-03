@@ -1,6 +1,7 @@
 {
   "extends": "@arquiteck/config-typescript/react.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
