@@ -3,7 +3,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { PrivateRoute } from '@/components/PrivateRoute';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { Dashboard } from '@/pages/Dashboard';
-import { NovaVisita, Checklists, Configuracoes } from '@/pages';
+import { NovaVisita, Configuracoes } from '@/pages';
+import { Historico } from '@/pages/Historico';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 
@@ -27,7 +28,7 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="nova-visita" element={<NovaVisita />} />
-            <Route path="checklists" element={<Checklists />} />
+            <Route path="historico" element={<Historico />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
 

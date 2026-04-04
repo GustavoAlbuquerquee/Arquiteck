@@ -5,7 +5,7 @@ import { LogOut } from 'lucide-react';
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: '📊' },
   { path: '/nova-visita', label: 'Briefing/Visita', icon: '➕' },
-  { path: '/checklists', label: 'Histórico', icon: '✓' },
+  { path: '/historico', label: 'Histórico', icon: '✓' },
   { path: '/configuracoes', label: 'Configurações', icon: '⚙️' },
 ];
 
