@@ -1,6 +1,6 @@
-import { UseFormRegister, UseFormWatch, FieldErrors, Control, useFieldArray } from 'react-hook-form';
-import { ChecklistFormData, eletrodomesticosOptions, tipoPuxadorOptions } from '@/schemas/checklistSchema';
-import { Ruler, Zap, AlertCircle, Palette, Plus, Trash2, Camera, CheckCircle2, Circle, Package } from 'lucide-react';
+import { UseFormRegister, UseFormWatch, FieldErrors, Control, useFieldArray, UseFormSetValue } from 'react-hook-form';
+import { ChecklistFormData, eletrodomesticosOptions, tipoPuxadorOptions, tipoCorredicas, tipoFitaLedOptions, tipoPortaVidroOptions } from '@/schemas/checklistSchema';
+import { Ruler, Zap, AlertCircle, Plus, Trash2, Camera, CheckCircle2, Circle, Building2, Package } from 'lucide-react';
 import { useState } from 'react';
 
 interface Step2Props {
@@ -8,9 +8,10 @@ interface Step2Props {
   watch: UseFormWatch<ChecklistFormData>;
   errors: FieldErrors<ChecklistFormData>;
   control: Control<ChecklistFormData>;
+  setValue: UseFormSetValue<ChecklistFormData>;
 }
 
-export function Step2Levantamento({ register, watch, errors, control }: Step2Props) {
+export function Step2Levantamento({ register, watch, errors, control, setValue }: Step2Props) {
   const [fotosPreview, setFotosPreview] = useState<string[]>([]);
 
   // useFieldArray para móveis dinâmicos
@@ -26,10 +27,30 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
   });
 
   const eletrodomesticosSelecionados = watch('eletrodomesticos') || [];
-  const composicao = watch('composicaoProjeto');
+  const especificacoes = watch('especificacoesAmbiente');
+  const fotosAmbiente = watch('fotosAmbiente') || [];
 
   const handleAddMovel = () => {
-    appendMovel({ nome: '', largura: '', altura: '', profundidade: '' });
+    appendMovel({
+      nome: '',
+      largura: '',
+      altura: '',
+      profundidade: '',
+      corMdfInterna: '',
+      corMdfExterna: '',
+      observacoesMovel: '',
+      temPuxador: false,
+      tipoPuxador: '',
+      corPuxador: '',
+      temCorredicas: false,
+      tipoCorredica: '',
+      temBascula: false,
+      tipoBascula: undefined,
+      temPortaVidro: false,
+      tipoPortaVidro: '',
+      temFitaLed: false,
+      tipoFitaLed: '',
+    });
   };
 
   const toggleEletrodomestico = (nomeEletro: string) => {
@@ -64,11 +85,10 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
       });
     }
 
-    setFotosPreview(previews);
-    // Atualizar o formulário com as fotos em Base64
-    const currentFotos = watch('fotosAmbiente') || [];
-    const novasFotos = [...currentFotos, ...fotosBase64];
-    // Usar setValue do react-hook-form (será passado do componente pai)
+    // Concatenar com fotos existentes
+    const novasFotos = [...fotosAmbiente, ...fotosBase64];
+    setValue('fotosAmbiente', novasFotos);
+    setFotosPreview([...fotosPreview, ...previews]);
   };
 
   return (
@@ -80,7 +100,7 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
         <div className="flex items-center justify-between mb-4">
           <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800">
             <Ruler className="w-6 h-6" />
-            Móveis e Medidas
+            Móveis e Especificações
           </h3>
           <button
             type="button"
@@ -96,95 +116,373 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
           <p className="text-gray-500 text-center py-4">Nenhum móvel adicionado. Clique em "Adicionar Móvel"</p>
         )}
 
-        <div className="space-y-4">
-          {moveisFields.map((field, index) => (
-            <div key={field.id} className="border-2 border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-gray-700">Móvel {index + 1}</h4>
-                <button
-                  type="button"
-                  onClick={() => removeMovel(index)}
-                  className="text-red-600 hover:text-red-700 p-1"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+        <div className="space-y-6">
+          {moveisFields.map((field, index) => {
+            const movel = watch(`moveis.${index}`);
+            
+            return (
+              <div key={field.id} className="border-2 border-gray-300 rounded-xl p-6 bg-gray-50">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-bold text-gray-700">Móvel {index + 1}</h4>
+                  <button
+                    type="button"
+                    onClick={() => removeMovel(index)}
+                    className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Nome do Móvel */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome do Móvel *
+                    </label>
+                    <input
+                      type="text"
+                      {...register(`moveis.${index}.nome`)}
+                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                      placeholder="Ex: Armário Aéreo, Balcão"
+                    />
+                    {errors.moveis?.[index]?.nome && (
+                      <p className="text-red-500 text-xs mt-1">{errors.moveis[index]?.nome?.message}</p>
+                    )}
+                  </div>
+
+                  {/* Medidas em MM */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Largura (mm) *
+                      </label>
+                      <input
+                        type="number"
+                        {...register(`moveis.${index}.largura`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        placeholder="3000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Altura (mm) *
+                      </label>
+                      <input
+                        type="number"
+                        {...register(`moveis.${index}.altura`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        placeholder="2800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Profundidade (mm) *
+                      </label>
+                      <input
+                        type="number"
+                        {...register(`moveis.${index}.profundidade`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        placeholder="600"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cores do MDF */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cor MDF Interno *
+                      </label>
+                      <input
+                        type="text"
+                        {...register(`moveis.${index}.corMdfInterna`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        placeholder="Ex: Branco Cristal"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cor MDF Externo *
+                      </label>
+                      <input
+                        type="text"
+                        {...register(`moveis.${index}.corMdfExterna`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        placeholder="Ex: Nogueira"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Checkboxes Condicionais */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                    {/* Tem Puxador */}
+                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                      <input
+                        type="checkbox"
+                        {...register(`moveis.${index}.temPuxador`)}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-medium">Tem Puxador?</span>
+                    </label>
+
+                    {/* Tem Corrediças */}
+                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                      <input
+                        type="checkbox"
+                        {...register(`moveis.${index}.temCorredicas`)}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-medium">Tem Corrediças?</span>
+                    </label>
+
+                    {/* Tem Báscula */}
+                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                      <input
+                        type="checkbox"
+                        {...register(`moveis.${index}.temBascula`)}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-medium">Tem Báscula?</span>
+                    </label>
+
+                    {/* Tem Porta de Vidro */}
+                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                      <input
+                        type="checkbox"
+                        {...register(`moveis.${index}.temPortaVidro`)}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-medium">Tem Porta Vidro?</span>
+                    </label>
+
+                    {/* Tem Fita LED */}
+                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                      <input
+                        type="checkbox"
+                        {...register(`moveis.${index}.temFitaLed`)}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-medium">Tem Fita LED?</span>
+                    </label>
+                  </div>
+
+                  {/* Campos Condicionais - Puxador */}
+                  {movel?.temPuxador && (
+                    <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tipo de Puxador *
+                        </label>
+                        <select
+                          {...register(`moveis.${index}.tipoPuxador`)}
+                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition bg-white"
+                        >
+                          <option value="">Selecione</option>
+                          {tipoPuxadorOptions.map((tipo) => (
+                            <option key={tipo} value={tipo}>{tipo}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Cor do Puxador *
+                        </label>
+                        <input
+                          type="text"
+                          {...register(`moveis.${index}.corPuxador`)}
+                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition"
+                          placeholder="Ex: Preto Fosco"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Campos Condicionais - Corrediças */}
+                  {movel?.temCorredicas && (
+                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Corrediça *
+                      </label>
+                      <select
+                        {...register(`moveis.${index}.tipoCorredica`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition bg-white"
+                      >
+                        <option value="">Selecione</option>
+                        {tipoCorredicas.map((tipo) => (
+                          <option key={tipo} value={tipo}>{tipo}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Campos Condicionais - Báscula */}
+                  {movel?.temBascula && (
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Báscula *
+                      </label>
+                      <select
+                        {...register(`moveis.${index}.tipoBascula`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition bg-white"
+                      >
+                        <option value="">Selecione</option>
+                        <option value="comum">Comum</option>
+                        <option value="inversa">Inversa</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Campos Condicionais - Porta de Vidro */}
+                  {movel?.temPortaVidro && (
+                    <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Porta de Vidro *
+                      </label>
+                      <select
+                        {...register(`moveis.${index}.tipoPortaVidro`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-yellow-500 outline-none transition bg-white"
+                      >
+                        <option value="">Selecione</option>
+                        {tipoPortaVidroOptions.map((tipo) => (
+                          <option key={tipo} value={tipo}>{tipo}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Campos Condicionais - Fita LED */}
+                  {movel?.temFitaLed && (
+                    <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Fita LED *
+                      </label>
+                      <select
+                        {...register(`moveis.${index}.tipoFitaLed`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-indigo-500 outline-none transition bg-white"
+                      >
+                        <option value="">Selecione</option>
+                        {tipoFitaLedOptions.map((tipo) => (
+                          <option key={tipo} value={tipo}>{tipo}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Observações do Móvel */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Observações do Móvel
+                    </label>
+                    <textarea
+                      {...register(`moveis.${index}.observacoesMovel`)}
+                      rows={3}
+                      className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition resize-none"
+                      placeholder="Observações específicas deste móvel..."
+                    />
+                  </div>
+                </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Nome do Móvel */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nome do Móvel
-                  </label>
-                  <input
-                    type="text"
-                    {...register(`moveis.${index}.nome`)}
-                    className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                    placeholder="Ex: Armário Aéreo, Balcão"
-                  />
-                  {errors.moveis?.[index]?.nome && (
-                    <p className="text-red-500 text-xs mt-1">{errors.moveis[index]?.nome?.message}</p>
-                  )}
-                </div>
-
-                {/* Largura */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Largura (cm)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register(`moveis.${index}.largura`)}
-                    className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                    placeholder="300"
-                  />
-                  {errors.moveis?.[index]?.largura && (
-                    <p className="text-red-500 text-xs mt-1">{errors.moveis[index]?.largura?.message}</p>
-                  )}
-                </div>
-
-                {/* Altura */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Altura (cm)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register(`moveis.${index}.altura`)}
-                    className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                    placeholder="280"
-                  />
-                  {errors.moveis?.[index]?.altura && (
-                    <p className="text-red-500 text-xs mt-1">{errors.moveis[index]?.altura?.message}</p>
-                  )}
-                </div>
-
-                {/* Profundidade */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Profundidade (cm)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register(`moveis.${index}.profundidade`)}
-                    className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                    placeholder="60"
-                  />
-                  {errors.moveis?.[index]?.profundidade && (
-                    <p className="text-red-500 text-xs mt-1">{errors.moveis[index]?.profundidade?.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {errors.moveis && typeof errors.moveis === 'object' && 'message' in errors.moveis && (
           <p className="text-red-500 text-sm mt-2">{errors.moveis.message as string}</p>
         )}
+      </div>
+
+      {/* Especificações do Ambiente (NOVO) */}
+      <div className="bg-white border-2 border-green-300 rounded-xl p-6 shadow-sm">
+        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
+          <Building2 className="w-6 h-6" />
+          Especificações do Ambiente
+        </h3>
+
+        <div className="space-y-4">
+          {/* Rodapé */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Rodapé
+            </label>
+            <input
+              type="text"
+              {...register('especificacoesAmbiente.rodape')}
+              className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+              placeholder="Ex: Madeira, MDF, Gesso"
+            />
+          </div>
+
+          {/* Tipo de Parede */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Parede
+            </label>
+            <input
+              type="text"
+              {...register('especificacoesAmbiente.tipoParede')}
+              className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+              placeholder="Ex: Alvenaria, Drywall, Concreto"
+            />
+          </div>
+
+          {/* Checkboxes */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
+              <input
+                type="checkbox"
+                {...register('especificacoesAmbiente.tubulacoesParede')}
+                className="w-5 h-5"
+              />
+              <span className="text-sm font-medium">Tubulações na Parede?</span>
+            </label>
+
+            <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
+              <input
+                type="checkbox"
+                {...register('especificacoesAmbiente.temEstacionamento')}
+                className="w-5 h-5"
+              />
+              <span className="text-sm font-medium">Tem Estacionamento?</span>
+            </label>
+
+            <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
+              <input
+                type="checkbox"
+                {...register('especificacoesAmbiente.temElevador')}
+                className="w-5 h-5"
+              />
+              <span className="text-sm font-medium">Tem Elevador?</span>
+            </label>
+          </div>
+
+          {/* Campos Condicionais - Elevador */}
+          {especificacoes?.temElevador && (
+            <div className="grid grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Altura do Elevador (mm) *
+                </label>
+                <input
+                  type="number"
+                  {...register('especificacoesAmbiente.alturaElevador')}
+                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+                  placeholder="2100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profundidade do Elevador (mm) *
+                </label>
+                <input
+                  type="number"
+                  {...register('especificacoesAmbiente.profundidadeElevador')}
+                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+                  placeholder="1400"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Eletrodomésticos com Modelos */}
@@ -224,13 +522,13 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
                 {isChecked && index >= 0 && (
                   <div className="mt-3 ml-12">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Qual o modelo?
+                      {eletro === 'Outros' ? 'Nome do Eletrodoméstico' : 'Qual o modelo?'}
                     </label>
                     <input
                       type="text"
                       {...register(`eletrodomesticos.${index}.modelo`)}
                       className="w-full h-10 px-3 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition"
-                      placeholder="Ex: Brastemp BRM56, Electrolux 80L"
+                      placeholder={eletro === 'Outros' ? 'Ex: Purificador de Água' : 'Ex: Brastemp BRM56, Electrolux 80L'}
                     />
                   </div>
                 )}
@@ -258,139 +556,6 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
         <p className="text-sm text-gray-500 mt-2">Campo opcional</p>
       </div>
 
-      {/* Preferência de Materiais */}
-      <div className="bg-white border-2 border-green-300 rounded-xl p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
-          <Palette className="w-6 h-6" />
-          Preferência de Materiais
-        </h3>
-        
-        <div className="space-y-4">
-          {/* Cor/Padrão do MDF */}
-          <div>
-            <label className="block text-base font-medium text-gray-700 mb-2">
-              Cor/Padrão do MDF
-            </label>
-            <input
-              type="text"
-              {...register('preferenciaMateriais.corPadraoMdf')}
-              className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition"
-              placeholder="Ex: Branco Cristal, Nogueira, Freijó"
-            />
-            {errors.preferenciaMateriais?.corPadraoMdf && (
-              <p className="text-red-500 text-sm mt-1">{errors.preferenciaMateriais.corPadraoMdf.message}</p>
-            )}
-          </div>
-
-          {/* Tipo de Puxador */}
-          <div>
-            <label className="block text-base font-medium text-gray-700 mb-2">
-              Tipo de Puxador
-            </label>
-            <select
-              {...register('preferenciaMateriais.tipoPuxador')}
-              className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition bg-white"
-            >
-              <option value="">Selecione o tipo de puxador</option>
-              {tipoPuxadorOptions.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
-                </option>
-              ))}
-            </select>
-            {errors.preferenciaMateriais?.tipoPuxador && (
-              <p className="text-red-500 text-sm mt-1">{errors.preferenciaMateriais.tipoPuxador.message}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Composição do Projeto */}
-      <div className="bg-white border-2 border-indigo-300 rounded-xl p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
-          <Package className="w-6 h-6" />
-          Composição do Projeto
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Terá Corrediças */}
-          <label className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition">
-            <input
-              type="checkbox"
-              {...register('composicaoProjeto.teraCorredicas')}
-              className="hidden"
-            />
-            <div className="flex-shrink-0">
-              {composicao?.teraCorredicas ? (
-                <CheckCircle2 className="w-8 h-8 text-indigo-600" />
-              ) : (
-                <Circle className="w-8 h-8 text-gray-400" />
-              )}
-            </div>
-            <span className={`text-lg ${composicao?.teraCorredicas ? 'font-medium' : ''}`}>
-              Terá Corrediças?
-            </span>
-          </label>
-
-          {/* Terá Gavetas */}
-          <label className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition">
-            <input
-              type="checkbox"
-              {...register('composicaoProjeto.teraGavetas')}
-              className="hidden"
-            />
-            <div className="flex-shrink-0">
-              {composicao?.teraGavetas ? (
-                <CheckCircle2 className="w-8 h-8 text-indigo-600" />
-              ) : (
-                <Circle className="w-8 h-8 text-gray-400" />
-              )}
-            </div>
-            <span className={`text-lg ${composicao?.teraGavetas ? 'font-medium' : ''}`}>
-              Terá Gavetas?
-            </span>
-          </label>
-
-          {/* Terá Portas */}
-          <label className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition">
-            <input
-              type="checkbox"
-              {...register('composicaoProjeto.teraPortas')}
-              className="hidden"
-            />
-            <div className="flex-shrink-0">
-              {composicao?.teraPortas ? (
-                <CheckCircle2 className="w-8 h-8 text-indigo-600" />
-              ) : (
-                <Circle className="w-8 h-8 text-gray-400" />
-              )}
-            </div>
-            <span className={`text-lg ${composicao?.teraPortas ? 'font-medium' : ''}`}>
-              Terá Portas?
-            </span>
-          </label>
-
-          {/* Terá Fita de LED */}
-          <label className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition">
-            <input
-              type="checkbox"
-              {...register('composicaoProjeto.teraFitaLed')}
-              className="hidden"
-            />
-            <div className="flex-shrink-0">
-              {composicao?.teraFitaLed ? (
-                <CheckCircle2 className="w-8 h-8 text-indigo-600" />
-              ) : (
-                <Circle className="w-8 h-8 text-gray-400" />
-              )}
-            </div>
-            <span className={`text-lg ${composicao?.teraFitaLed ? 'font-medium' : ''}`}>
-              Terá Fita de LED?
-            </span>
-          </label>
-        </div>
-      </div>
-
       {/* Fotos do Ambiente */}
       <div className="bg-white border-2 border-pink-300 rounded-xl p-6 shadow-sm">
         <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
@@ -402,7 +567,7 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-400 hover:bg-pink-50 transition">
             <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-700 font-medium mb-1">Clique para adicionar fotos</p>
-            <p className="text-sm text-gray-500">Ou arraste e solte aqui</p>
+            <p className="text-sm text-gray-500">Ou arraste e solte aqui (múltiplas fotos)</p>
             <input
               type="file"
               multiple
@@ -415,12 +580,17 @@ export function Step2Levantamento({ register, watch, errors, control }: Step2Pro
 
         {/* Preview das Fotos */}
         {fotosPreview.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-            {fotosPreview.map((foto, index) => (
-              <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
-                <img src={foto} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              {fotosPreview.length} {fotosPreview.length === 1 ? 'foto adicionada' : 'fotos adicionadas'}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {fotosPreview.map((foto, index) => (
+                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                  <img src={foto} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

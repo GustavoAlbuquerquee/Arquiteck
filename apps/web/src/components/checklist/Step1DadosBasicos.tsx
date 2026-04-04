@@ -1,6 +1,6 @@
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { ChecklistFormData } from '@/schemas/checklistSchema';
-import { Calendar, User, Home } from 'lucide-react';
+import { Calendar, User, Home, Phone, MapPin, Clock } from 'lucide-react';
 
 interface Step1Props {
   register: UseFormRegister<ChecklistFormData>;
@@ -29,11 +29,45 @@ export function Step1DadosBasicos({ register, errors }: Step1Props) {
         )}
       </div>
 
-      {/* Título do Ambiente */}
+      {/* Telefone */}
+      <div>
+        <label className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-3">
+          <Phone className="w-6 h-6" />
+          Telefone
+        </label>
+        <input
+          type="tel"
+          {...register('telefone')}
+          className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+          placeholder="(11) 98765-4321"
+        />
+        {errors.telefone && (
+          <p className="text-red-500 text-sm mt-2">{errors.telefone.message}</p>
+        )}
+      </div>
+
+      {/* Endereço */}
+      <div>
+        <label className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-3">
+          <MapPin className="w-6 h-6" />
+          Endereço
+        </label>
+        <input
+          type="text"
+          {...register('endereco')}
+          className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+          placeholder="Rua, número, bairro, cidade"
+        />
+        {errors.endereco && (
+          <p className="text-red-500 text-sm mt-2">{errors.endereco.message}</p>
+        )}
+      </div>
+
+      {/* Ambientes e Móveis */}
       <div>
         <label className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-3">
           <Home className="w-6 h-6" />
-          Título do Ambiente
+          Ambientes e Móveis
         </label>
         <input
           type="text"
@@ -59,6 +93,22 @@ export function Step1DadosBasicos({ register, errors }: Step1Props) {
         />
         {errors.dataAtendimento && (
           <p className="text-red-500 text-sm mt-2">{errors.dataAtendimento.message}</p>
+        )}
+      </div>
+
+      {/* Horário da Visita */}
+      <div>
+        <label className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-3">
+          <Clock className="w-6 h-6" />
+          Horário da Visita
+        </label>
+        <input
+          type="time"
+          {...register('horarioVisita')}
+          className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+        />
+        {errors.horarioVisita && (
+          <p className="text-red-500 text-sm mt-2">{errors.horarioVisita.message}</p>
         )}
       </div>
     </div>
