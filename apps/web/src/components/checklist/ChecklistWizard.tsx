@@ -9,12 +9,14 @@ import { ChevronLeft, ChevronRight, Save, CheckCircle, AlertCircle, FileDown } f
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import html2pdf from 'html2pdf.js';
+import { uploadBase64Image, uploadMultipleBase64Images } from '@/lib/supabase/storage';
 
 export function ChecklistWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [savedData, setSavedData] = useState<ChecklistFormData | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -88,7 +90,31 @@ export function ChecklistWizard() {
         throw new Error('Tenant ID não encontrado. Faça logout e login novamente.');
       }
 
-      // 1. Criar cliente com telefone e endereço
+      // 1. Upload da assinatura
+      setLoadingMessage('A enviar assinatura...');
+      let assinaturaUrl = '';
+      if (data.assinatura) {
+        const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
+        const uploadedUrl = await uploadBase64Image(data.assinatura, assinaturaPath);
+        if (!uploadedUrl) {
+          throw new Error('Erro ao fazer upload da assinatura');
+        }
+        assinaturaUrl = uploadedUrl;
+      }
+
+      // 2. Upload das fotos do ambiente
+      setLoadingMessage('A enviar fotos...');
+      let fotosUrls: string[] = [];
+      if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
+        const fotosPathPrefix = `${tenant_id}/fotos`;
+        fotosUrls = await uploadMultipleBase64Images(data.fotosAmbiente, fotosPathPrefix);
+        if (fotosUrls.length !== data.fotosAmbiente.length) {
+          console.warn('Algumas fotos falharam no upload');
+        }
+      }
+
+      // 3. Criar cliente com telefone e endereço
+      setLoadingMessage('A guardar dados do cliente...');
       const { data: cliente, error: clientError } = await supabase
         .from('clients')
         .insert({
@@ -103,7 +129,8 @@ export function ChecklistWizard() {
       if (clientError) throw clientError;
       if (!cliente) throw new Error('Erro ao criar cliente');
 
-      // 2. Criar projeto
+      // 4. Criar projeto
+      setLoadingMessage('A criar projeto...');
       const { data: projeto, error: projectError } = await supabase
         .from('projects')
         .insert({
@@ -119,16 +146,17 @@ export function ChecklistWizard() {
       if (projectError) throw projectError;
       if (!projeto) throw new Error('Erro ao criar projeto');
 
-      // 3. Criar checklist com payload atualizado
+      // 5. Criar checklist com URLs ao invés de Base64
+      setLoadingMessage('A finalizar...');
       const payload = {
         horarioVisita: data.horarioVisita,
         moveis: data.moveis,
         eletrodomesticos: data.eletrodomesticos,
         especificacoesAmbiente: data.especificacoesAmbiente,
         pontosCriticos: data.pontosCriticos,
-        fotosAmbiente: data.fotosAmbiente,
+        fotosAmbiente: fotosUrls,
         observacoes: data.observacoes,
-        assinatura_url: data.assinatura,
+        assinatura_url: assinaturaUrl,
       };
 
       const { error: checklistError } = await supabase
@@ -144,7 +172,14 @@ export function ChecklistWizard() {
 
       console.log('🎉 Briefing salvo com sucesso!', { cliente, projeto, payload });
 
-      setSavedData(data);
+      // Atualizar savedData com URLs para o PDF
+      const dataComUrls = {
+        ...data,
+        fotosAmbiente: fotosUrls,
+        assinatura: assinaturaUrl,
+      };
+
+      setSavedData(dataComUrls);
       setShowSuccessAlert(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
@@ -153,6 +188,7 @@ export function ChecklistWizard() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -162,10 +198,10 @@ export function ChecklistWizard() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const opt = {
+      const opt: any = {
         margin: [10, 10, 10, 10],
         filename: `briefing-${savedData.nomeCliente.replace(/\s+/g, '-')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
@@ -299,7 +335,7 @@ export function ChecklistWizard() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Salvando...
+                    {loadingMessage || 'Salvando...'}
                   </>
                 ) : (
                   <>
