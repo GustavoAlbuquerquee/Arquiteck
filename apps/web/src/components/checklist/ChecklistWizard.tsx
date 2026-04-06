@@ -1,22 +1,32 @@
-import { useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { checklistSchema, ChecklistFormData } from '@/schemas/checklistSchema';
-import { Step1DadosBasicos } from './Step1DadosBasicos';
-import { Step2Levantamento } from './Step2Levantamento';
-import { Step3Finalizacao } from './Step3Finalizacao';
-import { ChevronLeft, ChevronRight, Save, CheckCircle, AlertCircle, FileDown } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import html2pdf from 'html2pdf.js';
-import { uploadBase64Image, uploadMultipleBase64Images } from '@/lib/supabase/storage';
+import { useState, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { checklistSchema, ChecklistFormData } from "@/schemas/checklistSchema";
+import { Step1DadosBasicos } from "./Step1DadosBasicos";
+import { Step2Levantamento } from "./Step2Levantamento";
+import { Step3Finalizacao } from "./Step3Finalizacao";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  FileDown,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import html2pdf from "html2pdf.js";
+import {
+  uploadBase64Image,
+  uploadMultipleBase64Images,
+} from "@/lib/supabase/storage";
 
 export function ChecklistWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [savedData, setSavedData] = useState<ChecklistFormData | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -33,27 +43,27 @@ export function ChecklistWizard() {
   } = useForm<ChecklistFormData>({
     resolver: zodResolver(checklistSchema),
     defaultValues: {
-      nomeCliente: '',
-      telefone: '',
-      endereco: '',
-      tituloAmbiente: '',
-      dataAtendimento: '',
-      horarioVisita: '',
+      nomeCliente: "",
+      telefone: "",
+      endereco: "",
+      tituloAmbiente: "",
+      dataAtendimento: "",
+      horarioVisita: "",
       moveis: [],
       eletrodomesticos: [],
       especificacoesAmbiente: {
-        rodape: '',
-        tipoParede: '',
+        rodape: "",
+        tipoParede: "",
         tubulacoesParede: false,
         temEstacionamento: false,
         temElevador: false,
-        alturaElevador: '',
-        profundidadeElevador: '',
+        alturaElevador: "",
+        profundidadeElevador: "",
       },
-      pontosCriticos: '',
+      pontosCriticos: "",
       fotosAmbiente: [],
-      observacoes: '',
-      assinatura: '',
+      observacoes: "",
+      assinatura: "",
     },
   });
 
@@ -61,62 +71,77 @@ export function ChecklistWizard() {
     let fieldsToValidate: (keyof ChecklistFormData)[] = [];
 
     if (currentStep === 1) {
-      fieldsToValidate = ['nomeCliente', 'telefone', 'endereco', 'tituloAmbiente', 'dataAtendimento', 'horarioVisita'];
+      fieldsToValidate = [
+        "nomeCliente",
+        "telefone",
+        "endereco",
+        "tituloAmbiente",
+        "dataAtendimento",
+        "horarioVisita",
+      ];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['moveis'];
+      fieldsToValidate = ["moveis"];
     }
 
     const isValid = await trigger(fieldsToValidate);
 
     if (isValid) {
       setCurrentStep((prev) => Math.min(prev + 1, 3));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const onSubmit = async (data: ChecklistFormData) => {
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const tenant_id = user?.user_metadata?.tenant_id;
 
       if (!tenant_id) {
-        throw new Error('Tenant ID não encontrado. Faça logout e login novamente.');
+        throw new Error(
+          "Tenant ID não encontrado. Faça logout e login novamente.",
+        );
       }
 
       // 1. Upload da assinatura
-      setLoadingMessage('A enviar assinatura...');
-      let assinaturaUrl = '';
+      setLoadingMessage("A enviar assinatura...");
+      let assinaturaUrl = "";
       if (data.assinatura) {
         const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
-        const uploadedUrl = await uploadBase64Image(data.assinatura, assinaturaPath);
+        const uploadedUrl = await uploadBase64Image(
+          data.assinatura,
+          assinaturaPath,
+        );
         if (!uploadedUrl) {
-          throw new Error('Erro ao fazer upload da assinatura');
+          throw new Error("Erro ao fazer upload da assinatura");
         }
         assinaturaUrl = uploadedUrl;
       }
 
       // 2. Upload das fotos do ambiente
-      setLoadingMessage('A enviar fotos...');
+      setLoadingMessage("A enviar fotos...");
       let fotosUrls: string[] = [];
       if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
         const fotosPathPrefix = `${tenant_id}/fotos`;
-        fotosUrls = await uploadMultipleBase64Images(data.fotosAmbiente, fotosPathPrefix);
+        fotosUrls = await uploadMultipleBase64Images(
+          data.fotosAmbiente,
+          fotosPathPrefix,
+        );
         if (fotosUrls.length !== data.fotosAmbiente.length) {
-          console.warn('Algumas fotos falharam no upload');
+          console.warn("Algumas fotos falharam no upload");
         }
       }
 
       // 3. Criar cliente com telefone e endereço
-      setLoadingMessage('A guardar dados do cliente...');
+      setLoadingMessage("A guardar dados do cliente...");
       const { data: cliente, error: clientError } = await supabase
-        .from('clients')
+        .from("clients")
         .insert({
           tenant_id: tenant_id,
           nome: data.nomeCliente,
@@ -127,27 +152,27 @@ export function ChecklistWizard() {
         .single();
 
       if (clientError) throw clientError;
-      if (!cliente) throw new Error('Erro ao criar cliente');
+      if (!cliente) throw new Error("Erro ao criar cliente");
 
       // 4. Criar projeto
-      setLoadingMessage('A criar projeto...');
+      setLoadingMessage("A criar projeto...");
       const { data: projeto, error: projectError } = await supabase
-        .from('projects')
+        .from("projects")
         .insert({
           tenant_id: tenant_id,
           client_id: cliente.id,
           titulo_ambiente: data.tituloAmbiente,
           data_prevista_instalacao: data.dataAtendimento,
-          status: 'orcamento',
+          status: "orcamento",
         })
         .select()
         .single();
 
       if (projectError) throw projectError;
-      if (!projeto) throw new Error('Erro ao criar projeto');
+      if (!projeto) throw new Error("Erro ao criar projeto");
 
       // 5. Criar checklist com URLs ao invés de Base64
-      setLoadingMessage('A finalizar...');
+      setLoadingMessage("A finalizar...");
       const payload = {
         horarioVisita: data.horarioVisita,
         moveis: data.moveis,
@@ -160,17 +185,21 @@ export function ChecklistWizard() {
       };
 
       const { error: checklistError } = await supabase
-        .from('checklists')
+        .from("checklists")
         .insert({
           tenant_id: tenant_id,
           project_id: projeto.id,
-          tipo_etapa: 'pre_producao',
+          tipo_etapa: "pre_producao",
           payload: payload,
         });
 
       if (checklistError) throw checklistError;
 
-      console.log('🎉 Briefing salvo com sucesso!', { cliente, projeto, payload });
+      console.log("🎉 Briefing salvo com sucesso!", {
+        cliente,
+        projeto,
+        payload,
+      });
 
       // Atualizar savedData com URLs para o PDF
       const dataComUrls = {
@@ -181,14 +210,14 @@ export function ChecklistWizard() {
 
       setSavedData(dataComUrls);
       setShowSuccessAlert(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
-      console.error('Erro ao salvar briefing:', err);
-      setError(err.message || 'Erro ao salvar briefing. Tente novamente.');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      console.error("Erro ao salvar briefing:", err);
+      setError(err.message || "Erro ao salvar briefing. Tente novamente.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
-      setLoadingMessage('');
+      setLoadingMessage("");
     }
   };
 
@@ -196,27 +225,27 @@ export function ChecklistWizard() {
     if (!pdfRef.current || !savedData) return;
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const opt: any = {
         margin: [10, 10, 10, 10],
-        filename: `briefing-${savedData.nomeCliente.replace(/\s+/g, '-')}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { 
+        filename: `briefing-${savedData.nomeCliente.replace(/\s+/g, "-")}.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: {
           scale: 2,
           useCORS: true,
           logging: false,
           allowTaint: true,
-          backgroundColor: '#ffffff'
+          backgroundColor: "#ffffff",
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       };
 
       await html2pdf().set(opt).from(pdfRef.current).save();
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
+      console.error("Erro ao gerar PDF:", error);
+      alert("Erro ao gerar PDF. Tente novamente.");
     }
   };
 
@@ -225,7 +254,7 @@ export function ChecklistWizard() {
     setSavedData(null);
     setShowSuccessAlert(false);
     setCurrentStep(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -234,7 +263,9 @@ export function ChecklistWizard() {
         <div className="mb-6 bg-red-100 border-2 border-red-500 rounded-lg p-6 flex items-start gap-4 animate-fade-in">
           <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
           <div>
-            <h3 className="text-xl font-bold text-red-800 mb-2">Erro ao Salvar</h3>
+            <h3 className="text-xl font-bold text-red-800 mb-2">
+              Erro ao Salvar
+            </h3>
             <p className="text-red-700">{error}</p>
           </div>
         </div>
@@ -245,8 +276,12 @@ export function ChecklistWizard() {
           <div className="flex items-start gap-4 mb-4">
             <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
             <div>
-              <h3 className="text-xl font-bold text-green-800 mb-2">Briefing Salvo com Sucesso!</h3>
-              <p className="text-green-700">Os dados foram registrados no sistema.</p>
+              <h3 className="text-xl font-bold text-green-800 mb-2">
+                Briefing Salvo com Sucesso!
+              </h3>
+              <p className="text-green-700">
+                Os dados foram registrados no sistema.
+              </p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -274,7 +309,9 @@ export function ChecklistWizard() {
               <div key={step} className="flex items-center flex-1">
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition ${
-                    currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                    currentStep >= step
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-300 text-gray-600"
                   }`}
                 >
                   {step}
@@ -282,7 +319,7 @@ export function ChecklistWizard() {
                 {step < 3 && (
                   <div
                     className={`flex-1 h-2 mx-2 rounded transition ${
-                      currentStep > step ? 'bg-blue-600' : 'bg-gray-300'
+                      currentStep > step ? "bg-blue-600" : "bg-gray-300"
                     }`}
                   />
                 )}
@@ -298,10 +335,29 @@ export function ChecklistWizard() {
       )}
 
       {!showSuccessAlert && (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-lg p-8">
-          {currentStep === 1 && <Step1DadosBasicos register={register} errors={errors} />}
-          {currentStep === 2 && <Step2Levantamento register={register} watch={watch} errors={errors} control={control} setValue={setValue} />}
-          {currentStep === 3 && <Step3Finalizacao register={register} setValue={setValue} errors={errors} />}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white rounded-xl shadow-lg p-8"
+        >
+          {currentStep === 1 && (
+            <Step1DadosBasicos register={register} errors={errors} />
+          )}
+          {currentStep === 2 && (
+            <Step2Levantamento
+              register={register}
+              watch={watch}
+              errors={errors}
+              control={control}
+              setValue={setValue}
+            />
+          )}
+          {currentStep === 3 && (
+            <Step3Finalizacao
+              register={register}
+              setValue={setValue}
+              errors={errors}
+            />
+          )}
 
           <div className="flex items-center justify-between mt-8 pt-6 border-t-2 border-gray-200">
             {currentStep > 1 ? (
@@ -335,7 +391,7 @@ export function ChecklistWizard() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {loadingMessage || 'Salvando...'}
+                    {loadingMessage || "Salvando..."}
                   </>
                 ) : (
                   <>
@@ -351,84 +407,184 @@ export function ChecklistWizard() {
 
       {/* Template PDF Atualizado */}
       {savedData && (
-        <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -10 }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            opacity: 0,
+            pointerEvents: "none",
+            zIndex: -10,
+          }}
+        >
           <div ref={pdfRef} className="w-[210mm] bg-white p-8">
             <div className="space-y-6">
-              <div className="text-center border-b-2 border-gray-300 pb-4" style={{ pageBreakInside: 'avoid' }}>
+              <div
+                className="text-center border-b-2 border-gray-300 pb-4"
+                style={{ pageBreakInside: "avoid" }}
+              >
                 <h1 className="text-3xl font-bold text-gray-900">Arquiteck</h1>
-                <p className="text-lg text-gray-600">Briefing de Primeira Visita</p>
+                <p className="text-lg text-gray-600">
+                  Briefing de Primeira Visita
+                </p>
               </div>
 
-              <div style={{ pageBreakInside: 'avoid' }}>
-                <h2 className="text-xl font-bold text-gray-800 mb-3">Dados Básicos</h2>
-                <p><strong>Cliente:</strong> {savedData.nomeCliente}</p>
-                <p><strong>Telefone:</strong> {savedData.telefone}</p>
-                <p><strong>Endereço:</strong> {savedData.endereco}</p>
-                <p><strong>Ambiente:</strong> {savedData.tituloAmbiente}</p>
-                <p><strong>Data:</strong> {new Date(savedData.dataAtendimento).toLocaleDateString('pt-BR')}</p>
-                <p><strong>Horário:</strong> {savedData.horarioVisita}</p>
+              <div style={{ pageBreakInside: "avoid" }}>
+                <h2 className="text-xl font-bold text-gray-800 mb-3">
+                  Dados Básicos
+                </h2>
+                <p>
+                  <strong>Cliente:</strong> {savedData.nomeCliente}
+                </p>
+                <p>
+                  <strong>Telefone:</strong> {savedData.telefone}
+                </p>
+                <p>
+                  <strong>Endereço:</strong> {savedData.endereco}
+                </p>
+                <p>
+                  <strong>Ambiente:</strong> {savedData.tituloAmbiente}
+                </p>
+                <p>
+                  <strong>Data:</strong>{" "}
+                  {new Date(savedData.dataAtendimento).toLocaleDateString(
+                    "pt-BR",
+                  )}
+                </p>
+                <p>
+                  <strong>Horário:</strong> {savedData.horarioVisita}
+                </p>
               </div>
 
-              <div style={{ pageBreakInside: 'avoid' }}>
+              <div style={{ pageBreakInside: "avoid" }}>
                 <h2 className="text-xl font-bold text-gray-800 mb-3">Móveis</h2>
                 {savedData.moveis.map((movel, idx) => (
-                  <div key={idx} className="mb-4 p-3 border border-gray-300 rounded" style={{ pageBreakInside: 'avoid' }}>
+                  <div
+                    key={idx}
+                    className="mb-4 p-3 border border-gray-300 rounded"
+                    style={{ pageBreakInside: "avoid" }}
+                  >
                     <p className="font-bold">{movel.nome}</p>
-                    <p>Medidas: {movel.largura}mm × {movel.altura}mm × {movel.profundidade}mm</p>
-                    <p>MDF Interno: {movel.corMdfInterna} | MDF Externo: {movel.corMdfExterna}</p>
-                    {movel.temPuxador && <p>Puxador: {movel.tipoPuxador} - {movel.corPuxador}</p>}
-                    {movel.temCorredicas && <p>Corrediça: {movel.tipoCorredica}</p>}
+                    <p>
+                      Medidas: {movel.largura}mm × {movel.altura}mm ×{" "}
+                      {movel.profundidade}mm
+                    </p>
+                    <p>
+                      MDF Interno: {movel.corMdfInterna} | MDF Externo:{" "}
+                      {movel.corMdfExterna}
+                    </p>
+                    {movel.temPuxador && (
+                      <p>
+                        Puxador: {movel.tipoPuxador} - {movel.corPuxador}
+                      </p>
+                    )}
+                    {movel.temCorredicas && (
+                      <p>Corrediça: {movel.tipoCorredica}</p>
+                    )}
                     {movel.temBascula && <p>Báscula: {movel.tipoBascula}</p>}
-                    {movel.temPortaVidro && <p>Porta Vidro: {movel.tipoPortaVidro}</p>}
+                    {movel.temPortaVidro && (
+                      <p>Porta Vidro: {movel.tipoPortaVidro}</p>
+                    )}
                     {movel.temFitaLed && <p>Fita LED: {movel.tipoFitaLed}</p>}
-                    {movel.observacoesMovel && <p className="text-sm mt-2">Obs: {movel.observacoesMovel}</p>}
+                    {movel.observacoesMovel && (
+                      <p className="text-sm mt-2">
+                        Obs: {movel.observacoesMovel}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
 
               {savedData.especificacoesAmbiente && (
-                <div style={{ pageBreakInside: 'avoid' }}>
-                  <h2 className="text-xl font-bold text-gray-800 mb-3">Especificações do Ambiente</h2>
-                  {savedData.especificacoesAmbiente.rodape && <p>Rodapé: {savedData.especificacoesAmbiente.rodape}</p>}
-                  {savedData.especificacoesAmbiente.tipoParede && <p>Tipo de Parede: {savedData.especificacoesAmbiente.tipoParede}</p>}
-                  <p>Tubulações: {savedData.especificacoesAmbiente.tubulacoesParede ? 'Sim' : 'Não'}</p>
-                  <p>Estacionamento: {savedData.especificacoesAmbiente.temEstacionamento ? 'Sim' : 'Não'}</p>
+                <div style={{ pageBreakInside: "avoid" }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">
+                    Especificações do Ambiente
+                  </h2>
+                  {savedData.especificacoesAmbiente.rodape && (
+                    <p>Rodapé: {savedData.especificacoesAmbiente.rodape}</p>
+                  )}
+                  {savedData.especificacoesAmbiente.tipoParede && (
+                    <p>
+                      Tipo de Parede:{" "}
+                      {savedData.especificacoesAmbiente.tipoParede}
+                    </p>
+                  )}
+                  <p>
+                    Tubulações:{" "}
+                    {savedData.especificacoesAmbiente.tubulacoesParede
+                      ? "Sim"
+                      : "Não"}
+                  </p>
+                  <p>
+                    Estacionamento:{" "}
+                    {savedData.especificacoesAmbiente.temEstacionamento
+                      ? "Sim"
+                      : "Não"}
+                  </p>
                   {savedData.especificacoesAmbiente.temElevador && (
-                    <p>Elevador: {savedData.especificacoesAmbiente.alturaElevador}mm × {savedData.especificacoesAmbiente.profundidadeElevador}mm</p>
+                    <p>
+                      Elevador:{" "}
+                      {savedData.especificacoesAmbiente.alturaElevador}mm ×{" "}
+                      {savedData.especificacoesAmbiente.profundidadeElevador}mm
+                    </p>
                   )}
                 </div>
               )}
 
               {savedData.eletrodomesticos.length > 0 && (
-                <div style={{ pageBreakInside: 'avoid' }}>
-                  <h2 className="text-xl font-bold text-gray-800 mb-3">Eletrodomésticos</h2>
+                <div style={{ pageBreakInside: "avoid" }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">
+                    Eletrodomésticos
+                  </h2>
                   {savedData.eletrodomesticos.map((e, idx) => (
-                    <p key={idx}>• {e.nome} {e.modelo && `- ${e.modelo}`}</p>
+                    <p key={idx}>
+                      • {e.nome} {e.modelo && `- ${e.modelo}`}
+                    </p>
                   ))}
                 </div>
               )}
 
-              {savedData.fotosAmbiente && savedData.fotosAmbiente.length > 0 && (
-                <div style={{ pageBreakInside: 'avoid' }}>
-                  <h2 className="text-xl font-bold text-gray-800 mb-3">Fotos</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {savedData.fotosAmbiente.map((foto, idx) => (
-                      <img key={idx} src={foto} alt={`Foto ${idx + 1}`} style={{ maxHeight: '200px', objectFit: 'contain' }} />
-                    ))}
+              {savedData.fotosAmbiente &&
+                savedData.fotosAmbiente.length > 0 && (
+                  <div style={{ pageBreakInside: "avoid" }}>
+                    <h2 className="text-xl font-bold text-gray-800 mb-3">
+                      Fotos
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {savedData.fotosAmbiente.map((foto, idx) => (
+                        <img
+                          key={idx}
+                          src={foto}
+                          alt={`Foto ${idx + 1}`}
+                          style={{ maxHeight: "200px", objectFit: "contain" }}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {savedData.observacoes && (
-                <div style={{ pageBreakInside: 'avoid' }}>
-                  <h2 className="text-xl font-bold text-gray-800 mb-3">Observações</h2>
+                <div style={{ pageBreakInside: "avoid" }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">
+                    Observações
+                  </h2>
                   <p className="whitespace-pre-wrap">{savedData.observacoes}</p>
                 </div>
               )}
 
-              <div style={{ pageBreakInside: 'avoid' }}>
-                <h2 className="text-xl font-bold text-gray-800 mb-3">Assinatura</h2>
-                <img src={savedData.assinatura} alt="Assinatura" style={{ maxWidth: '400px', maxHeight: '150px', objectFit: 'contain' }} />
+              <div style={{ pageBreakInside: "avoid" }}>
+                <h2 className="text-xl font-bold text-gray-800 mb-3">
+                  Assinatura
+                </h2>
+                <img
+                  src={savedData.assinatura}
+                  alt="Assinatura"
+                  style={{
+                    maxWidth: "400px",
+                    maxHeight: "150px",
+                    objectFit: "contain",
+                  }}
+                />
               </div>
             </div>
           </div>
