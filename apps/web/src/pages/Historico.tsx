@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Calendar, User, Home, FileText, Loader2, FolderOpen, Plus, Eye } from 'lucide-react';
+import { Calendar, User, Home, FileText, Loader2, FolderOpen, Plus, Eye, FileDown, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import html2pdf from 'html2pdf.js';
 
 interface Cliente {
   id: string;
@@ -32,6 +33,7 @@ export function Historico() {
   const [loading, setLoading] = useState(true);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const pdfRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,6 +65,38 @@ export function Historico() {
     setSelectedProjeto(projeto);
     setShowModal(true);
     console.log('📋 Detalhes do Projeto:', projeto);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!pdfRef.current || !selectedProjeto) return;
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const opt: any = {
+        margin: [10, 10, 10, 10],
+        filename: `briefing-${selectedProjeto.clients.nome.replace(/\s+/g, '-')}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await html2pdf().set(opt).from(pdfRef.current).save();
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    }
+  };
+
+  const handleEdit = () => {
+    alert('✏️ Edição de Briefing estará disponível na próxima atualização');
   };
 
   const formatDate = (dateString: string) => {
@@ -379,14 +413,133 @@ export function Historico() {
               )}
             </div>
 
-            {/* Footer do Modal */}
+            {/* Footer do Modal com Ações */}
             <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 p-6">
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-full h-12 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
-              >
-                Fechar
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                >
+                  <FileDown className="w-5 h-5" />
+                  Baixar PDF
+                </button>
+                <button
+                  onClick={handleEdit}
+                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg transition"
+                >
+                  <Edit className="w-5 h-5" />
+                  Editar
+                </button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 h-12 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template PDF Oculto */}
+      {selectedProjeto && selectedProjeto.checklists.length > 0 && (
+        <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -10 }}>
+          <div ref={pdfRef} className="w-[210mm] bg-white p-8">
+            <div className="space-y-6">
+              <div className="text-center border-b-2 border-gray-300 pb-4" style={{ pageBreakInside: 'avoid' }}>
+                <h1 className="text-3xl font-bold text-gray-900">Arquiteck</h1>
+                <p className="text-lg text-gray-600">Briefing de Primeira Visita</p>
+              </div>
+
+              <div style={{ pageBreakInside: 'avoid' }}>
+                <h2 className="text-xl font-bold text-gray-800 mb-3">Dados Básicos</h2>
+                <p><strong>Cliente:</strong> {selectedProjeto.clients.nome}</p>
+                {selectedProjeto.clients.telefone && <p><strong>Telefone:</strong> {selectedProjeto.clients.telefone}</p>}
+                {selectedProjeto.clients.endereco && <p><strong>Endereço:</strong> {selectedProjeto.clients.endereco}</p>}
+                <p><strong>Ambiente:</strong> {selectedProjeto.titulo_ambiente}</p>
+                <p><strong>Data:</strong> {formatDate(selectedProjeto.data_prevista_instalacao)}</p>
+                {selectedProjeto.checklists[0]?.payload?.horarioVisita && (
+                  <p><strong>Horário:</strong> {selectedProjeto.checklists[0].payload.horarioVisita}</p>
+                )}
+              </div>
+
+              {selectedProjeto.checklists[0]?.payload?.moveis && selectedProjeto.checklists[0].payload.moveis.length > 0 && (
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Móveis</h2>
+                  {selectedProjeto.checklists[0].payload.moveis.map((movel: any, idx: number) => (
+                    <div key={idx} className="mb-4 p-3 border border-gray-300 rounded" style={{ pageBreakInside: 'avoid' }}>
+                      <p className="font-bold">{movel.nome}</p>
+                      <p>Medidas: {movel.largura}mm × {movel.altura}mm × {movel.profundidade}mm</p>
+                      <p>MDF Interno: {movel.corMdfInterna} | MDF Externo: {movel.corMdfExterna}</p>
+                      {movel.temPuxador && <p>Puxador: {movel.tipoPuxador} - {movel.detalhesPuxador}</p>}
+                      {movel.temCorredicas && <p>Corrediça: {movel.tipoCorredica} ({movel.finalidadeCorredica})</p>}
+                      {movel.temBascula && <p>Báscula: {movel.tipoBascula}</p>}
+                      {movel.temPortaVidro && <p>Porta Vidro: {movel.tipoPortaVidro}</p>}
+                      {movel.temFitaLed && <p>Fita LED: {movel.tipoFitaLed}</p>}
+                      {movel.observacoesMovel && <p className="text-sm mt-2">Obs: {movel.observacoesMovel}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedProjeto.checklists[0]?.payload?.especificacoesAmbiente && (
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Especificações do Ambiente</h2>
+                  {selectedProjeto.checklists[0].payload.especificacoesAmbiente.rodape && (
+                    <>
+                      <p>Rodapé: {selectedProjeto.checklists[0].payload.especificacoesAmbiente.rodape}</p>
+                      {selectedProjeto.checklists[0].payload.especificacoesAmbiente.alturaRodape && selectedProjeto.checklists[0].payload.especificacoesAmbiente.profundidadeRodape && (
+                        <p>Dimensões: {selectedProjeto.checklists[0].payload.especificacoesAmbiente.alturaRodape}mm × {selectedProjeto.checklists[0].payload.especificacoesAmbiente.profundidadeRodape}mm</p>
+                      )}
+                    </>
+                  )}
+                  {selectedProjeto.checklists[0].payload.especificacoesAmbiente.tipoParede && (
+                    <p>Tipo de Parede: {selectedProjeto.checklists[0].payload.especificacoesAmbiente.tipoParede}</p>
+                  )}
+                  {selectedProjeto.checklists[0].payload.especificacoesAmbiente.tubulacoesParede && (
+                    <p>Tubulações: Sim - {selectedProjeto.checklists[0].payload.especificacoesAmbiente.localTubulacao}</p>
+                  )}
+                  <p>Estacionamento: {selectedProjeto.checklists[0].payload.especificacoesAmbiente.temEstacionamento ? 'Sim' : 'Não'}</p>
+                  {selectedProjeto.checklists[0].payload.especificacoesAmbiente.temElevador && (
+                    <p>Elevador: {selectedProjeto.checklists[0].payload.especificacoesAmbiente.alturaElevador}mm × {selectedProjeto.checklists[0].payload.especificacoesAmbiente.profundidadeElevador}mm</p>
+                  )}
+                </div>
+              )}
+
+              {selectedProjeto.checklists[0]?.payload?.eletrodomesticos && selectedProjeto.checklists[0].payload.eletrodomesticos.length > 0 && (
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Eletrodomésticos</h2>
+                  {selectedProjeto.checklists[0].payload.eletrodomesticos.map((e: any, idx: number) => (
+                    <p key={idx}>• {e.nome} {e.modelo && `- ${e.modelo}`}</p>
+                  ))}
+                </div>
+              )}
+
+              {selectedProjeto.checklists[0]?.payload?.fotosAmbiente && selectedProjeto.checklists[0].payload.fotosAmbiente.length > 0 && (
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Fotos</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedProjeto.checklists[0].payload.fotosAmbiente.map((foto: string, idx: number) => (
+                      <img key={idx} src={foto} alt={`Foto ${idx + 1}`} style={{ maxHeight: '200px', objectFit: 'contain' }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedProjeto.checklists[0]?.payload?.observacoes && (
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Observações</h2>
+                  <p className="whitespace-pre-wrap">{selectedProjeto.checklists[0].payload.observacoes}</p>
+                </div>
+              )}
+
+              {selectedProjeto.checklists[0]?.payload?.assinatura_url && (
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Assinatura</h2>
+                  <img src={selectedProjeto.checklists[0].payload.assinatura_url} alt="Assinatura" style={{ maxWidth: '400px', maxHeight: '150px', objectFit: 'contain' }} />
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -41,9 +41,10 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
       observacoesMovel: '',
       temPuxador: false,
       tipoPuxador: '',
-      corPuxador: '',
+      detalhesPuxador: '',
       temCorredicas: false,
       tipoCorredica: '',
+      finalidadeCorredica: '',
       temBascula: false,
       tipoBascula: undefined,
       temPortaVidro: false,
@@ -89,6 +90,13 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
     const novasFotos = [...fotosAmbiente, ...fotosBase64];
     setValue('fotosAmbiente', novasFotos);
     setFotosPreview([...fotosPreview, ...previews]);
+  };
+
+  const handleRemoveFoto = (indexToRemove: number) => {
+    const novasFotos = fotosAmbiente.filter((_, index) => index !== indexToRemove);
+    const novosPreviews = fotosPreview.filter((_, index) => index !== indexToRemove);
+    setValue('fotosAmbiente', novasFotos);
+    setFotosPreview(novosPreviews);
   };
 
   return (
@@ -285,13 +293,13 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Cor do Puxador *
+                          Detalhes do Puxador *
                         </label>
                         <input
                           type="text"
-                          {...register(`moveis.${index}.corPuxador`)}
+                          {...register(`moveis.${index}.detalhesPuxador`)}
                           className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition"
-                          placeholder="Ex: Preto Fosco"
+                          placeholder="Ex: Preto Fosco, 128mm"
                         />
                       </div>
                     </div>
@@ -299,19 +307,32 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
                   {/* Campos Condicionais - Corrediças */}
                   {movel?.temCorredicas && (
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Corrediça *
-                      </label>
-                      <select
-                        {...register(`moveis.${index}.tipoCorredica`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition bg-white"
-                      >
-                        <option value="">Selecione</option>
-                        {tipoCorredicas.map((tipo) => (
-                          <option key={tipo} value={tipo}>{tipo}</option>
-                        ))}
-                      </select>
+                    <div className="space-y-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tipo de Corrediça *
+                        </label>
+                        <select
+                          {...register(`moveis.${index}.tipoCorredica`)}
+                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition bg-white"
+                        >
+                          <option value="">Selecione</option>
+                          {tipoCorredicas.map((tipo) => (
+                            <option key={tipo} value={tipo}>{tipo}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Para qual finalidade/gaveta? *
+                        </label>
+                        <input
+                          type="text"
+                          {...register(`moveis.${index}.finalidadeCorredica`)}
+                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition"
+                          placeholder="Ex: Gaveta de talheres, Gaveta de panelas"
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -402,7 +423,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           {/* Rodapé */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rodapé
+              Rodapé (Material)
             </label>
             <input
               type="text"
@@ -411,6 +432,34 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
               placeholder="Ex: Madeira, MDF, Gesso"
             />
           </div>
+
+          {/* Campos Condicionais - Rodapé */}
+          {especificacoes?.rodape && (
+            <div className="grid grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Altura do Rodapé (mm)
+                </label>
+                <input
+                  type="number"
+                  {...register('especificacoesAmbiente.alturaRodape')}
+                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+                  placeholder="70"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profundidade do Rodapé (mm)
+                </label>
+                <input
+                  type="number"
+                  {...register('especificacoesAmbiente.profundidadeRodape')}
+                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+                  placeholder="15"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Tipo de Parede */}
           <div>
@@ -454,6 +503,21 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
               <span className="text-sm font-medium">Tem Elevador?</span>
             </label>
           </div>
+
+          {/* Campos Condicionais - Tubulações */}
+          {especificacoes?.tubulacoesParede && (
+            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Indique o local exato *
+              </label>
+              <input
+                type="text"
+                {...register('especificacoesAmbiente.localTubulacao')}
+                className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none transition"
+                placeholder="Ex: Parede esquerda, próximo à janela"
+              />
+            </div>
+          )}
 
           {/* Campos Condicionais - Elevador */}
           {especificacoes?.temElevador && (
@@ -556,11 +620,11 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
         <p className="text-sm text-gray-500 mt-2">Campo opcional</p>
       </div>
 
-      {/* Fotos do Ambiente */}
+      {/* Fotos do Ambiente e Anotações Manuais */}
       <div className="bg-white border-2 border-pink-300 rounded-xl p-6 shadow-sm">
         <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
           <Camera className="w-6 h-6" />
-          Fotos do Ambiente
+          Fotos do ambiente e anotações manuais
         </h3>
         
         <label className="block">
@@ -586,15 +650,23 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {fotosPreview.map((foto, index) => (
-                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group">
                   <img src={foto} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFoto(index)}
+                    className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remover foto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <p className="text-sm text-gray-500 mt-3">Campo opcional - As fotos serão salvas no formato Base64</p>
+        <p className="text-sm text-gray-500 mt-3">Campo opcional - As fotos serão enviadas para o Supabase Storage</p>
       </div>
     </div>
   );

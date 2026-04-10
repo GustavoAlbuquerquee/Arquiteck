@@ -475,11 +475,11 @@ export function ChecklistWizard() {
                     </p>
                     {movel.temPuxador && (
                       <p>
-                        Puxador: {movel.tipoPuxador} - {movel.corPuxador}
+                        Puxador: {movel.tipoPuxador} - {movel.detalhesPuxador}
                       </p>
                     )}
                     {movel.temCorredicas && (
-                      <p>Corrediça: {movel.tipoCorredica}</p>
+                      <p>Corrediça: {movel.tipoCorredica} ({movel.finalidadeCorredica})</p>
                     )}
                     {movel.temBascula && <p>Báscula: {movel.tipoBascula}</p>}
                     {movel.temPortaVidro && (
@@ -501,7 +501,12 @@ export function ChecklistWizard() {
                     Especificações do Ambiente
                   </h2>
                   {savedData.especificacoesAmbiente.rodape && (
-                    <p>Rodapé: {savedData.especificacoesAmbiente.rodape}</p>
+                    <>
+                      <p>Rodapé: {savedData.especificacoesAmbiente.rodape}</p>
+                      {savedData.especificacoesAmbiente.alturaRodape && savedData.especificacoesAmbiente.profundidadeRodape && (
+                        <p>Dimensões: {savedData.especificacoesAmbiente.alturaRodape}mm × {savedData.especificacoesAmbiente.profundidadeRodape}mm</p>
+                      )}
+                    </>
                   )}
                   {savedData.especificacoesAmbiente.tipoParede && (
                     <p>
@@ -509,12 +514,11 @@ export function ChecklistWizard() {
                       {savedData.especificacoesAmbiente.tipoParede}
                     </p>
                   )}
-                  <p>
-                    Tubulações:{" "}
-                    {savedData.especificacoesAmbiente.tubulacoesParede
-                      ? "Sim"
-                      : "Não"}
-                  </p>
+                  {savedData.especificacoesAmbiente.tubulacoesParede && (
+                    <p>
+                      Tubulações: Sim - {savedData.especificacoesAmbiente.localTubulacao}
+                    </p>
+                  )}
                   <p>
                     Estacionamento:{" "}
                     {savedData.especificacoesAmbiente.temEstacionamento

@@ -13,10 +13,11 @@ const movelSchema = z.object({
   // Campos condicionais
   temPuxador: z.boolean(),
   tipoPuxador: z.string().optional(),
-  corPuxador: z.string().optional(),
+  detalhesPuxador: z.string().optional(),
   
   temCorredicas: z.boolean(),
   tipoCorredica: z.string().optional(),
+  finalidadeCorredica: z.string().optional(),
   
   temBascula: z.boolean(),
   tipoBascula: z.enum(['comum', 'inversa']).optional(),
@@ -27,10 +28,10 @@ const movelSchema = z.object({
   temFitaLed: z.boolean(),
   tipoFitaLed: z.string().optional(),
 }).refine((data) => {
-  if (data.temPuxador && (!data.tipoPuxador || !data.corPuxador)) {
+  if (data.temPuxador && (!data.tipoPuxador || !data.detalhesPuxador)) {
     return false;
   }
-  if (data.temCorredicas && !data.tipoCorredica) {
+  if (data.temCorredicas && (!data.tipoCorredica || !data.finalidadeCorredica)) {
     return false;
   }
   if (data.temBascula && !data.tipoBascula) {
@@ -56,8 +57,11 @@ const eletrodomesticoSchema = z.object({
 // Schema para especificações do ambiente
 const especificacoesAmbienteSchema = z.object({
   rodape: z.string().optional(),
+  alturaRodape: z.string().optional(),
+  profundidadeRodape: z.string().optional(),
   tipoParede: z.string().optional(),
   tubulacoesParede: z.boolean().optional(),
+  localTubulacao: z.string().optional(),
   temEstacionamento: z.boolean().optional(),
   temElevador: z.boolean(),
   alturaElevador: z.string().optional(),
@@ -66,9 +70,12 @@ const especificacoesAmbienteSchema = z.object({
   if (data.temElevador && (!data.alturaElevador || !data.profundidadeElevador)) {
     return false;
   }
+  if (data.tubulacoesParede && !data.localTubulacao) {
+    return false;
+  }
   return true;
 }, {
-  message: 'Se tem elevador, informe altura e profundidade',
+  message: 'Preencha todos os campos obrigatórios',
 });
 
 // Schema completo do formulário de Briefing/Primeira Visita
@@ -122,6 +129,7 @@ export const tipoPuxadorOptions = [
   'Puxador Redondo',
   'Puxador Quadrado',
   'Sem Puxador (Push)',
+  'Outros',
 ];
 
 // Opções de tipos de corrediças
