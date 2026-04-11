@@ -562,7 +562,7 @@ export function ChecklistWizard() {
           <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
           <div>
             <h3 className="text-xl font-bold text-red-800 mb-2">
-              Erro ao Salvar
+              Erro ao Prosseguir
             </h3>
             <p className="text-red-700">{error}</p>
           </div>
@@ -605,32 +605,74 @@ export function ChecklistWizard() {
 
       {!showSuccessAlert && (
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {[1, 2, 3].map((step) => (
-              <div key={step} className="flex items-center flex-1">
+          {/* Container com linha de progresso */}
+          <div className="relative">
+            {/* Linha de fundo (cinza) */}
+            <div
+              className="absolute top-6 left-0 right-0 h-1 bg-primor-gray-medium"
+              style={{ left: "15%", right: "15%" }}
+            />
+
+            {/* Linha de progresso (laranja) */}
+            <div
+              className="absolute top-6 h-1 bg-primor-primary transition-all duration-300"
+              style={{
+                left: "15%",
+                width:
+                  currentStep === 1 ? "0%" : currentStep === 2 ? "35%" : "70%",
+              }}
+            />
+
+            {/* Bolinhas e Textos */}
+            <div className="relative flex justify-between items-start">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition ${
-                    currentStep >= step
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-300 text-gray-600"
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition z-10 ${
+                    currentStep >= 1
+                      ? "bg-primor-primary text-primor-text-dark"
+                      : "bg-primor-gray-medium text-primor-gray-dark"
                   }`}
                 >
-                  {step}
+                  1
                 </div>
-                {step < 3 && (
-                  <div
-                    className={`flex-1 h-2 mx-2 rounded transition ${
-                      currentStep > step ? "bg-blue-600" : "bg-gray-300"
-                    }`}
-                  />
-                )}
+                <span className="mt-3 text-sm font-medium text-primor-gray-dark text-center">
+                  Dados Básicos
+                </span>
               </div>
-            ))}
-          </div>
-          <div className="flex justify-between text-sm font-medium text-gray-600">
-            <span>Dados Básicos</span>
-            <span>Levantamento</span>
-            <span>Finalização</span>
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center flex-1">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition z-10 ${
+                    currentStep >= 2
+                      ? "bg-primor-primary text-primor-text-dark"
+                      : "bg-primor-gray-medium text-primor-gray-dark"
+                  }`}
+                >
+                  2
+                </div>
+                <span className="mt-3 text-sm font-medium text-primor-gray-dark text-center">
+                  Levantamento
+                </span>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex flex-col items-center flex-1">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition z-10 ${
+                    currentStep >= 3
+                      ? "bg-primor-primary text-primor-text-dark"
+                      : "bg-primor-gray-medium text-primor-gray-dark"
+                  }`}
+                >
+                  3
+                </div>
+                <span className="mt-3 text-sm font-medium text-primor-gray-dark text-center">
+                  Finalização
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -665,7 +707,7 @@ export function ChecklistWizard() {
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex items-center gap-2 px-8 h-14 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition text-lg"
+                className="flex items-center gap-2 px-8 h-14 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-lg"
               >
                 <ChevronLeft className="w-6 h-6" />
                 Voltar
@@ -682,7 +724,7 @@ export function ChecklistWizard() {
                   e.preventDefault();
                   handleNext();
                 }}
-                className="flex items-center gap-2 px-8 h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition text-lg ml-auto"
+                className="flex items-center gap-2 px-8 h-14 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition text-lg ml-auto"
               >
                 Avançar
                 <ChevronRight className="w-6 h-6" />
@@ -699,7 +741,7 @@ export function ChecklistWizard() {
                     loading,
                   });
                 }}
-                className="flex items-center gap-2 px-8 h-14 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-lg transition text-lg ml-auto"
+                className="flex items-center gap-2 px-8 h-14 bg-primor-secondary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition text-lg ml-auto shadow-md"
               >
                 {loading ? (
                   <>

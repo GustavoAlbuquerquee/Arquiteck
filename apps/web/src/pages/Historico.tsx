@@ -26,15 +26,15 @@ interface Checklist {
   id: string;
   tipo_etapa: string;
   payload: any;
-  created_at: string;
+  created_at: string | null;
 }
 
 interface Projeto {
   id: string;
   titulo_ambiente: string;
-  status: string;
-  data_prevista_instalacao: string;
-  created_at: string;
+  status: string | null;
+  data_prevista_instalacao: string | null;
+  created_at: string | null;
   clients: Cliente;
   checklists: Checklist[];
 }
@@ -115,7 +115,8 @@ export function Historico() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Data não informada";
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -123,18 +124,21 @@ export function Historico() {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
+    if (!status) return "bg-gray-100 text-gray-800 border-gray-300";
     const colors: Record<string, string> = {
-      orcamento: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      pre_producao: "bg-blue-100 text-blue-800 border-blue-300",
-      producao: "bg-purple-100 text-purple-800 border-purple-300",
-      instalacao: "bg-orange-100 text-orange-800 border-orange-300",
+      orcamento: "bg-amber-100 text-amber-800 border-amber-300",
+      pre_producao: "bg-orange-100 text-orange-800 border-orange-300",
+      producao:
+        "bg-primor-primary/20 text-primor-secondary border-primor-primary",
+      instalacao: "bg-yellow-100 text-yellow-800 border-yellow-300",
       concluido: "bg-green-100 text-green-800 border-green-300",
     };
     return colors[status] || "bg-gray-100 text-gray-800 border-gray-300";
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string | null) => {
+    if (!status) return "Sem Status";
     const labels: Record<string, string> = {
       orcamento: "Orçamento",
       pre_producao: "Pré-Produção",
@@ -150,8 +154,10 @@ export function Historico() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-xl text-gray-600">Carregando briefings...</p>
+          <Loader2 className="w-16 h-16 text-primor-primary animate-spin mx-auto mb-4" />
+          <p className="text-xl text-primor-gray-dark">
+            Carregando briefings...
+          </p>
         </div>
       </div>
     );
@@ -165,15 +171,15 @@ export function Historico() {
           <div className="bg-gray-100 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
             <FolderOpen className="w-16 h-16 text-gray-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
+          <h2 className="text-2xl font-bold text-primor-text-light mb-3">
             Nenhum briefing encontrado
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-primor-gray-dark mb-6">
             Que tal registrar sua primeira visita?
           </p>
           <button
             onClick={() => navigate("/nova-visita")}
-            className="flex items-center gap-2 px-8 h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition text-lg mx-auto"
+            className="flex items-center gap-2 px-8 h-14 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition text-lg mx-auto shadow-md"
           >
             <Plus className="w-6 h-6" />
             Criar Primeiro Briefing
@@ -188,10 +194,10 @@ export function Historico() {
       {/* Cabeçalho */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-primor-text-light">
             Histórico de Briefings
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-primor-gray-dark mt-2">
             {projetos.length}{" "}
             {projetos.length === 1
               ? "briefing encontrado"
@@ -200,7 +206,7 @@ export function Historico() {
         </div>
         <button
           onClick={() => navigate("/nova-visita")}
-          className="flex items-center gap-2 px-6 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+          className="flex items-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
         >
           <Plus className="w-5 h-5" />
           Novo Briefing
@@ -212,7 +218,7 @@ export function Historico() {
         {projetos.map((projeto) => (
           <div
             key={projeto.id}
-            className="bg-white rounded-xl shadow-md border-2 border-gray-200 hover:border-blue-300 transition-all p-6"
+            className="bg-primor-bg rounded-xl shadow-md border-2 border-primor-gray-medium hover:border-primor-primary transition-all p-6"
           >
             {/* Status Badge */}
             <div className="flex items-center justify-between mb-4">
@@ -223,7 +229,7 @@ export function Historico() {
               >
                 {getStatusLabel(projeto.status)}
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-primor-gray-dark">
                 {formatDate(projeto.created_at)}
               </span>
             </div>
@@ -231,30 +237,32 @@ export function Historico() {
             {/* Informações Principais */}
             <div className="space-y-3 mb-4">
               <div className="flex items-start gap-3">
-                <User className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <User className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Cliente</p>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-sm text-primor-gray-dark">Cliente</p>
+                  <p className="text-lg font-semibold text-primor-text-light">
                     {projeto.clients.nome}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Home className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <Home className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Ambiente</p>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-sm text-primor-gray-dark">Ambiente</p>
+                  <p className="text-lg font-semibold text-primor-text-light">
                     {projeto.titulo_ambiente}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <Calendar className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Data do Atendimento</p>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-sm text-primor-gray-dark">
+                    Data do Atendimento
+                  </p>
+                  <p className="text-lg font-semibold text-primor-text-light">
                     {formatDate(projeto.data_prevista_instalacao)}
                   </p>
                 </div>
@@ -262,10 +270,10 @@ export function Historico() {
 
               {projeto.checklists.length > 0 && (
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <FileText className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Checklists</p>
-                    <p className="text-lg font-semibold text-gray-800">
+                    <p className="text-sm text-primor-gray-dark">Checklists</p>
+                    <p className="text-lg font-semibold text-primor-text-light">
                       {projeto.checklists.length}{" "}
                       {projeto.checklists.length === 1
                         ? "checklist"
@@ -279,7 +287,7 @@ export function Historico() {
             {/* Botão Ver Detalhes */}
             <button
               onClick={() => handleVerDetalhes(projeto)}
-              className="w-full flex items-center justify-center gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+              className="w-full flex items-center justify-center gap-2 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
             >
               <Eye className="w-5 h-5" />
               Ver Detalhes
@@ -291,15 +299,15 @@ export function Historico() {
       {/* Modal de Detalhes */}
       {showModal && selectedProjeto && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-primor-bg rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header do Modal */}
-            <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">
+            <div className="sticky top-0 bg-primor-bg border-b-2 border-primor-gray-medium p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-primor-text-light">
                 Detalhes do Briefing
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                className="text-primor-gray-dark hover:text-primor-text-light text-2xl font-bold"
               >
                 ×
               </button>
@@ -309,10 +317,10 @@ export function Historico() {
             <div className="p-6 space-y-6">
               {/* Informações do Cliente */}
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                <h3 className="text-lg font-bold text-primor-text-light mb-3">
                   Cliente
                 </h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="bg-primor-bg-light rounded-lg p-4 space-y-2">
                   <p>
                     <strong>Nome:</strong> {selectedProjeto.clients.nome}
                   </p>
@@ -333,10 +341,10 @@ export function Historico() {
 
               {/* Informações do Projeto */}
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                <h3 className="text-lg font-bold text-primor-text-light mb-3">
                   Projeto
                 </h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="bg-primor-bg-light rounded-lg p-4 space-y-2">
                   <p>
                     <strong>Ambiente:</strong> {selectedProjeto.titulo_ambiente}
                   </p>
@@ -364,13 +372,13 @@ export function Historico() {
               {/* Checklists */}
               {selectedProjeto.checklists.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 mb-3">
+                  <h3 className="text-lg font-bold text-primor-text-light mb-3">
                     Checklists
                   </h3>
                   {selectedProjeto.checklists.map((checklist) => (
                     <div
                       key={checklist.id}
-                      className="bg-gray-50 rounded-lg p-4 mb-3"
+                      className="bg-primor-bg-light rounded-lg p-4 mb-3"
                     >
                       <p className="mb-2">
                         <strong>Tipo:</strong>{" "}
@@ -378,7 +386,7 @@ export function Historico() {
                           {checklist.tipo_etapa.replace("_", " ")}
                         </span>
                       </p>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className="text-sm text-primor-gray-dark mb-3">
                         Criado em: {formatDate(checklist.created_at)}
                       </p>
 
@@ -395,12 +403,12 @@ export function Historico() {
                                     (movel: any, idx: number) => (
                                       <div
                                         key={idx}
-                                        className="bg-white p-3 rounded border"
+                                        className="bg-primor-bg p-3 rounded border border-primor-gray-medium"
                                       >
-                                        <p className="font-medium">
+                                        <p className="font-medium text-primor-text-light">
                                           {movel.nome}
                                         </p>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-primor-gray-dark">
                                           {movel.largura}cm × {movel.altura}cm ×{" "}
                                           {movel.profundidade}cm
                                         </p>
@@ -547,25 +555,25 @@ export function Historico() {
             </div>
 
             {/* Footer do Modal com Ações */}
-            <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 p-6">
+            <div className="sticky bottom-0 bg-primor-bg border-t-2 border-primor-gray-medium p-6">
               <div className="flex gap-3">
                 <button
                   onClick={handleDownloadPDF}
-                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
                 >
                   <FileDown className="w-5 h-5" />
                   Baixar PDF
                 </button>
                 <button
                   onClick={handleEdit}
-                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg transition"
+                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-primor-secondary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
                 >
                   <Edit className="w-5 h-5" />
                   Editar
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-12 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
+                  className="flex-1 h-12 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition"
                 >
                   Fechar
                 </button>

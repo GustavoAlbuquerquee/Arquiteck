@@ -104,16 +104,16 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Levantamento Técnico</h2>
 
       {/* Móveis e Medidas Dinâmicas */}
-      <div className="bg-white border-2 border-blue-300 rounded-xl p-6 shadow-sm">
+      <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800">
+          <h3 className="flex items-center gap-2 text-xl font-bold text-primor-text-light">
             <Ruler className="w-6 h-6" />
             Móveis e Especificações
           </h3>
           <button
             type="button"
             onClick={handleAddMovel}
-            className="flex items-center gap-2 px-4 h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+            className="flex items-center gap-2 px-4 h-10 bg-primor-primary hover:brightness-110 text-primor-text-dark font-medium rounded-lg transition shadow-md"
           >
             <Plus className="w-5 h-5" />
             Adicionar Móvel
