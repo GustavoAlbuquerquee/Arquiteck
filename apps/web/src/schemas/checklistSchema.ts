@@ -167,6 +167,7 @@ export const tipoFitaLedOptions = [
 export const tipoPortaVidroOptions = [
   "Temperado Transparente",
   "Temperado Fumê",
-  "Serigrafado",
+  "Canelado",
   "Espelhado",
+  "Refletente",
 ];
