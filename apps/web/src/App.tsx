@@ -7,6 +7,7 @@ import { NovaVisita, Configuracoes } from '@/pages';
 import { Historico } from '@/pages/Historico';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
+import { InstallPWA } from '@/components/InstallPWA';
 
 function App() {
   return (
@@ -35,6 +36,9 @@ function App() {
           {/* Rota padrão - redireciona para login */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        
+        {/* Botão de Instalação PWA */}
+        <InstallPWA />
       </BrowserRouter>
     </AuthProvider>
   );
