@@ -24,11 +24,13 @@ ChecklistWizard.tsx (Principal)
 ## Etapas do Wizard
 
 ### Etapa 1: Dados Básicos
+
 - Nome do Cliente (input text)
 - Título do Ambiente (input text)
 - Data Prevista de Instalação (input date)
 
 **Validações:**
+
 - Nome do cliente: mínimo 3 caracteres
 - Título do ambiente: mínimo 3 caracteres
 - Data: campo obrigatório
@@ -38,22 +40,26 @@ ChecklistWizard.tsx (Principal)
 Dividido em 3 categorias:
 
 #### 📋 Pré-Produção
+
 - Projeto final aprovado
 - Medição final conferida
 - Interferências elétricas/hidráulicas verificadas
 - Cores de MDF e acabamentos confirmados
 
 #### 📦 Saída
+
 - Todas as peças conferidas com a lista
 - Sem riscos ou defeitos visuais
 - Ferragens separadas por ambiente
 
 #### 🔧 Instalação
+
 - Ambiente protegido (piso/paredes)
 - Nivelamento e prumo conferidos
 - Limpeza final realizada
 
 ### Etapa 3: Finalização e Assinatura
+
 - Observações e Ressalvas (textarea opcional)
 - Assinatura Digital (canvas obrigatório)
 - Termo de Aceite
@@ -61,18 +67,21 @@ Dividido em 3 categorias:
 ## UX/UI - Otimizações para Tablet
 
 ### Tamanhos de Elementos
+
 - **Inputs**: `h-14` (56px) - fácil de tocar
 - **Botões**: `h-12` ou `h-14` - área de toque confortável
 - **Checkboxes**: Ícones de `w-8 h-8` (32px) - visíveis e clicáveis
 - **Texto**: `text-lg` (18px) - legível em tablets
 
 ### Interações Touch-Friendly
+
 - Áreas de clique expandidas com padding generoso
 - Feedback visual ao hover/focus
 - Canvas de assinatura com `touch-none` para evitar scroll
 - Botões com espaçamento adequado
 
 ### Navegação
+
 - Indicador de progresso visual (1, 2, 3)
 - Botões "Voltar" e "Avançar" fixos no rodapé
 - Validação por etapa (não permite avançar com erros)
@@ -86,12 +95,12 @@ const checklistSchema = z.object({
   nomeCliente: z.string().min(3),
   tituloAmbiente: z.string().min(3),
   dataPrevistaInstalacao: z.string().min(1),
-  
+
   // Etapa 2
   preProducao: z.array(checklistItemSchema),
   saida: z.array(checklistItemSchema),
   instalacao: z.array(checklistItemSchema),
-  
+
   // Etapa 3
   observacoes: z.string().optional(),
   assinatura: z.string().min(1),
@@ -117,7 +126,7 @@ const checklistSchema = z.object({
   "dadosBasicos": {
     "nomeCliente": "João Silva",
     "tituloAmbiente": "Cozinha Planejada",
-    "dataPrevistaInstalacao": "2024-03-15"
+    "dataPrevistaInstalacao": "2026-03-15"
   },
   "checklist": {
     "preProducao": [
@@ -155,19 +164,15 @@ const onSubmit = async (data: ChecklistFormData) => {
     client_id: cliente.id,
     titulo_ambiente: data.tituloAmbiente,
     data_prevista_instalacao: data.dataPrevistaInstalacao,
-    status: 'pre_producao',
+    status: "pre_producao",
   });
 
   // 3. Salvar checklist
   const checklist = await checklistsService.create({
     project_id: projeto.id,
-    tipo_etapa: 'pre_producao', // ou determinar dinamicamente
+    tipo_etapa: "pre_producao", // ou determinar dinamicamente
     payload: {
-      items: [
-        ...data.preProducao,
-        ...data.saida,
-        ...data.instalacao,
-      ],
+      items: [...data.preProducao, ...data.saida, ...data.instalacao],
       observacoes: data.observacoes,
       assinatura_url: data.assinatura, // ou fazer upload para Storage
     },

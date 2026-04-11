@@ -37,7 +37,8 @@
 
 ### 2. Step1DadosBasicos.tsx
 
-**Mudança:** 
+**Mudança:**
+
 - "Data Prevista de Instalação" → "Data do Atendimento"
 - Título: "Dados Básicos da Vistoria" → "Dados Básicos do Atendimento"
 
@@ -48,23 +49,27 @@ Substituiu completamente o `Step2ChecklistOperacional.tsx`
 #### Seções Criadas:
 
 **📏 Dimensões Principais**
+
 - 3 inputs numéricos lado a lado
 - Largura, Altura, Profundidade (em cm)
 - Inputs grandes (h-14) para tablet
 - Validação obrigatória
 
 **⚡ Eletrodomésticos a Embutir**
+
 - Checkboxes visuais grandes (32px)
 - 8 opções: Geladeira, Forno Elétrico, Microondas, Cooktop, Coifa, Máquina de Lavar, Lava-Louças, Adega
 - Feedback visual ao selecionar
 - Grid responsivo (1 coluna mobile, 2 colunas tablet+)
 
 **🚨 Pontos Críticos**
+
 - Textarea grande (5 linhas)
 - Campo opcional
 - Para descrever posição de tomadas, água, gás
 
 **🎨 Preferência de Materiais**
+
 - Input text: Cor/Padrão do MDF
 - Select: Tipo de Puxador (6 opções)
 - Ambos obrigatórios
@@ -72,6 +77,7 @@ Substituiu completamente o `Step2ChecklistOperacional.tsx`
 ### 4. ChecklistWizard.tsx
 
 **Mudanças:**
+
 - Import do novo `Step2Levantamento`
 - Valores padrão atualizados
 - Validação da Etapa 2 ajustada
@@ -83,18 +89,21 @@ Substituiu completamente o `Step2ChecklistOperacional.tsx`
 ### 5. NovaVisita.tsx
 
 **Mudanças:**
+
 - Título: "Briefing - Primeira Visita"
 - Descrição atualizada para contexto de captação
 
 ### 6. Sidebar.tsx
 
 **Mudanças:**
+
 - "Nova Visita" → "Briefing/Visita"
 - "Checklists" → "Histórico"
 
 ## Fluxo de Uso
 
 ### Contexto Real:
+
 O marceneiro está na casa do cliente com um tablet. Ele precisa:
 
 1. **Etapa 1:** Registrar dados básicos do cliente e data do atendimento
@@ -112,7 +121,7 @@ O marceneiro está na casa do cliente com um tablet. Ele precisa:
   "dadosBasicos": {
     "nomeCliente": "Maria Silva",
     "tituloAmbiente": "Cozinha Planejada",
-    "dataAtendimento": "2024-01-15"
+    "dataAtendimento": "2026-01-15"
   },
   "levantamentoTecnico": {
     "dimensoes": {
@@ -120,12 +129,7 @@ O marceneiro está na casa do cliente com um tablet. Ele precisa:
       "altura": "280",
       "profundidade": "60"
     },
-    "eletrodomesticos": [
-      "Geladeira",
-      "Forno Elétrico",
-      "Cooktop",
-      "Coifa"
-    ],
+    "eletrodomesticos": ["Geladeira", "Forno Elétrico", "Cooktop", "Coifa"],
     "pontosCriticos": "Tomada atrás da geladeira, registro de gás na parede esquerda",
     "preferenciaMateriais": {
       "corPadraoMdf": "Branco Cristal",
@@ -155,7 +159,7 @@ const payload = {
 
 await checklistsService.create({
   project_id: projeto.id,
-  tipo_etapa: 'pre_producao', // Briefing é pré-produção
+  tipo_etapa: "pre_producao", // Briefing é pré-produção
   payload: payload,
 });
 ```
@@ -163,11 +167,13 @@ await checklistsService.create({
 ## Validações Implementadas
 
 ### Etapa 1 (obrigatórios):
+
 - ✅ Nome do cliente (min 3 caracteres)
 - ✅ Título do ambiente (min 3 caracteres)
 - ✅ Data do atendimento
 
 ### Etapa 2 (obrigatórios):
+
 - ✅ Largura
 - ✅ Altura
 - ✅ Profundidade
@@ -175,13 +181,16 @@ await checklistsService.create({
 - ✅ Tipo de Puxador
 
 ### Etapa 2 (opcionais):
+
 - Eletrodomésticos (pode não selecionar nenhum)
 - Pontos Críticos (textarea)
 
 ### Etapa 3 (obrigatórios):
+
 - ✅ Assinatura
 
 ### Etapa 3 (opcionais):
+
 - Observações
 
 ## UX/UI Mantida
