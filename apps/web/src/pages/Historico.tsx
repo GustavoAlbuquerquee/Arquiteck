@@ -96,7 +96,10 @@ export function Historico() {
   };
 
   const handleEdit = () => {
-    alert('✏️ Edição de Briefing estará disponível na próxima atualização');
+    if (selectedProjeto) {
+      navigate(`/nova-visita?edit=${selectedProjeto.id}`);
+      setShowModal(false);
+    }
   };
 
   const formatDate = (dateString: string) => {

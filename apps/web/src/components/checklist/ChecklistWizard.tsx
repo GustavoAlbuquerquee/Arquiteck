@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { checklistSchema, ChecklistFormData } from "@/schemas/checklistSchema";
@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   FileDown,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,14 +21,24 @@ import {
   uploadBase64Image,
   uploadMultipleBase64Images,
 } from "@/lib/supabase/storage";
+import { useSearchParams } from "react-router-dom";
 
 export function ChecklistWizard() {
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get("edit");
+  const isEditMode = !!projectId;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingData, setLoadingData] = useState(false);
   const [savedData, setSavedData] = useState<ChecklistFormData | null>(null);
+  const [existingClientId, setExistingClientId] = useState<string | null>(null);
+  const [existingChecklistId, setExistingChecklistId] = useState<string | null>(
+    null,
+  );
   const pdfRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -68,25 +79,99 @@ export function ChecklistWizard() {
   });
 
   const handleNext = async () => {
-    let fieldsToValidate: (keyof ChecklistFormData)[] = [];
-
     if (currentStep === 1) {
-      fieldsToValidate = [
+      const isValid = await trigger([
         "nomeCliente",
         "telefone",
         "endereco",
         "tituloAmbiente",
         "dataAtendimento",
         "horarioVisita",
-      ];
+      ]);
+
+      console.log("🔵 Validação Step 1:", { isValid, errors });
+
+      if (isValid) {
+        setCurrentStep(2);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } else if (currentStep === 2) {
-      fieldsToValidate = ["moveis"];
-    }
+      // Validar manualmente os móveis
+      const moveis = watch("moveis");
 
-    const isValid = await trigger(fieldsToValidate);
+      if (!moveis || moveis.length === 0) {
+        setError("Adicione pelo menos um móvel");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
 
-    if (isValid) {
-      setCurrentStep((prev) => Math.min(prev + 1, 3));
+      // Validar campos condicionais dos móveis
+      let hasError = false;
+      for (let i = 0; i < moveis.length; i++) {
+        const movel = moveis[i];
+
+        if (
+          movel.temPuxador &&
+          (!movel.tipoPuxador || !movel.detalhesPuxador)
+        ) {
+          setError(`Móvel ${i + 1}: Preencha o tipo e detalhes do puxador`);
+          hasError = true;
+          break;
+        }
+
+        if (
+          movel.temCorredicas &&
+          (!movel.tipoCorredica || !movel.finalidadeCorredica)
+        ) {
+          setError(`Móvel ${i + 1}: Preencha o tipo e finalidade da corrediça`);
+          hasError = true;
+          break;
+        }
+
+        if (movel.temBascula && !movel.tipoBascula) {
+          setError(`Móvel ${i + 1}: Selecione o tipo de báscula`);
+          hasError = true;
+          break;
+        }
+
+        if (movel.temPortaVidro && !movel.tipoPortaVidro) {
+          setError(`Móvel ${i + 1}: Selecione o tipo de porta de vidro`);
+          hasError = true;
+          break;
+        }
+
+        if (movel.temFitaLed && !movel.tipoFitaLed) {
+          setError(`Móvel ${i + 1}: Selecione o tipo de fita LED`);
+          hasError = true;
+          break;
+        }
+      }
+
+      if (hasError) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Validar especificações do ambiente
+      const specs = watch("especificacoesAmbiente");
+      if (
+        specs?.temElevador &&
+        (!specs.alturaElevador || !specs.profundidadeElevador)
+      ) {
+        setError("Preencha as dimensões do elevador");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      if (specs?.tubulacoesParede && !specs.localTubulacao) {
+        setError("Indique o local das tubulações");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Se passou em todas as validações, avançar
+      setError("");
+      setCurrentStep(3);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -96,7 +181,107 @@ export function ChecklistWizard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Buscar dados do projeto para edição
+  useEffect(() => {
+    if (isEditMode && projectId) {
+      loadProjectData(projectId);
+    }
+  }, [isEditMode, projectId]);
+
+  const loadProjectData = async (id: string) => {
+    try {
+      setLoadingData(true);
+      const { data, error } = await supabase
+        .from("projects")
+        .select(
+          `
+          *,
+          clients (*),
+          checklists (*)
+        `,
+        )
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error("Projeto não encontrado");
+
+      // Mapear dados para o formato do formulário
+      const checklist = data.checklists[0];
+      const payload = (checklist?.payload as any) || {};
+
+      // Mapear móveis com compatibilidade de campos antigos
+      const moveisFormatados = (payload.moveis || []).map((movel: any) => ({
+        nome: movel.nome || "",
+        largura: movel.largura || "",
+        altura: movel.altura || "",
+        profundidade: movel.profundidade || "",
+        corMdfInterna: movel.corMdfInterna || "",
+        corMdfExterna: movel.corMdfExterna || "",
+        observacoesMovel: movel.observacoesMovel || "",
+        temPuxador: movel.temPuxador || false,
+        tipoPuxador: movel.tipoPuxador || "",
+        detalhesPuxador: movel.detalhesPuxador || movel.corPuxador || "", // Compatibilidade com campo antigo
+        temCorredicas: movel.temCorredicas || false,
+        tipoCorredica: movel.tipoCorredica || "",
+        finalidadeCorredica: movel.finalidadeCorredica || "", // Novo campo
+        temBascula: movel.temBascula || false,
+        tipoBascula: movel.tipoBascula || undefined,
+        temPortaVidro: movel.temPortaVidro || false,
+        tipoPortaVidro: movel.tipoPortaVidro || "",
+        temFitaLed: movel.temFitaLed || false,
+        tipoFitaLed: movel.tipoFitaLed || "",
+      }));
+
+      // Mapear especificações do ambiente com compatibilidade
+      const especificacoesFormatadas = {
+        rodape: payload.especificacoesAmbiente?.rodape || "",
+        alturaRodape: payload.especificacoesAmbiente?.alturaRodape || "",
+        profundidadeRodape:
+          payload.especificacoesAmbiente?.profundidadeRodape || "",
+        tipoParede: payload.especificacoesAmbiente?.tipoParede || "",
+        tubulacoesParede:
+          payload.especificacoesAmbiente?.tubulacoesParede || false,
+        localTubulacao: payload.especificacoesAmbiente?.localTubulacao || "",
+        temEstacionamento:
+          payload.especificacoesAmbiente?.temEstacionamento || false,
+        temElevador: payload.especificacoesAmbiente?.temElevador || false,
+        alturaElevador: payload.especificacoesAmbiente?.alturaElevador || "",
+        profundidadeElevador:
+          payload.especificacoesAmbiente?.profundidadeElevador || "",
+      };
+
+      const formData: ChecklistFormData = {
+        nomeCliente: data.clients.nome,
+        telefone: data.clients.telefone || "",
+        endereco: data.clients.endereco || "",
+        tituloAmbiente: data.titulo_ambiente || "",
+        dataAtendimento: data.data_prevista_instalacao || "",
+        horarioVisita: payload.horarioVisita || "",
+        moveis: moveisFormatados,
+        eletrodomesticos: payload.eletrodomesticos || [],
+        especificacoesAmbiente: especificacoesFormatadas,
+        pontosCriticos: payload.pontosCriticos || "",
+        fotosAmbiente: payload.fotosAmbiente || [],
+        observacoes: payload.observacoes || "",
+        assinatura: payload.assinatura_url || "",
+      };
+
+      console.log("🟢 Dados carregados e formatados:", formData);
+
+      setExistingClientId(data.clients.id);
+      setExistingChecklistId(checklist?.id || null);
+      reset(formData);
+    } catch (err: any) {
+      console.error("Erro ao carregar dados:", err);
+      setError(err.message || "Erro ao carregar dados do briefing");
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   const onSubmit = async (data: ChecklistFormData) => {
+    console.log("🔵 onSubmit chamado", { isEditMode, projectId, data });
     setLoading(true);
     setError("");
 
@@ -109,108 +294,206 @@ export function ChecklistWizard() {
         );
       }
 
-      // 1. Upload da assinatura
-      setLoadingMessage("A enviar assinatura...");
-      let assinaturaUrl = "";
-      if (data.assinatura) {
-        const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
-        const uploadedUrl = await uploadBase64Image(
-          data.assinatura,
-          assinaturaPath,
-        );
-        if (!uploadedUrl) {
-          throw new Error("Erro ao fazer upload da assinatura");
+      if (isEditMode && projectId) {
+        // MODO DE EDIÇÃO (UPDATE)
+        setLoadingMessage("A processar imagens...");
+
+        // Processar assinatura (nova ou existente)
+        let assinaturaUrl = data.assinatura;
+        if (data.assinatura && data.assinatura.startsWith("data:")) {
+          const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
+          const uploadedUrl = await uploadBase64Image(
+            data.assinatura,
+            assinaturaPath,
+          );
+          if (uploadedUrl) assinaturaUrl = uploadedUrl;
         }
-        assinaturaUrl = uploadedUrl;
-      }
 
-      // 2. Upload das fotos do ambiente
-      setLoadingMessage("A enviar fotos...");
-      let fotosUrls: string[] = [];
-      if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
-        const fotosPathPrefix = `${tenant_id}/fotos`;
-        fotosUrls = await uploadMultipleBase64Images(
-          data.fotosAmbiente,
-          fotosPathPrefix,
-        );
-        if (fotosUrls.length !== data.fotosAmbiente.length) {
-          console.warn("Algumas fotos falharam no upload");
+        // Processar fotos (novas ou existentes)
+        setLoadingMessage("A enviar fotos...");
+        const fotosUrls: string[] = [];
+        if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
+          for (let i = 0; i < data.fotosAmbiente.length; i++) {
+            const foto = data.fotosAmbiente[i];
+            if (foto.startsWith("data:")) {
+              // Nova foto Base64 - fazer upload
+              const fotoPath = `${tenant_id}/fotos/foto-${Date.now()}-${i}.jpg`;
+              const uploadedUrl = await uploadBase64Image(foto, fotoPath);
+              if (uploadedUrl) fotosUrls.push(uploadedUrl);
+            } else {
+              // Foto já existente (URL) - manter
+              fotosUrls.push(foto);
+            }
+          }
         }
-      }
 
-      // 3. Criar cliente com telefone e endereço
-      setLoadingMessage("A guardar dados do cliente...");
-      const { data: cliente, error: clientError } = await supabase
-        .from("clients")
-        .insert({
-          tenant_id: tenant_id,
-          nome: data.nomeCliente,
-          telefone: data.telefone,
-          endereco: data.endereco,
-        })
-        .select()
-        .single();
+        // Atualizar cliente
+        if (existingClientId) {
+          setLoadingMessage("A atualizar dados do cliente...");
+          const { error: clientError } = await supabase
+            .from("clients")
+            .update({
+              nome: data.nomeCliente,
+              telefone: data.telefone,
+              endereco: data.endereco,
+            })
+            .eq("id", existingClientId);
 
-      if (clientError) throw clientError;
-      if (!cliente) throw new Error("Erro ao criar cliente");
+          if (clientError) throw clientError;
+        }
 
-      // 4. Criar projeto
-      setLoadingMessage("A criar projeto...");
-      const { data: projeto, error: projectError } = await supabase
-        .from("projects")
-        .insert({
-          tenant_id: tenant_id,
-          client_id: cliente.id,
-          titulo_ambiente: data.tituloAmbiente,
-          data_prevista_instalacao: data.dataAtendimento,
-          status: "orcamento",
-        })
-        .select()
-        .single();
+        // Atualizar projeto
+        if (projectId) {
+          setLoadingMessage("A atualizar projeto...");
+          const { error: projectError } = await supabase
+            .from("projects")
+            .update({
+              titulo_ambiente: data.tituloAmbiente,
+              data_prevista_instalacao: data.dataAtendimento,
+            })
+            .eq("id", projectId);
 
-      if (projectError) throw projectError;
-      if (!projeto) throw new Error("Erro ao criar projeto");
+          if (projectError) throw projectError;
+        }
 
-      // 5. Criar checklist com URLs ao invés de Base64
-      setLoadingMessage("A finalizar...");
-      const payload = {
-        horarioVisita: data.horarioVisita,
-        moveis: data.moveis,
-        eletrodomesticos: data.eletrodomesticos,
-        especificacoesAmbiente: data.especificacoesAmbiente,
-        pontosCriticos: data.pontosCriticos,
-        fotosAmbiente: fotosUrls,
-        observacoes: data.observacoes,
-        assinatura_url: assinaturaUrl,
-      };
+        // Atualizar checklist
+        if (existingChecklistId) {
+          setLoadingMessage("A finalizar...");
+          const payload = {
+            horarioVisita: data.horarioVisita,
+            moveis: data.moveis,
+            eletrodomesticos: data.eletrodomesticos,
+            especificacoesAmbiente: data.especificacoesAmbiente,
+            pontosCriticos: data.pontosCriticos,
+            fotosAmbiente: fotosUrls,
+            observacoes: data.observacoes,
+            assinatura_url: assinaturaUrl,
+          };
 
-      const { error: checklistError } = await supabase
-        .from("checklists")
-        .insert({
-          tenant_id: tenant_id,
-          project_id: projeto.id,
-          tipo_etapa: "pre_producao",
-          payload: payload,
+          const { error: checklistError } = await supabase
+            .from("checklists")
+            .update({ payload })
+            .eq("id", existingChecklistId);
+
+          if (checklistError) throw checklistError;
+        }
+
+        console.log("✅ Briefing atualizado com sucesso!");
+
+        const dataComUrls = {
+          ...data,
+          fotosAmbiente: fotosUrls,
+          assinatura: assinaturaUrl,
+        };
+
+        setSavedData(dataComUrls);
+        setShowSuccessAlert(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        // MODO DE CRIAÇÃO (INSERT)
+        // 1. Upload da assinatura
+        setLoadingMessage("A enviar assinatura...");
+        let assinaturaUrl = "";
+        if (data.assinatura) {
+          const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
+          const uploadedUrl = await uploadBase64Image(
+            data.assinatura,
+            assinaturaPath,
+          );
+          if (!uploadedUrl) {
+            throw new Error("Erro ao fazer upload da assinatura");
+          }
+          assinaturaUrl = uploadedUrl;
+        }
+
+        // 2. Upload das fotos do ambiente
+        setLoadingMessage("A enviar fotos...");
+        let fotosUrls: string[] = [];
+        if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
+          const fotosPathPrefix = `${tenant_id}/fotos`;
+          fotosUrls = await uploadMultipleBase64Images(
+            data.fotosAmbiente,
+            fotosPathPrefix,
+          );
+          if (fotosUrls.length !== data.fotosAmbiente.length) {
+            console.warn("Algumas fotos falharam no upload");
+          }
+        }
+
+        // 3. Criar cliente com telefone e endereço
+        setLoadingMessage("A guardar dados do cliente...");
+        const { data: cliente, error: clientError } = await supabase
+          .from("clients")
+          .insert({
+            tenant_id: tenant_id,
+            nome: data.nomeCliente,
+            telefone: data.telefone,
+            endereco: data.endereco,
+          })
+          .select()
+          .single();
+
+        if (clientError) throw clientError;
+        if (!cliente) throw new Error("Erro ao criar cliente");
+
+        // 4. Criar projeto
+        setLoadingMessage("A criar projeto...");
+        const { data: projeto, error: projectError } = await supabase
+          .from("projects")
+          .insert({
+            tenant_id: tenant_id,
+            client_id: cliente.id,
+            titulo_ambiente: data.tituloAmbiente,
+            data_prevista_instalacao: data.dataAtendimento,
+            status: "orcamento",
+          })
+          .select()
+          .single();
+
+        if (projectError) throw projectError;
+        if (!projeto) throw new Error("Erro ao criar projeto");
+
+        // 5. Criar checklist com URLs ao invés de Base64
+        setLoadingMessage("A finalizar...");
+        const payload = {
+          horarioVisita: data.horarioVisita,
+          moveis: data.moveis,
+          eletrodomesticos: data.eletrodomesticos,
+          especificacoesAmbiente: data.especificacoesAmbiente,
+          pontosCriticos: data.pontosCriticos,
+          fotosAmbiente: fotosUrls,
+          observacoes: data.observacoes,
+          assinatura_url: assinaturaUrl,
+        };
+
+        const { error: checklistError } = await supabase
+          .from("checklists")
+          .insert({
+            tenant_id: tenant_id,
+            project_id: projeto.id,
+            tipo_etapa: "pre_producao",
+            payload: payload,
+          });
+
+        if (checklistError) throw checklistError;
+
+        console.log("🎉 Briefing salvo com sucesso!", {
+          cliente,
+          projeto,
+          payload,
         });
 
-      if (checklistError) throw checklistError;
+        // Atualizar savedData com URLs para o PDF
+        const dataComUrls = {
+          ...data,
+          fotosAmbiente: fotosUrls,
+          assinatura: assinaturaUrl,
+        };
 
-      console.log("🎉 Briefing salvo com sucesso!", {
-        cliente,
-        projeto,
-        payload,
-      });
-
-      // Atualizar savedData com URLs para o PDF
-      const dataComUrls = {
-        ...data,
-        fotosAmbiente: fotosUrls,
-        assinatura: assinaturaUrl,
-      };
-
-      setSavedData(dataComUrls);
-      setShowSuccessAlert(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+        setSavedData(dataComUrls);
+        setShowSuccessAlert(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (err: any) {
       console.error("Erro ao salvar briefing:", err);
       setError(err.message || "Erro ao salvar briefing. Tente novamente.");
@@ -259,6 +542,21 @@ export function ChecklistWizard() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Loading State - Carregando Dados */}
+      {loadingData && (
+        <div className="mb-6 bg-blue-100 border-2 border-blue-500 rounded-lg p-6 flex items-start gap-4 animate-fade-in">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin flex-shrink-0" />
+          <div>
+            <h3 className="text-xl font-bold text-blue-800 mb-2">
+              Carregando dados do briefing...
+            </h3>
+            <p className="text-blue-700">
+              Aguarde enquanto buscamos as informações.
+            </p>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="mb-6 bg-red-100 border-2 border-red-500 rounded-lg p-6 flex items-start gap-4 animate-fade-in">
           <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
@@ -277,10 +575,13 @@ export function ChecklistWizard() {
             <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
             <div>
               <h3 className="text-xl font-bold text-green-800 mb-2">
-                Briefing Salvo com Sucesso!
+                {isEditMode
+                  ? "Briefing Atualizado com Sucesso!"
+                  : "Briefing Salvo com Sucesso!"}
               </h3>
               <p className="text-green-700">
-                Os dados foram registrados no sistema.
+                Os dados foram {isEditMode ? "atualizados" : "registrados"} no
+                sistema.
               </p>
             </div>
           </div>
@@ -334,7 +635,7 @@ export function ChecklistWizard() {
         </div>
       )}
 
-      {!showSuccessAlert && (
+      {!showSuccessAlert && !loadingData && (
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white rounded-xl shadow-lg p-8"
@@ -375,8 +676,12 @@ export function ChecklistWizard() {
 
             {currentStep < 3 ? (
               <button
+                key="btn-avancar"
                 type="button"
-                onClick={handleNext}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNext();
+                }}
                 className="flex items-center gap-2 px-8 h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition text-lg ml-auto"
               >
                 Avançar
@@ -384,19 +689,28 @@ export function ChecklistWizard() {
               </button>
             ) : (
               <button
+                key="btn-salvar"
                 type="submit"
                 disabled={loading}
+                onClick={() => {
+                  console.log("🔴 Botão clicado", {
+                    errors,
+                    isEditMode,
+                    loading,
+                  });
+                }}
                 className="flex items-center gap-2 px-8 h-14 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-lg transition text-lg ml-auto"
               >
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {loadingMessage || "Salvando..."}
+                    {loadingMessage ||
+                      (isEditMode ? "Atualizando..." : "Salvando...")}
                   </>
                 ) : (
                   <>
                     <Save className="w-6 h-6" />
-                    Salvar Briefing
+                    {isEditMode ? "Salvar Alterações" : "Salvar Briefing"}
                   </>
                 )}
               </button>
@@ -479,7 +793,10 @@ export function ChecklistWizard() {
                       </p>
                     )}
                     {movel.temCorredicas && (
-                      <p>Corrediça: {movel.tipoCorredica} ({movel.finalidadeCorredica})</p>
+                      <p>
+                        Corrediça: {movel.tipoCorredica} (
+                        {movel.finalidadeCorredica})
+                      </p>
                     )}
                     {movel.temBascula && <p>Báscula: {movel.tipoBascula}</p>}
                     {movel.temPortaVidro && (
@@ -503,9 +820,18 @@ export function ChecklistWizard() {
                   {savedData.especificacoesAmbiente.rodape && (
                     <>
                       <p>Rodapé: {savedData.especificacoesAmbiente.rodape}</p>
-                      {savedData.especificacoesAmbiente.alturaRodape && savedData.especificacoesAmbiente.profundidadeRodape && (
-                        <p>Dimensões: {savedData.especificacoesAmbiente.alturaRodape}mm × {savedData.especificacoesAmbiente.profundidadeRodape}mm</p>
-                      )}
+                      {savedData.especificacoesAmbiente.alturaRodape &&
+                        savedData.especificacoesAmbiente.profundidadeRodape && (
+                          <p>
+                            Dimensões:{" "}
+                            {savedData.especificacoesAmbiente.alturaRodape}mm ×{" "}
+                            {
+                              savedData.especificacoesAmbiente
+                                .profundidadeRodape
+                            }
+                            mm
+                          </p>
+                        )}
                     </>
                   )}
                   {savedData.especificacoesAmbiente.tipoParede && (
@@ -516,7 +842,8 @@ export function ChecklistWizard() {
                   )}
                   {savedData.especificacoesAmbiente.tubulacoesParede && (
                     <p>
-                      Tubulações: Sim - {savedData.especificacoesAmbiente.localTubulacao}
+                      Tubulações: Sim -{" "}
+                      {savedData.especificacoesAmbiente.localTubulacao}
                     </p>
                   )}
                   <p>

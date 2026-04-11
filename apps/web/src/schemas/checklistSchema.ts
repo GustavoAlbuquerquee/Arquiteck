@@ -153,7 +153,7 @@ export const tipoPuxadorOptions = [
 ];
 
 // Opções de tipos de corrediças
-export const tipoCorredicas = ["Telescópica", "Comum", "Soft Close"];
+export const tipoCorredicas = ["Telescópica", "Comum", "Soft Close", "Quadro"];
 
 // Opções de tipos de fita LED
 export const tipoFitaLedOptions = [
