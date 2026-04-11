@@ -452,6 +452,18 @@ export function Historico() {
                             </div>
                           )}
 
+                          {/* Pontos Críticos */}
+                          {checklist.payload.pontosCriticos && (
+                            <div>
+                              <p className="font-semibold mb-2 text-red-600">
+                                Pontos Críticos / Atenção:
+                              </p>
+                              <p className="text-sm whitespace-pre-wrap bg-red-50 p-3 rounded border border-red-200 text-red-800">
+                                {checklist.payload.pontosCriticos}
+                              </p>
+                            </div>
+                          )}
+
                           {/* Observações */}
                           {checklist.payload.observacoes && (
                             <div>
@@ -795,6 +807,17 @@ export function Historico() {
                     </div>
                   </div>
                 )}
+
+              {selectedProjeto.checklists[0]?.payload?.pontosCriticos && (
+                <div style={{ pageBreakInside: "avoid" }}>
+                  <h2 className="text-xl font-bold text-red-600 mb-3">
+                    Pontos Críticos / Atenção
+                  </h2>
+                  <p className="whitespace-pre-wrap text-red-800 bg-red-50 p-4 rounded border border-red-200">
+                    {selectedProjeto.checklists[0].payload.pontosCriticos}
+                  </p>
+                </div>
+              )}
 
               {selectedProjeto.checklists[0]?.payload?.observacoes && (
                 <div style={{ pageBreakInside: "avoid" }}>
