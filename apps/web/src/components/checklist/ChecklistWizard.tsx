@@ -672,7 +672,7 @@ export function ChecklistWizard() {
           className="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8"
         >
           {currentStep === 1 && (
-            <Step1DadosBasicos register={register} errors={errors} />
+            <Step1DadosBasicos register={register} errors={errors} control={control} />
           )}
           {currentStep === 2 && (
             <Step2Levantamento

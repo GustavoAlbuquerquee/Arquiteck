@@ -1,13 +1,15 @@
-import { UseFormRegister, FieldErrors } from 'react-hook-form';
+import { UseFormRegister, FieldErrors, Controller, Control } from 'react-hook-form';
 import { ChecklistFormData } from '@/schemas/checklistSchema';
 import { Calendar, User, Home, Phone, MapPin, Clock } from 'lucide-react';
+import InputMask from 'react-input-mask';
 
 interface Step1Props {
   register: UseFormRegister<ChecklistFormData>;
   errors: FieldErrors<ChecklistFormData>;
+  control: Control<ChecklistFormData>;
 }
 
-export function Step1DadosBasicos({ register, errors }: Step1Props) {
+export function Step1DadosBasicos({ register, errors, control }: Step1Props) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Dados Básicos do Atendimento</h2>
@@ -35,11 +37,26 @@ export function Step1DadosBasicos({ register, errors }: Step1Props) {
           <Phone className="w-6 h-6" />
           Telefone
         </label>
-        <input
-          type="tel"
-          {...register('telefone')}
-          className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-          placeholder="(11) 98765-4321"
+        <Controller
+          name="telefone"
+          control={control}
+          render={({ field }) => (
+            <InputMask
+              mask="(99) 99999-9999"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            >
+              {(inputProps: any) => (
+                <input
+                  {...inputProps}
+                  type="tel"
+                  className="w-full h-14 px-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                  placeholder="(11) 98765-4321"
+                />
+              )}
+            </InputMask>
+          )}
         />
         {errors.telefone && (
           <p className="text-red-500 text-sm mt-2">{errors.telefone.message}</p>
