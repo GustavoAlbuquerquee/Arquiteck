@@ -100,7 +100,7 @@ export function Step1DadosBasicos({ register, errors, control }: Step1Props) {
       {/* Data e Horário - Grid Responsivo */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full">
         {/* Data do Atendimento */}
-        <div className="w-full">
+        <div className="w-full box-border overflow-hidden">
           <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
             <Calendar className="w-5 h-5 md:w-6 md:h-6" />
             Data do Atendimento
@@ -108,7 +108,7 @@ export function Step1DadosBasicos({ register, errors, control }: Step1Props) {
           <input
             type="date"
             {...register('dataAtendimento')}
-            className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+            className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition box-border"
           />
           {errors.dataAtendimento && (
             <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.dataAtendimento.message}</p>
@@ -116,7 +116,7 @@ export function Step1DadosBasicos({ register, errors, control }: Step1Props) {
         </div>
 
         {/* Horário da Visita */}
-        <div className="w-full">
+        <div className="w-full box-border overflow-hidden">
           <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
             <Clock className="w-5 h-5 md:w-6 md:h-6" />
             Horário da Visita
@@ -124,7 +124,7 @@ export function Step1DadosBasicos({ register, errors, control }: Step1Props) {
           <input
             type="time"
             {...register('horarioVisita')}
-            className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+            className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition box-border"
           />
           {errors.horarioVisita && (
             <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.horarioVisita.message}</p>

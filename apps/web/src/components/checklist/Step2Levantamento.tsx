@@ -1,7 +1,32 @@
-import { UseFormRegister, UseFormWatch, FieldErrors, Control, useFieldArray, UseFormSetValue } from 'react-hook-form';
-import { ChecklistFormData, eletrodomesticosOptions, tipoPuxadorOptions, tipoCorredicas, tipoFitaLedOptions, tipoPortaVidroOptions } from '@/schemas/checklistSchema';
-import { Ruler, Zap, AlertCircle, Plus, Trash2, Camera, CheckCircle2, Circle, Building2, Package } from 'lucide-react';
-import { useState } from 'react';
+import {
+  UseFormRegister,
+  UseFormWatch,
+  FieldErrors,
+  Control,
+  useFieldArray,
+  UseFormSetValue,
+} from "react-hook-form";
+import {
+  ChecklistFormData,
+  eletrodomesticosOptions,
+  tipoPuxadorOptions,
+  tipoCorredicas,
+  tipoFitaLedOptions,
+  tipoPortaVidroOptions,
+} from "@/schemas/checklistSchema";
+import {
+  Ruler,
+  Zap,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Camera,
+  CheckCircle2,
+  Circle,
+  Building2,
+  Package,
+} from "lucide-react";
+import { useState } from "react";
 
 interface Step2Props {
   register: UseFormRegister<ChecklistFormData>;
@@ -11,56 +36,75 @@ interface Step2Props {
   setValue: UseFormSetValue<ChecklistFormData>;
 }
 
-export function Step2Levantamento({ register, watch, errors, control, setValue }: Step2Props) {
+export function Step2Levantamento({
+  register,
+  watch,
+  errors,
+  control,
+  setValue,
+}: Step2Props) {
   const [fotosPreview, setFotosPreview] = useState<string[]>([]);
 
   // useFieldArray para móveis dinâmicos
-  const { fields: moveisFields, append: appendMovel, remove: removeMovel } = useFieldArray({
+  const {
+    fields: moveisFields,
+    append: appendMovel,
+    remove: removeMovel,
+  } = useFieldArray({
     control,
-    name: 'moveis',
+    name: "moveis",
   });
 
   // useFieldArray para eletrodomésticos
-  const { fields: eletroFields, append: appendEletro, remove: removeEletro } = useFieldArray({
+  const {
+    fields: eletroFields,
+    append: appendEletro,
+    remove: removeEletro,
+  } = useFieldArray({
     control,
-    name: 'eletrodomesticos',
+    name: "eletrodomesticos",
   });
 
-  const eletrodomesticosSelecionados = watch('eletrodomesticos') || [];
-  const especificacoes = watch('especificacoesAmbiente');
-  const fotosAmbiente = watch('fotosAmbiente') || [];
+  const watchedMoveis = watch("moveis") || [];
+  const eletrodomesticosSelecionados = watch("eletrodomesticos") || [];
+  const especificacoes = watch("especificacoesAmbiente");
+  const fotosAmbiente = watch("fotosAmbiente") || [];
 
   const handleAddMovel = () => {
     appendMovel({
-      nome: '',
-      largura: '',
-      altura: '',
-      profundidade: '',
-      corMdfInterna: '',
-      corMdfExterna: '',
-      observacoesMovel: '',
+      nome: "",
+      largura: "",
+      altura: "",
+      profundidade: "",
+      corMdfInterna: "",
+      corMdfExterna: "",
+      observacoesMovel: "",
       temPuxador: false,
-      tipoPuxador: '',
-      detalhesPuxador: '',
+      tipoPuxador: "",
+      detalhesPuxador: "",
       temCorredicas: false,
-      tipoCorredica: '',
-      finalidadeCorredica: '',
+      tipoCorredica: "",
+      finalidadeCorredica: "",
       temBascula: false,
-      tipoBascula: '',
+      tipoBascula: "",
       temPortaVidro: false,
-      tipoPortaVidro: '',
+      tipoPortaVidro: "",
       temFitaLed: false,
-      tipoFitaLed: '',
+      tipoFitaLed: "",
     });
   };
 
   const toggleEletrodomestico = (nomeEletro: string) => {
-    const existe = eletrodomesticosSelecionados.find((e) => e.nome === nomeEletro);
+    const existe = eletrodomesticosSelecionados.find(
+      (e) => e.nome === nomeEletro,
+    );
     if (existe) {
-      const index = eletrodomesticosSelecionados.findIndex((e) => e.nome === nomeEletro);
+      const index = eletrodomesticosSelecionados.findIndex(
+        (e) => e.nome === nomeEletro,
+      );
       removeEletro(index);
     } else {
-      appendEletro({ nome: nomeEletro, modelo: '' });
+      appendEletro({ nome: nomeEletro, modelo: "" });
     }
   };
 
@@ -88,20 +132,26 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
     // Concatenar com fotos existentes
     const novasFotos = [...fotosAmbiente, ...fotosBase64];
-    setValue('fotosAmbiente', novasFotos);
+    setValue("fotosAmbiente", novasFotos);
     setFotosPreview([...fotosPreview, ...previews]);
   };
 
   const handleRemoveFoto = (indexToRemove: number) => {
-    const novasFotos = fotosAmbiente.filter((_, index) => index !== indexToRemove);
-    const novosPreviews = fotosPreview.filter((_, index) => index !== indexToRemove);
-    setValue('fotosAmbiente', novasFotos);
+    const novasFotos = fotosAmbiente.filter(
+      (_, index) => index !== indexToRemove,
+    );
+    const novosPreviews = fotosPreview.filter(
+      (_, index) => index !== indexToRemove,
+    );
+    setValue("fotosAmbiente", novasFotos);
     setFotosPreview(novosPreviews);
   };
 
   return (
     <div className="space-y-6 md:space-y-8 w-full overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Levantamento Técnico</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">
+        Levantamento Técnico
+      </h2>
 
       {/* Móveis e Medidas Dinâmicas */}
       <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-4 md:p-6 shadow-sm w-full">
@@ -121,17 +171,24 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
         </div>
 
         {moveisFields.length === 0 && (
-          <p className="text-gray-500 text-center py-4">Nenhum móvel adicionado. Clique em "Adicionar Móvel"</p>
+          <p className="text-gray-500 text-center py-4">
+            Nenhum móvel adicionado. Clique em "Adicionar Móvel"
+          </p>
         )}
 
         <div className="space-y-6">
           {moveisFields.map((field, index) => {
-            const movel = watch(`moveis.${index}`);
-            
+            const movel = watchedMoveis[index] || field;
+
             return (
-              <div key={field.id} className="border-2 border-gray-300 rounded-xl p-6 bg-gray-50">
+              <div
+                key={field.id}
+                className="border-2 border-gray-300 rounded-xl p-6 bg-gray-50"
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-bold text-gray-700">Móvel {index + 1}</h4>
+                  <h4 className="text-lg font-bold text-gray-700">
+                    Móvel {index + 1}
+                  </h4>
                   <button
                     type="button"
                     onClick={() => removeMovel(index)}
@@ -154,7 +211,9 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       placeholder="Ex: Armário Aéreo, Balcão"
                     />
                     {errors.moveis?.[index]?.nome && (
-                      <p className="text-red-500 text-xs mt-1">{errors.moveis[index]?.nome?.message}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.moveis[index]?.nome?.message}
+                      </p>
                     )}
                   </div>
 
@@ -227,14 +286,15 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                     <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
                       <input
                         type="checkbox"
-                        {...register(`moveis.${index}.temPuxador`)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          if (!checked) {
-                            setValue(`moveis.${index}.tipoPuxador`, "");
-                            setValue(`moveis.${index}.detalhesPuxador`, "");
-                          }
-                        }}
+                        {...register(`moveis.${index}.temPuxador`, {
+                          onChange: (e) => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              setValue(`moveis.${index}.tipoPuxador`, "");
+                              setValue(`moveis.${index}.detalhesPuxador`, "");
+                            }
+                          },
+                        })}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Puxador?</span>
@@ -244,30 +304,37 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                     <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
                       <input
                         type="checkbox"
-                        {...register(`moveis.${index}.temCorredicas`)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          if (!checked) {
-                            setValue(`moveis.${index}.tipoCorredica`, "");
-                            setValue(`moveis.${index}.finalidadeCorredica`, "");
-                          }
-                        }}
+                        {...register(`moveis.${index}.temCorredicas`, {
+                          onChange: (e) => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              setValue(`moveis.${index}.tipoCorredica`, "");
+                              setValue(
+                                `moveis.${index}.finalidadeCorredica`,
+                                "",
+                              );
+                            }
+                          },
+                        })}
                         className="w-5 h-5"
                       />
-                      <span className="text-sm font-medium">Tem Corrediças?</span>
+                      <span className="text-sm font-medium">
+                        Tem Corrediças?
+                      </span>
                     </label>
 
                     {/* Tem Báscula */}
                     <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
                       <input
                         type="checkbox"
-                        {...register(`moveis.${index}.temBascula`)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          if (!checked) {
-                            setValue(`moveis.${index}.tipoBascula`, "");
-                          }
-                        }}
+                        {...register(`moveis.${index}.temBascula`, {
+                          onChange: (e) => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              setValue(`moveis.${index}.tipoBascula`, "");
+                            }
+                          },
+                        })}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Báscula?</span>
@@ -277,29 +344,33 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                     <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
                       <input
                         type="checkbox"
-                        {...register(`moveis.${index}.temPortaVidro`)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          if (!checked) {
-                            setValue(`moveis.${index}.tipoPortaVidro`, "");
-                          }
-                        }}
+                        {...register(`moveis.${index}.temPortaVidro`, {
+                          onChange: (e) => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              setValue(`moveis.${index}.tipoPortaVidro`, "");
+                            }
+                          },
+                        })}
                         className="w-5 h-5"
                       />
-                      <span className="text-sm font-medium">Tem Porta Vidro?</span>
+                      <span className="text-sm font-medium">
+                        Tem Porta Vidro?
+                      </span>
                     </label>
 
                     {/* Tem Fita LED */}
                     <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
                       <input
                         type="checkbox"
-                        {...register(`moveis.${index}.temFitaLed`)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          if (!checked) {
-                            setValue(`moveis.${index}.tipoFitaLed`, "");
-                          }
-                        }}
+                        {...register(`moveis.${index}.temFitaLed`, {
+                          onChange: (e) => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              setValue(`moveis.${index}.tipoFitaLed`, "");
+                            }
+                          },
+                        })}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Fita LED?</span>
@@ -307,119 +378,127 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                   </div>
 
                   {/* Campos Condicionais - Puxador */}
-                  {movel?.temPuxador && (
-                    <div className="flex flex-col w-full gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200 mt-3">
-                      <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tipo de Puxador *
-                        </label>
-                        <select
-                          {...register(`moveis.${index}.tipoPuxador`)}
-                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition bg-white"
-                        >
-                          <option value="">Selecione</option>
-                          {tipoPuxadorOptions.map((tipo) => (
-                            <option key={tipo} value={tipo}>{tipo}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Detalhes do Puxador *
-                        </label>
-                        <input
-                          type="text"
-                          {...register(`moveis.${index}.detalhesPuxador`)}
-                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition"
-                          placeholder="Ex: Preto Fosco, 128mm"
-                        />
-                      </div>
+                  <div
+                    className={`flex flex-col w-full gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200 mt-3 ${!movel?.temPuxador ? "hidden" : ""}`}
+                  >
+                    <div className="w-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Puxador *
+                      </label>
+                      <select
+                        {...register(`moveis.${index}.tipoPuxador`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition bg-white"
+                      >
+                        <option value="">Selecione</option>
+                        {tipoPuxadorOptions.map((tipo) => (
+                          <option key={tipo} value={tipo}>
+                            {tipo}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
+                    <div className="w-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Detalhes do Puxador *
+                      </label>
+                      <input
+                        type="text"
+                        {...register(`moveis.${index}.detalhesPuxador`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition"
+                        placeholder="Ex: Preto Fosco, 128mm"
+                      />
+                    </div>
+                  </div>
 
                   {/* Campos Condicionais - Corrediças */}
-                  {movel?.temCorredicas && (
-                    <div className="flex flex-col w-full gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200 mt-3">
-                      <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tipo de Corrediça *
-                        </label>
-                        <select
-                          {...register(`moveis.${index}.tipoCorredica`)}
-                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition bg-white"
-                        >
-                          <option value="">Selecione</option>
-                          {tipoCorredicas.map((tipo) => (
-                            <option key={tipo} value={tipo}>{tipo}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Para qual finalidade/gaveta? *
-                        </label>
-                        <input
-                          type="text"
-                          {...register(`moveis.${index}.finalidadeCorredica`)}
-                          className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition"
-                          placeholder="Ex: Gaveta de talheres, Gaveta de panelas"
-                        />
-                      </div>
+                  <div
+                    className={`flex flex-col w-full gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200 mt-3 ${!movel?.temCorredicas ? "hidden" : ""}`}
+                  >
+                    <div className="w-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Corrediça *
+                      </label>
+                      <select
+                        {...register(`moveis.${index}.tipoCorredica`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition bg-white"
+                      >
+                        <option value="">Selecione</option>
+                        {tipoCorredicas.map((tipo) => (
+                          <option key={tipo} value={tipo}>
+                            {tipo}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
+                    <div className="w-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Para qual finalidade/gaveta? *
+                      </label>
+                      <input
+                        type="text"
+                        {...register(`moveis.${index}.finalidadeCorredica`)}
+                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition"
+                        placeholder="Ex: Gaveta de talheres, Gaveta de panelas"
+                      />
+                    </div>
+                  </div>
 
                   {/* Campos Condicionais - Báscula */}
-                  {movel?.temBascula && (
-                    <div className="flex flex-col w-full p-4 bg-green-50 rounded-lg border border-green-200 mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Báscula *
-                      </label>
-                      <select
-                        {...register(`moveis.${index}.tipoBascula`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition bg-white"
-                      >
-                        <option value="">Selecione</option>
-                        <option value="comum">Comum</option>
-                        <option value="inversa">Inversa</option>
-                      </select>
-                    </div>
-                  )}
+                  <div
+                    className={`flex flex-col w-full p-4 bg-green-50 rounded-lg border border-green-200 mt-3 ${!movel?.temBascula ? "hidden" : ""}`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Báscula *
+                    </label>
+                    <select
+                      {...register(`moveis.${index}.tipoBascula`)}
+                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition bg-white"
+                    >
+                      <option value="">Selecione</option>
+                      <option value="comum">Comum</option>
+                      <option value="inversa">Inversa</option>
+                    </select>
+                  </div>
 
                   {/* Campos Condicionais - Porta de Vidro */}
-                  {movel?.temPortaVidro && (
-                    <div className="flex flex-col w-full p-4 bg-yellow-50 rounded-lg border border-yellow-200 mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Porta de Vidro *
-                      </label>
-                      <select
-                        {...register(`moveis.${index}.tipoPortaVidro`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-yellow-500 outline-none transition bg-white"
-                      >
-                        <option value="">Selecione</option>
-                        {tipoPortaVidroOptions.map((tipo) => (
-                          <option key={tipo} value={tipo}>{tipo}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                  <div
+                    className={`flex flex-col w-full p-4 bg-yellow-50 rounded-lg border border-yellow-200 mt-3 ${!movel?.temPortaVidro ? "hidden" : ""}`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Porta de Vidro *
+                    </label>
+                    <select
+                      {...register(`moveis.${index}.tipoPortaVidro`)}
+                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-yellow-500 outline-none transition bg-white"
+                    >
+                      <option value="">Selecione</option>
+                      {tipoPortaVidroOptions.map((tipo) => (
+                        <option key={tipo} value={tipo}>
+                          {tipo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   {/* Campos Condicionais - Fita LED */}
-                  {movel?.temFitaLed && (
-                    <div className="flex flex-col w-full p-4 bg-indigo-50 rounded-lg border border-indigo-200 mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Fita LED *
-                      </label>
-                      <select
-                        {...register(`moveis.${index}.tipoFitaLed`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-indigo-500 outline-none transition bg-white"
-                      >
-                        <option value="">Selecione</option>
-                        {tipoFitaLedOptions.map((tipo) => (
-                          <option key={tipo} value={tipo}>{tipo}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                  <div
+                    className={`flex flex-col w-full p-4 bg-indigo-50 rounded-lg border border-indigo-200 mt-3 ${!movel?.temFitaLed ? "hidden" : ""}`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Fita LED *
+                    </label>
+                    <select
+                      {...register(`moveis.${index}.tipoFitaLed`)}
+                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-indigo-500 outline-none transition bg-white"
+                    >
+                      <option value="">Selecione</option>
+                      {tipoFitaLedOptions.map((tipo) => (
+                        <option key={tipo} value={tipo}>
+                          {tipo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   {/* Observações do Móvel */}
                   <div>
@@ -439,9 +518,13 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           })}
         </div>
 
-        {errors.moveis && typeof errors.moveis === 'object' && 'message' in errors.moveis && (
-          <p className="text-red-500 text-sm mt-2">{errors.moveis.message as string}</p>
-        )}
+        {errors.moveis &&
+          typeof errors.moveis === "object" &&
+          "message" in errors.moveis && (
+            <p className="text-red-500 text-sm mt-2">
+              {errors.moveis.message as string}
+            </p>
+          )}
       </div>
 
       {/* Especificações do Ambiente (NOVO) */}
@@ -459,7 +542,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
             </label>
             <input
               type="text"
-              {...register('especificacoesAmbiente.rodape')}
+              {...register("especificacoesAmbiente.rodape")}
               className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
               placeholder="Ex: Madeira, MDF, Gesso"
             />
@@ -474,7 +557,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                 </label>
                 <input
                   type="number"
-                  {...register('especificacoesAmbiente.alturaRodape')}
+                  {...register("especificacoesAmbiente.alturaRodape")}
                   className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
                   placeholder="70"
                 />
@@ -485,7 +568,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                 </label>
                 <input
                   type="number"
-                  {...register('especificacoesAmbiente.profundidadeRodape')}
+                  {...register("especificacoesAmbiente.profundidadeRodape")}
                   className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
                   placeholder="15"
                 />
@@ -500,7 +583,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
             </label>
             <input
               type="text"
-              {...register('especificacoesAmbiente.tipoParede')}
+              {...register("especificacoesAmbiente.tipoParede")}
               className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
               placeholder="Ex: Alvenaria, Drywall, Concreto"
             />
@@ -511,7 +594,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
             <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
               <input
                 type="checkbox"
-                {...register('especificacoesAmbiente.tubulacoesParede')}
+                {...register("especificacoesAmbiente.tubulacoesParede")}
                 className="w-5 h-5 flex-shrink-0"
               />
               <span className="text-sm font-medium">Tubulações na Parede?</span>
@@ -520,7 +603,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
             <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
               <input
                 type="checkbox"
-                {...register('especificacoesAmbiente.temEstacionamento')}
+                {...register("especificacoesAmbiente.temEstacionamento")}
                 className="w-5 h-5 flex-shrink-0"
               />
               <span className="text-sm font-medium">Tem Estacionamento?</span>
@@ -529,7 +612,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
             <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
               <input
                 type="checkbox"
-                {...register('especificacoesAmbiente.temElevador')}
+                {...register("especificacoesAmbiente.temElevador")}
                 className="w-5 h-5 flex-shrink-0"
               />
               <span className="text-sm font-medium">Tem Elevador?</span>
@@ -544,7 +627,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
               </label>
               <input
                 type="text"
-                {...register('especificacoesAmbiente.localTubulacao')}
+                {...register("especificacoesAmbiente.localTubulacao")}
                 className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none transition"
                 placeholder="Ex: Parede esquerda, próximo à janela"
               />
@@ -560,7 +643,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                 </label>
                 <input
                   type="number"
-                  {...register('especificacoesAmbiente.alturaElevador')}
+                  {...register("especificacoesAmbiente.alturaElevador")}
                   className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
                   placeholder="2100"
                 />
@@ -571,7 +654,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                 </label>
                 <input
                   type="number"
-                  {...register('especificacoesAmbiente.profundidadeElevador')}
+                  {...register("especificacoesAmbiente.profundidadeElevador")}
                   className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
                   placeholder="1400"
                 />
@@ -589,12 +672,19 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
         </h3>
         <div className="space-y-3">
           {eletrodomesticosOptions.map((eletro) => {
-            const eletroSelecionado = eletrodomesticosSelecionados.find((e) => e.nome === eletro);
+            const eletroSelecionado = eletrodomesticosSelecionados.find(
+              (e) => e.nome === eletro,
+            );
             const isChecked = !!eletroSelecionado;
-            const index = eletrodomesticosSelecionados.findIndex((e) => e.nome === eletro);
+            const index = eletrodomesticosSelecionados.findIndex(
+              (e) => e.nome === eletro,
+            );
 
             return (
-              <div key={eletro} className="border-2 border-gray-200 rounded-lg p-4">
+              <div
+                key={eletro}
+                className="border-2 border-gray-200 rounded-lg p-4"
+              >
                 <label className="flex items-center gap-4 cursor-pointer">
                   <input
                     type="checkbox"
@@ -609,7 +699,9 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       <Circle className="w-8 h-8 text-gray-400" />
                     )}
                   </div>
-                  <span className={`text-lg flex-1 ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700'}`}>
+                  <span
+                    className={`text-lg flex-1 ${isChecked ? "text-gray-900 font-medium" : "text-gray-700"}`}
+                  >
                     {eletro}
                   </span>
                 </label>
@@ -618,13 +710,19 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                 {isChecked && index >= 0 && (
                   <div className="mt-3 ml-12">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {eletro === 'Outros' ? 'Nome do Eletrodoméstico' : 'Qual o modelo?'}
+                      {eletro === "Outros"
+                        ? "Nome do Eletrodoméstico"
+                        : "Qual o modelo?"}
                     </label>
                     <input
                       type="text"
                       {...register(`eletrodomesticos.${index}.modelo`)}
                       className="w-full h-10 px-3 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition"
-                      placeholder={eletro === 'Outros' ? 'Ex: Purificador de Água' : 'Ex: Brastemp BRM56, Electrolux 80L'}
+                      placeholder={
+                        eletro === "Outros"
+                          ? "Ex: Purificador de Água"
+                          : "Ex: Brastemp BRM56, Electrolux 80L"
+                      }
                     />
                   </div>
                 )}
@@ -644,7 +742,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           Posição de Tomadas, Registros de Água e Gás
         </label>
         <textarea
-          {...register('pontosCriticos')}
+          {...register("pontosCriticos")}
           rows={5}
           className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition resize-none"
           placeholder="Descreva a localização de tomadas, pontos de água, gás, etc..."
@@ -658,12 +756,16 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           <Camera className="w-6 h-6" />
           Fotos do ambiente e anotações manuais
         </h3>
-        
+
         <label className="block">
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-400 hover:bg-pink-50 transition">
             <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-700 font-medium mb-1">Clique para adicionar fotos</p>
-            <p className="text-sm text-gray-500">Ou arraste e solte aqui (múltiplas fotos)</p>
+            <p className="text-gray-700 font-medium mb-1">
+              Clique para adicionar fotos
+            </p>
+            <p className="text-sm text-gray-500">
+              Ou arraste e solte aqui (múltiplas fotos)
+            </p>
             <input
               type="file"
               multiple
@@ -678,12 +780,22 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
         {fotosPreview.length > 0 && (
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-700 mb-2">
-              {fotosPreview.length} {fotosPreview.length === 1 ? 'foto adicionada' : 'fotos adicionadas'}
+              {fotosPreview.length}{" "}
+              {fotosPreview.length === 1
+                ? "foto adicionada"
+                : "fotos adicionadas"}
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {fotosPreview.map((foto, index) => (
-                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group">
-                  <img src={foto} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                <div
+                  key={index}
+                  className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group"
+                >
+                  <img
+                    src={foto}
+                    alt={`Foto ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveFoto(index)}
@@ -698,7 +810,9 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           </div>
         )}
 
-        <p className="text-sm text-gray-500 mt-3">Campo opcional - As fotos serão enviadas para o Supabase Storage</p>
+        <p className="text-sm text-gray-500 mt-3">
+          Campo opcional - As fotos serão enviadas para o Supabase Storage
+        </p>
       </div>
     </div>
   );
