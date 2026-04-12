@@ -541,7 +541,7 @@ export function ChecklistWizard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-2 md:px-4">
       {/* Loading State - Carregando Dados */}
       {loadingData && (
         <div className="mb-6 bg-blue-100 border-2 border-blue-500 rounded-lg p-6 flex items-start gap-4 animate-fade-in">
@@ -558,10 +558,10 @@ export function ChecklistWizard() {
       )}
 
       {error && (
-        <div className="mb-6 bg-red-100 border-2 border-red-500 rounded-lg p-6 flex items-start gap-4 animate-fade-in">
+        <div className="mb-6 bg-red-100 border-2 border-red-500 rounded-lg p-4 md:p-6 flex items-start gap-3 md:gap-4 animate-fade-in">
           <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
           <div>
-            <h3 className="text-xl font-bold text-red-800 mb-2">
+            <h3 className="text-lg md:text-xl font-bold text-red-800 mb-2">
               Erro ao Prosseguir
             </h3>
             <p className="text-red-700">{error}</p>
@@ -570,11 +570,11 @@ export function ChecklistWizard() {
       )}
 
       {showSuccessAlert && savedData && (
-        <div className="mb-6 bg-green-100 border-2 border-green-500 rounded-lg p-6 animate-fade-in">
+        <div className="mb-6 bg-green-100 border-2 border-green-500 rounded-lg p-4 md:p-6 animate-fade-in">
           <div className="flex items-start gap-4 mb-4">
             <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
             <div>
-              <h3 className="text-xl font-bold text-green-800 mb-2">
+              <h3 className="text-lg md:text-xl font-bold text-green-800 mb-2">
                 {isEditMode
                   ? "Briefing Atualizado com Sucesso!"
                   : "Briefing Salvo com Sucesso!"}
@@ -585,17 +585,17 @@ export function ChecklistWizard() {
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center gap-2 px-6 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+              className="flex items-center justify-center gap-2 px-4 md:px-6 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition w-full sm:w-auto"
             >
               <FileDown className="w-5 h-5" />
               Baixar Resumo em PDF
             </button>
             <button
               onClick={handleNovoFormulario}
-              className="flex items-center gap-2 px-6 h-12 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
+              className="flex items-center justify-center gap-2 px-4 md:px-6 h-12 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition w-full sm:w-auto"
             >
               Novo Formulário
             </button>
@@ -604,16 +604,12 @@ export function ChecklistWizard() {
       )}
 
       {!showSuccessAlert && (
-        <div className="mb-8">
-          {/* Container com linha de progresso */}
-          <div className="relative">
-            {/* Linha de fundo (cinza) */}
+        <div className="mb-6 md:mb-8">
+          <div className="relative overflow-x-auto pb-2">
             <div
               className="absolute top-6 left-0 right-0 h-1 bg-primor-gray-medium"
               style={{ left: "15%", right: "15%" }}
             />
-
-            {/* Linha de progresso (laranja) */}
             <div
               className="absolute top-6 h-1 bg-primor-primary transition-all duration-300"
               style={{
@@ -622,13 +618,10 @@ export function ChecklistWizard() {
                   currentStep === 1 ? "0%" : currentStep === 2 ? "35%" : "70%",
               }}
             />
-
-            {/* Bolinhas e Textos */}
-            <div className="relative flex justify-between items-start">
-              {/* Step 1 */}
+            <div className="relative flex justify-between items-start min-w-[300px]">
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition z-10 ${
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition z-10 ${
                     currentStep >= 1
                       ? "bg-primor-primary text-primor-text-dark"
                       : "bg-primor-gray-medium text-primor-gray-dark"
@@ -636,15 +629,13 @@ export function ChecklistWizard() {
                 >
                   1
                 </div>
-                <span className="mt-3 text-sm font-medium text-primor-gray-dark text-center">
+                <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primor-gray-dark text-center">
                   Dados Básicos
                 </span>
               </div>
-
-              {/* Step 2 */}
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition z-10 ${
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition z-10 ${
                     currentStep >= 2
                       ? "bg-primor-primary text-primor-text-dark"
                       : "bg-primor-gray-medium text-primor-gray-dark"
@@ -652,15 +643,13 @@ export function ChecklistWizard() {
                 >
                   2
                 </div>
-                <span className="mt-3 text-sm font-medium text-primor-gray-dark text-center">
+                <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primor-gray-dark text-center">
                   Levantamento
                 </span>
               </div>
-
-              {/* Step 3 */}
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition z-10 ${
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition z-10 ${
                     currentStep >= 3
                       ? "bg-primor-primary text-primor-text-dark"
                       : "bg-primor-gray-medium text-primor-gray-dark"
@@ -668,7 +657,7 @@ export function ChecklistWizard() {
                 >
                   3
                 </div>
-                <span className="mt-3 text-sm font-medium text-primor-gray-dark text-center">
+                <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primor-gray-dark text-center">
                   Finalização
                 </span>
               </div>
@@ -680,7 +669,7 @@ export function ChecklistWizard() {
       {!showSuccessAlert && !loadingData && (
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="bg-white rounded-xl shadow-lg p-8"
+          className="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8"
         >
           {currentStep === 1 && (
             <Step1DadosBasicos register={register} errors={errors} />
@@ -702,14 +691,14 @@ export function ChecklistWizard() {
             />
           )}
 
-          <div className="flex items-center justify-between mt-8 pt-6 border-t-2 border-gray-200">
+          <div className="flex flex-col md:flex-row items-center justify-between mt-6 md:mt-8 pt-4 md:pt-6 border-t-2 border-gray-200 gap-3">
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex items-center gap-2 px-8 h-14 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-lg"
+                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-base md:text-lg"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 Voltar
               </button>
             ) : (
@@ -724,10 +713,10 @@ export function ChecklistWizard() {
                   e.preventDefault();
                   handleNext();
                 }}
-                className="flex items-center gap-2 px-8 h-14 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition text-lg ml-auto"
+                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition text-base md:text-lg md:ml-auto"
               >
                 Avançar
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             ) : (
               <button
@@ -737,11 +726,15 @@ export function ChecklistWizard() {
                 onClick={() => {
                   console.log("🔴 Botão clicado", {
                     errors,
+                    errorsDetalhado: JSON.stringify(errors, null, 2),
                     isEditMode,
                     loading,
                   });
+                  if (errors.moveis) {
+                    console.log("❌ Erros nos móveis:", errors.moveis);
+                  }
                 }}
-                className="flex items-center gap-2 px-8 h-14 bg-primor-secondary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition text-lg ml-auto shadow-md"
+                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-secondary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition text-base md:text-lg md:ml-auto shadow-md"
               >
                 {loading ? (
                   <>
@@ -751,7 +744,7 @@ export function ChecklistWizard() {
                   </>
                 ) : (
                   <>
-                    <Save className="w-6 h-6" />
+                    <Save className="w-5 h-5 md:w-6 md:h-6" />
                     {isEditMode ? "Salvar Alterações" : "Salvar Briefing"}
                   </>
                 )}

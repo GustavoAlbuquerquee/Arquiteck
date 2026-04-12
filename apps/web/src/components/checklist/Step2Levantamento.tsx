@@ -46,7 +46,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
       tipoCorredica: '',
       finalidadeCorredica: '',
       temBascula: false,
-      tipoBascula: undefined,
+      tipoBascula: '',
       temPortaVidro: false,
       tipoPortaVidro: '',
       temFitaLed: false,
@@ -113,7 +113,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           <button
             type="button"
             onClick={handleAddMovel}
-            className="flex items-center gap-2 px-4 h-10 bg-primor-primary hover:brightness-110 text-primor-text-dark font-medium rounded-lg transition shadow-md"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 md:px-6 h-10 md:h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-medium rounded-lg transition shadow-md text-sm md:text-base"
           >
             <Plus className="w-5 h-5" />
             Adicionar Móvel
@@ -159,7 +159,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                   </div>
 
                   {/* Medidas em MM */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Largura (mm) *
@@ -228,6 +228,13 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       <input
                         type="checkbox"
                         {...register(`moveis.${index}.temPuxador`)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (!checked) {
+                            setValue(`moveis.${index}.tipoPuxador`, "");
+                            setValue(`moveis.${index}.detalhesPuxador`, "");
+                          }
+                        }}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Puxador?</span>
@@ -238,6 +245,13 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       <input
                         type="checkbox"
                         {...register(`moveis.${index}.temCorredicas`)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (!checked) {
+                            setValue(`moveis.${index}.tipoCorredica`, "");
+                            setValue(`moveis.${index}.finalidadeCorredica`, "");
+                          }
+                        }}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Corrediças?</span>
@@ -248,6 +262,12 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       <input
                         type="checkbox"
                         {...register(`moveis.${index}.temBascula`)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (!checked) {
+                            setValue(`moveis.${index}.tipoBascula`, "");
+                          }
+                        }}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Báscula?</span>
@@ -258,6 +278,12 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       <input
                         type="checkbox"
                         {...register(`moveis.${index}.temPortaVidro`)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (!checked) {
+                            setValue(`moveis.${index}.tipoPortaVidro`, "");
+                          }
+                        }}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Porta Vidro?</span>
@@ -268,6 +294,12 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                       <input
                         type="checkbox"
                         {...register(`moveis.${index}.temFitaLed`)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (!checked) {
+                            setValue(`moveis.${index}.tipoFitaLed`, "");
+                          }
+                        }}
                         className="w-5 h-5"
                       />
                       <span className="text-sm font-medium">Tem Fita LED?</span>
@@ -435,7 +467,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
           {/* Campos Condicionais - Rodapé */}
           {especificacoes?.rodape && (
-            <div className="grid grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Altura do Rodapé (mm)
@@ -521,7 +553,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
           {/* Campos Condicionais - Elevador */}
           {especificacoes?.temElevador && (
-            <div className="grid grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Altura do Elevador (mm) *

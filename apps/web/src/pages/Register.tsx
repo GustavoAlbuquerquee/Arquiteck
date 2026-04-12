@@ -50,7 +50,7 @@ export function Register() {
 
   return (
     <div className="min-h-screen bg-primor-bg-light flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-[90%] md:w-full max-w-md">
         {/* Logo/Título */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primor-secondary mb-2">Arquiteck</h1>

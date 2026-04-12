@@ -21,7 +21,7 @@ const movelSchema = z
     finalidadeCorredica: z.string().optional(),
 
     temBascula: z.boolean(),
-    tipoBascula: z.enum(["comum", "inversa"]).optional(),
+    tipoBascula: z.enum(["comum", "inversa", ""]).optional().nullable(),
 
     temPortaVidro: z.boolean(),
     tipoPortaVidro: z.string().optional(),
@@ -29,32 +29,57 @@ const movelSchema = z
     temFitaLed: z.boolean(),
     tipoFitaLed: z.string().optional(),
   })
-  .refine(
-    (data) => {
-      if (data.temPuxador && (!data.tipoPuxador || !data.detalhesPuxador)) {
-        return false;
-      }
-      if (
-        data.temCorredicas &&
-        (!data.tipoCorredica || !data.finalidadeCorredica)
-      ) {
-        return false;
-      }
-      if (data.temBascula && !data.tipoBascula) {
-        return false;
-      }
-      if (data.temPortaVidro && !data.tipoPortaVidro) {
-        return false;
-      }
-      if (data.temFitaLed && !data.tipoFitaLed) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Preencha todos os campos obrigatórios dos itens marcados",
-    },
-  );
+  .superRefine((data, ctx) => {
+    if (data.temPuxador && !data.tipoPuxador) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o tipo de puxador",
+        path: ["tipoPuxador"],
+      });
+    }
+    if (data.temPuxador && !data.detalhesPuxador) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe os detalhes do puxador",
+        path: ["detalhesPuxador"],
+      });
+    }
+    if (data.temCorredicas && !data.tipoCorredica) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o tipo de corrediça",
+        path: ["tipoCorredica"],
+      });
+    }
+    if (data.temCorredicas && !data.finalidadeCorredica) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a finalidade da corrediça",
+        path: ["finalidadeCorredica"],
+      });
+    }
+    if (data.temBascula && !data.tipoBascula) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o tipo de báscula",
+        path: ["tipoBascula"],
+      });
+    }
+    if (data.temPortaVidro && !data.tipoPortaVidro) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o tipo de porta de vidro",
+        path: ["tipoPortaVidro"],
+      });
+    }
+    if (data.temFitaLed && !data.tipoFitaLed) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o tipo de fita LED",
+        path: ["tipoFitaLed"],
+      });
+    }
+  });
 
 // Schema para eletrodomésticos com modelo
 const eletrodomesticoSchema = z.object({
@@ -76,23 +101,29 @@ const especificacoesAmbienteSchema = z
     alturaElevador: z.string().optional(),
     profundidadeElevador: z.string().optional(),
   })
-  .refine(
-    (data) => {
-      if (
-        data.temElevador &&
-        (!data.alturaElevador || !data.profundidadeElevador)
-      ) {
-        return false;
-      }
-      if (data.tubulacoesParede && !data.localTubulacao) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Preencha todos os campos obrigatórios",
-    },
-  );
+  .superRefine((data, ctx) => {
+    if (data.temElevador && !data.alturaElevador) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a altura do elevador",
+        path: ["alturaElevador"],
+      });
+    }
+    if (data.temElevador && !data.profundidadeElevador) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a profundidade do elevador",
+        path: ["profundidadeElevador"],
+      });
+    }
+    if (data.tubulacoesParede && !data.localTubulacao) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe o local das tubulações",
+        path: ["localTubulacao"],
+      });
+    }
+  });
 
 // Schema completo do formulário de Briefing/Primeira Visita
 export const checklistSchema = z.object({

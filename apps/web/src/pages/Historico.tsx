@@ -192,12 +192,12 @@ export function Historico() {
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 md:mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-primor-text-light">
+          <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light">
             Histórico de Briefings
           </h1>
-          <p className="text-primor-gray-dark mt-2">
+          <p className="text-sm md:text-base text-primor-gray-dark mt-2">
             {projetos.length}{" "}
             {projetos.length === 1
               ? "briefing encontrado"
@@ -206,7 +206,7 @@ export function Historico() {
         </div>
         <button
           onClick={() => navigate("/nova-visita")}
-          className="flex items-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-4 md:px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
         >
           <Plus className="w-5 h-5" />
           Novo Briefing
@@ -214,11 +214,11 @@ export function Historico() {
       </div>
 
       {/* Lista de Projetos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {projetos.map((projeto) => (
           <div
             key={projeto.id}
-            className="bg-primor-bg rounded-xl shadow-md border-2 border-primor-gray-medium hover:border-primor-primary transition-all p-6"
+            className="bg-primor-bg rounded-xl shadow-md border-2 border-primor-gray-medium hover:border-primor-primary transition-all p-4 md:p-6"
           >
             {/* Status Badge */}
             <div className="flex items-center justify-between mb-4">
@@ -287,7 +287,7 @@ export function Historico() {
             {/* Botão Ver Detalhes */}
             <button
               onClick={() => handleVerDetalhes(projeto)}
-              className="w-full flex items-center justify-center gap-2 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+              className="w-full flex items-center justify-center gap-2 h-10 md:h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md text-sm md:text-base"
             >
               <Eye className="w-5 h-5" />
               Ver Detalhes
@@ -299,10 +299,10 @@ export function Historico() {
       {/* Modal de Detalhes */}
       {showModal && selectedProjeto && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-primor-bg rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-primor-bg rounded-xl shadow-2xl w-[95%] md:w-[90%] lg:w-3/4 max-w-3xl max-h-[90vh] overflow-y-auto">
             {/* Header do Modal */}
-            <div className="sticky top-0 bg-primor-bg border-b-2 border-primor-gray-medium p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-primor-text-light">
+            <div className="sticky top-0 bg-primor-bg border-b-2 border-primor-gray-medium p-4 md:p-6 flex items-center justify-between">
+              <h2 className="text-xl md:text-2xl font-bold text-primor-text-light">
                 Detalhes do Briefing
               </h2>
               <button
@@ -314,7 +314,7 @@ export function Historico() {
             </div>
 
             {/* Conteúdo do Modal */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               {/* Informações do Cliente */}
               <div>
                 <h3 className="text-lg font-bold text-primor-text-light mb-3">
@@ -555,25 +555,25 @@ export function Historico() {
             </div>
 
             {/* Footer do Modal com Ações */}
-            <div className="sticky bottom-0 bg-primor-bg border-t-2 border-primor-gray-medium p-6">
-              <div className="flex gap-3">
+            <div className="sticky bottom-0 bg-primor-bg border-t-2 border-primor-gray-medium p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleDownloadPDF}
-                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+                  className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md text-sm md:text-base"
                 >
                   <FileDown className="w-5 h-5" />
                   Baixar PDF
                 </button>
                 <button
                   onClick={handleEdit}
-                  className="flex-1 flex items-center justify-center gap-2 h-12 bg-primor-secondary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+                  className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-primor-secondary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md text-sm md:text-base"
                 >
                   <Edit className="w-5 h-5" />
                   Editar
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-12 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition"
+                  className="w-full sm:flex-1 h-10 md:h-12 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-sm md:text-base"
                 >
                   Fechar
                 </button>
