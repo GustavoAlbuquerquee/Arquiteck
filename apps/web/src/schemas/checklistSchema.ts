@@ -3,12 +3,12 @@ import { z } from "zod";
 // Schema para cada móvel com todas as especificações
 const movelSchema = z
   .object({
-    nome: z.string().min(1, "Nome do móvel é obrigatório"),
-    largura: z.string().min(1, "Largura é obrigatória"),
-    altura: z.string().min(1, "Altura é obrigatória"),
-    profundidade: z.string().min(1, "Profundidade é obrigatória"),
-    corMdfInterna: z.string().min(1, "Cor do MDF interno é obrigatória"),
-    corMdfExterna: z.string().min(1, "Cor do MDF externo é obrigatória"),
+    nome: z.string().trim().min(1, "Nome do móvel é obrigatório"),
+    largura: z.string().trim().min(1, "Largura é obrigatória"),
+    altura: z.string().trim().min(1, "Altura é obrigatória"),
+    profundidade: z.string().trim().min(1, "Profundidade é obrigatória"),
+    corMdfInterna: z.string().trim().min(1, "Cor do MDF interno é obrigatória"),
+    corMdfExterna: z.string().trim().min(1, "Cor do MDF externo é obrigatória"),
     observacoesMovel: z.string().optional(),
 
     // Campos condicionais

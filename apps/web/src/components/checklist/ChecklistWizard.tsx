@@ -96,6 +96,23 @@ export function ChecklistWizard() {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } else if (currentStep === 2) {
+      // Validar Step 2 com o Zod via React Hook Form
+      const isStep2Valid = await trigger([
+        "moveis",
+        "especificacoesAmbiente",
+        "eletrodomesticos",
+        "pontosCriticos",
+        "fotosAmbiente",
+      ]);
+
+      if (!isStep2Valid) {
+        setError(
+          "Preencha todos os campos obrigatórios destacados em vermelho.",
+        );
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       // Validar manualmente os móveis
       const moveis = watch("moveis");
 
@@ -672,7 +689,11 @@ export function ChecklistWizard() {
           className="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8"
         >
           {currentStep === 1 && (
-            <Step1DadosBasicos register={register} errors={errors} control={control} />
+            <Step1DadosBasicos
+              register={register}
+              errors={errors}
+              control={control}
+            />
           )}
           {currentStep === 2 && (
             <Step2Levantamento
