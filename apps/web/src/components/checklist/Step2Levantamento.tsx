@@ -100,14 +100,14 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
   };
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Levantamento Técnico</h2>
+    <div className="space-y-6 md:space-y-8 w-full overflow-hidden">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Levantamento Técnico</h2>
 
       {/* Móveis e Medidas Dinâmicas */}
-      <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="flex items-center gap-2 text-xl font-bold text-primor-text-light">
-            <Ruler className="w-6 h-6" />
+      <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-4 md:p-6 shadow-sm w-full">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4">
+          <h3 className="flex items-center gap-2 text-lg md:text-xl font-bold text-primor-text-light">
+            <Ruler className="w-5 h-5 md:w-6 md:h-6" />
             Móveis e Especificações
           </h3>
           <button
@@ -222,7 +222,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                   </div>
 
                   {/* Checkboxes Condicionais */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                     {/* Tem Puxador */}
                     <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
                       <input
@@ -308,8 +308,8 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
                   {/* Campos Condicionais - Puxador */}
                   {movel?.temPuxador && (
-                    <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div>
+                    <div className="flex flex-col w-full gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200 mt-3">
+                      <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Tipo de Puxador *
                         </label>
@@ -323,7 +323,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                           ))}
                         </select>
                       </div>
-                      <div>
+                      <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Detalhes do Puxador *
                         </label>
@@ -339,8 +339,8 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
                   {/* Campos Condicionais - Corrediças */}
                   {movel?.temCorredicas && (
-                    <div className="space-y-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <div>
+                    <div className="flex flex-col w-full gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200 mt-3">
+                      <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Tipo de Corrediça *
                         </label>
@@ -354,7 +354,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
                           ))}
                         </select>
                       </div>
-                      <div>
+                      <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Para qual finalidade/gaveta? *
                         </label>
@@ -370,7 +370,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
                   {/* Campos Condicionais - Báscula */}
                   {movel?.temBascula && (
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex flex-col w-full p-4 bg-green-50 rounded-lg border border-green-200 mt-3">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tipo de Báscula *
                       </label>
@@ -387,7 +387,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
                   {/* Campos Condicionais - Porta de Vidro */}
                   {movel?.temPortaVidro && (
-                    <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex flex-col w-full p-4 bg-yellow-50 rounded-lg border border-yellow-200 mt-3">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tipo de Porta de Vidro *
                       </label>
@@ -405,7 +405,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
 
                   {/* Campos Condicionais - Fita LED */}
                   {movel?.temFitaLed && (
-                    <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                    <div className="flex flex-col w-full p-4 bg-indigo-50 rounded-lg border border-indigo-200 mt-3">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tipo de Fita LED *
                       </label>
@@ -507,12 +507,12 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
           </div>
 
           {/* Checkboxes */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
               <input
                 type="checkbox"
                 {...register('especificacoesAmbiente.tubulacoesParede')}
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0"
               />
               <span className="text-sm font-medium">Tubulações na Parede?</span>
             </label>
@@ -521,7 +521,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
               <input
                 type="checkbox"
                 {...register('especificacoesAmbiente.temEstacionamento')}
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0"
               />
               <span className="text-sm font-medium">Tem Estacionamento?</span>
             </label>
@@ -530,7 +530,7 @@ export function Step2Levantamento({ register, watch, errors, control, setValue }
               <input
                 type="checkbox"
                 {...register('especificacoesAmbiente.temElevador')}
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0"
               />
               <span className="text-sm font-medium">Tem Elevador?</span>
             </label>
