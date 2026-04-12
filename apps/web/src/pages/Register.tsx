@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPlus, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
-
-const PRIMOR_MOVEIS_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { supabase } from "@/lib/supabase";
+import { UserPlus, Mail, Lock, AlertCircle, CheckCircle, Building2 } from "lucide-react";
 
 export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [cnpj, setCnpj] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,16 @@ export function Register() {
     setSuccess(false);
 
     // Validações
+    if (!nomeEmpresa.trim()) {
+      setError("Nome da empresa é obrigatório");
+      return;
+    }
+
+    if (!cnpj.trim()) {
+      setError("CNPJ é obrigatório");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("As senhas não coincidem");
       return;
@@ -33,18 +44,48 @@ export function Register() {
 
     setLoading(true);
 
-    const { error } = await signUp(email, password, PRIMOR_MOVEIS_TENANT_ID);
+    try {
+      // PASSO 1: Criar o Tenant (Organização)
+      const { data: tenantData, error: tenantError } = await supabase
+        .from('tenants')
+        .insert({
+          nome_fantasia: nomeEmpresa,
+          cnpj: cnpj,
+        })
+        .select('id')
+        .single();
 
-    if (error) {
-      setError(error.message || "Erro ao criar conta");
-      setLoading(false);
-    } else {
+      if (tenantError) {
+        console.error('Erro ao criar tenant:', tenantError);
+        setError(tenantError.message || "Erro ao criar organização");
+        setLoading(false);
+        return;
+      }
+
+      const tenantId = tenantData.id;
+
+      // PASSO 2: Criar o Usuário com tenant_id nos metadados
+      const { error: signUpError } = await signUp(email, password, tenantId);
+
+      if (signUpError) {
+        // Se falhar ao criar usuário, deletar o tenant criado
+        await supabase.from('tenants').delete().eq('id', tenantId);
+        setError(signUpError.message || "Erro ao criar conta");
+        setLoading(false);
+        return;
+      }
+
+      // Sucesso!
       setSuccess(true);
       setLoading(false);
       // Auto-login: redirecionar direto para o Dashboard
       setTimeout(() => {
         navigate("/");
       }, 1500);
+    } catch (err: any) {
+      console.error('Erro no registro:', err);
+      setError(err.message || "Erro inesperado ao criar conta");
+      setLoading(false);
     }
   };
 
@@ -95,6 +136,44 @@ export function Register() {
 
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nome da Empresa */}
+            <div>
+              <label className="block text-sm font-medium text-primor-text-light mb-2">
+                Nome da Empresa *
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                <input
+                  type="text"
+                  value={nomeEmpresa}
+                  onChange={(e) => setNomeEmpresa(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
+                  placeholder="Primor Móveis"
+                  required
+                  disabled={loading || success}
+                />
+              </div>
+            </div>
+
+            {/* CNPJ */}
+            <div>
+              <label className="block text-sm font-medium text-primor-text-light mb-2">
+                CNPJ *
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                <input
+                  type="text"
+                  value={cnpj}
+                  onChange={(e) => setCnpj(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
+                  placeholder="12.345.678/0001-90"
+                  required
+                  disabled={loading || success}
+                />
+              </div>
+            </div>
+
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-primor-text-light mb-2">
@@ -155,12 +234,7 @@ export function Register() {
               </div>
             </div>
 
-            {/* Info sobre Tenant */}
-            <div className="bg-primor-primary/10 border border-primor-primary/30 rounded-lg p-3">
-              <p className="text-xs text-primor-secondary">
-                <strong>Empresa:</strong> Primor Móveis
-              </p>
-            </div>
+
 
             {/* Botão de Registro */}
             <button
