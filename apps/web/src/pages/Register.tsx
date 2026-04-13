@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { createTenant } from "@/lib/supabase/tenants";
+import { registerUser } from "@/lib/supabase/register";
+import { supabase } from "@/lib/supabase";
 import { UserPlus, Mail, Lock, AlertCircle, CheckCircle, Building2, User } from "lucide-react";
 
 export function Register() {
@@ -14,7 +14,6 @@ export function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const formatCNPJ = (value: string) => {
@@ -68,19 +67,21 @@ export function Register() {
     setLoading(true);
 
     try {
-      // PASSO 1: Criar o Usuário
-      const { error: signUpError } = await signUp(email, password, nomeCompleto);
+      // Chamar Edge Function que cria tudo de uma vez
+      await registerUser(email, password, nomeCompleto, nomeEmpresa, cnpj);
 
-      if (signUpError) {
-        setError(signUpError.message || "Erro ao criar conta");
+      // Fazer login após registro
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(signInError.message || "Erro ao fazer login");
         setLoading(false);
         return;
       }
 
-      // PASSO 2: Criar o Tenant via Edge Function
-      await createTenant(nomeEmpresa, cnpj, nomeCompleto);
-
-      // Sucesso!
       setSuccess(true);
       setLoading(false);
       
