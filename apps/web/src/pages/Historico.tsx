@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Calendar,
   User,
@@ -11,6 +12,7 @@ import {
   Eye,
   FileDown,
   Edit,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -40,6 +42,7 @@ interface Projeto {
 }
 
 export function Historico() {
+  const { user } = useAuth();
   const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
@@ -48,8 +51,10 @@ export function Historico() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadProjetos();
-  }, []);
+    if (user) {
+      loadProjetos();
+    }
+  }, [user]);
 
   const loadProjetos = async () => {
     try {
@@ -112,6 +117,29 @@ export function Historico() {
     if (selectedProjeto) {
       navigate(`/nova-visita?edit=${selectedProjeto.id}`);
       setShowModal(false);
+    }
+  };
+
+  const handleDelete = async (projetoId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projetoId);
+
+      if (error) throw error;
+
+      // Recarregar lista
+      loadProjetos();
+      setShowModal(false);
+      alert('Projeto excluído com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao excluir projeto:', error);
+      alert('Erro ao excluir projeto: ' + error.message);
     }
   };
 
@@ -570,6 +598,13 @@ export function Historico() {
                 >
                   <Edit className="w-5 h-5" />
                   Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(selectedProjeto.id)}
+                  className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition shadow-md text-sm md:text-base"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Excluir
                 </button>
                 <button
                   onClick={() => setShowModal(false)}

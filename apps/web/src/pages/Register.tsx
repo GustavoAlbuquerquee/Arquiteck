@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { UserPlus, Mail, Lock, AlertCircle, CheckCircle, Building2 } from "lucide-react";
+import { createTenant } from "@/lib/supabase/tenants";
+import { UserPlus, Mail, Lock, AlertCircle, CheckCircle, Building2, User } from "lucide-react";
 
 export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [nomeCompleto, setNomeCompleto] = useState("");
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [error, setError] = useState("");
@@ -16,12 +17,34 @@ export function Register() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
+  const formatCNPJ = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 14) {
+      return numbers
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    return value;
+  };
+
+  const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCNPJ(e.target.value);
+    setCnpj(formatted);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
 
     // Validações
+    if (!nomeCompleto.trim()) {
+      setError("Nome completo é obrigatório");
+      return;
+    }
+
     if (!nomeEmpresa.trim()) {
       setError("Nome da empresa é obrigatório");
       return;
@@ -45,40 +68,22 @@ export function Register() {
     setLoading(true);
 
     try {
-      // PASSO 1: Criar o Tenant (Organização)
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
-          nome_fantasia: nomeEmpresa,
-          cnpj: cnpj,
-        })
-        .select('id')
-        .single();
-
-      if (tenantError) {
-        console.error('Erro ao criar tenant:', tenantError);
-        setError(tenantError.message || "Erro ao criar organização");
-        setLoading(false);
-        return;
-      }
-
-      const tenantId = tenantData.id;
-
-      // PASSO 2: Criar o Usuário com tenant_id nos metadados
-      const { error: signUpError } = await signUp(email, password, tenantId);
+      // PASSO 1: Criar o Usuário
+      const { error: signUpError } = await signUp(email, password, nomeCompleto);
 
       if (signUpError) {
-        // Se falhar ao criar usuário, deletar o tenant criado
-        await supabase.from('tenants').delete().eq('id', tenantId);
         setError(signUpError.message || "Erro ao criar conta");
         setLoading(false);
         return;
       }
 
+      // PASSO 2: Criar o Tenant via Edge Function
+      await createTenant(nomeEmpresa, cnpj, nomeCompleto);
+
       // Sucesso!
       setSuccess(true);
       setLoading(false);
-      // Auto-login: redirecionar direto para o Dashboard
+      
       setTimeout(() => {
         navigate("/");
       }, 1500);
@@ -136,6 +141,25 @@ export function Register() {
 
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nome Completo */}
+            <div>
+              <label className="block text-sm font-medium text-primor-text-light mb-2">
+                Nome Completo *
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                <input
+                  type="text"
+                  value={nomeCompleto}
+                  onChange={(e) => setNomeCompleto(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
+                  placeholder="João Silva"
+                  required
+                  disabled={loading || success}
+                />
+              </div>
+            </div>
+
             {/* Nome da Empresa */}
             <div>
               <label className="block text-sm font-medium text-primor-text-light mb-2">
@@ -165,9 +189,10 @@ export function Register() {
                 <input
                   type="text"
                   value={cnpj}
-                  onChange={(e) => setCnpj(e.target.value)}
+                  onChange={handleCNPJChange}
                   className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
                   placeholder="12.345.678/0001-90"
+                  maxLength={18}
                   required
                   disabled={loading || success}
                 />
