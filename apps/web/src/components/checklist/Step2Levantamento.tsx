@@ -224,7 +224,7 @@ export function Step2Levantamento({
                         Largura (mm) *
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         {...register(`moveis.${index}.largura`)}
                         className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                         placeholder="3000"
@@ -235,7 +235,7 @@ export function Step2Levantamento({
                         Altura (mm) *
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         {...register(`moveis.${index}.altura`)}
                         className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                         placeholder="2800"
@@ -246,11 +246,20 @@ export function Step2Levantamento({
                         Profundidade (mm) *
                       </label>
                       <input
-                        type="number"
-                        {...register(`moveis.${index}.profundidade`)}
+                        type="text"
+                        {...register(`moveis.${index}.profundidade`, {
+                          onChange: (e) => {
+                            console.log(`📏 Profundidade Móvel ${index + 1}:`, e.target.value, typeof e.target.value);
+                          }
+                        })}
                         className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                         placeholder="600"
                       />
+                      {errors.moveis?.[index]?.profundidade && (
+                        <p className="text-red-500 text-xs mt-1 font-bold">
+                          ⚠️ {errors.moveis[index]?.profundidade?.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
