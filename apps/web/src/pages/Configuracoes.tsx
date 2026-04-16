@@ -1,29 +1,40 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { Users, UserPlus, Shield, Trash2, AlertCircle, CheckCircle, Mail, Lock } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import {
+  Users,
+  UserPlus,
+  Shield,
+  Trash2,
+  AlertCircle,
+  CheckCircle,
+  Mail,
+  Lock,
+} from "lucide-react";
 
 interface Profile {
   id: string;
   nome_completo: string | null;
   cargo: string | null;
-  role: 'admin' | 'membro';
+  role: "admin" | "membro";
   created_at: string;
 }
 
 export function Configuracoes() {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'membro' | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<
+    "admin" | "membro" | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [showAddMember, setShowAddMember] = useState(false);
-  
+
   // Form states
-  const [email, setEmail] = useState('');
-  const [nomeCompleto, setNomeCompleto] = useState('');
-  const [cargo, setCargo] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [email, setEmail] = useState("");
+  const [nomeCompleto, setNomeCompleto] = useState("");
+  const [cargo, setCargo] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -38,73 +49,90 @@ export function Configuracoes() {
     setLoading(true);
     try {
       // Buscar perfil do usuário atual
-      const { data: currentProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role, tenant_id')
-        .eq('id', user.id)
-        .maybeSingle();
+      const { data: currentProfile, error: profileError } = (await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", user.id)
+        .maybeSingle()) as {
+        data: { role: "admin" | "membro"; tenant_id: string } | null;
+        error: any;
+      };
 
       if (profileError) {
-        console.error('Erro ao buscar perfil:', profileError);
+        console.error("Erro ao buscar perfil:", profileError);
         throw profileError;
       }
 
       // Se não existe perfil, criar um
       if (!currentProfile) {
-        console.log('Perfil não encontrado, criando...');
-        
+        console.log("Perfil não encontrado, criando...");
+
         // Extrair tenant_id dos metadados do usuário
         const tenantId = user.user_metadata?.tenant_id;
-        
+
         if (!tenantId) {
-          setError('Usuário não possui tenant_id. Faça logout e login novamente.');
+          setError(
+            "Usuário não possui tenant_id. Faça logout e login novamente.",
+          );
           setLoading(false);
           return;
         }
 
         // Criar perfil
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
+        const { data: newProfile, error: createError } = (await supabase
+          .from("profiles")
           .insert({
             id: user.id,
             tenant_id: tenantId,
             nome_completo: user.email,
-            role: 'admin', // Primeiro usuário é admin
+            role: "admin", // Primeiro usuário é admin
           })
-          .select('role, tenant_id')
-          .single();
+          .select("role, tenant_id")
+          .single()) as {
+          data: { role: "admin" | "membro"; tenant_id: string } | null;
+          error: any;
+        };
 
         if (createError) {
-          console.error('Erro ao criar perfil:', createError);
+          console.error("Erro ao criar perfil:", createError);
           throw createError;
         }
 
-        setCurrentUserRole(newProfile.role);
+        if (!newProfile) {
+          throw new Error("Erro ao criar perfil: dados não retornados");
+        }
 
-        // Buscar todos os perfis do mesmo tenant
-        const { data: teamData, error: teamError } = await supabase
-          .from('profiles')
-          .select('id, nome_completo, cargo, role, created_at')
-          .eq('tenant_id', newProfile.tenant_id)
-          .order('created_at', { ascending: true });
+        setCurrentUserRole(newProfile.role as "admin" | "membro");
+
+        const { data: teamData, error: teamError } = (await supabase
+          .from("profiles")
+          .select("id, nome_completo, cargo, role, created_at")
+          .eq("tenant_id", newProfile.tenant_id)
+          .order("created_at", { ascending: true })) as {
+          data: Profile[] | null;
+          error: any;
+        };
 
         if (teamError) throw teamError;
         setProfiles(teamData || []);
       } else {
-        setCurrentUserRole(currentProfile.role);
+        setCurrentUserRole(currentProfile.role as "admin" | "membro");
 
         // Buscar todos os perfis do mesmo tenant
-        const { data: teamData, error: teamError } = await supabase
-          .from('profiles')
-          .select('id, nome_completo, cargo, role, created_at')
-          .eq('tenant_id', currentProfile.tenant_id)
-          .order('created_at', { ascending: true });
+        const { data: teamData, error: teamError } = (await supabase
+          .from("profiles")
+          .select("id, nome_completo, cargo, role, created_at")
+          .eq("tenant_id", currentProfile.tenant_id)
+          .order("created_at", { ascending: true })) as {
+          data: Profile[] | null;
+          error: any;
+        };
 
         if (teamError) throw teamError;
         setProfiles(teamData || []);
       }
     } catch (err: any) {
-      console.error('Erro ao carregar equipe:', err);
+      console.error("Erro ao carregar equipe:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -113,25 +141,30 @@ export function Configuracoes() {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setSubmitting(true);
 
     try {
       // Buscar tenant_id do usuário atual
+      const tenantId = user?.user_metadata?.tenant_id;
+      if (!tenantId) {
+        throw new Error("Tenant ID não encontrado");
+      }
+
       const { data: currentProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user?.id)
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user?.id || "")
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!currentProfile) throw new Error('Perfil não encontrado');
+      if (!currentProfile) throw new Error("Perfil não encontrado");
 
       // Criar usuário no Supabase Auth SEM autoConfirm para evitar trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password: 'primor123',
+        password: "primor123",
         options: {
           emailRedirectTo: undefined,
           data: {
@@ -142,73 +175,73 @@ export function Configuracoes() {
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Usuário não foi criado');
+      if (!authData.user) throw new Error("Usuário não foi criado");
 
       // Aguardar um pouco para o trigger executar
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Verificar se o perfil foi criado pelo trigger
       const { data: profileExists } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', authData.user.id)
+        .from("profiles")
+        .select("id")
+        .eq("id", authData.user.id)
         .maybeSingle();
 
       // Se o trigger não criou, criar manualmente
       if (!profileExists) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            tenant_id: currentProfile.tenant_id,
-            nome_completo: nomeCompleto,
-            role: 'membro',
-            cargo: cargo || null,
-          });
+        const { error: insertError } = await supabase.from("profiles").insert({
+          id: authData.user.id,
+          tenant_id: currentProfile.tenant_id,
+          nome_completo: nomeCompleto,
+          role: "membro",
+          cargo: cargo || null,
+        });
 
         if (insertError) throw insertError;
       } else if (cargo) {
         // Se o perfil existe e tem cargo, atualizar
         await supabase
-          .from('profiles')
+          .from("profiles")
           .update({ cargo })
-          .eq('id', authData.user.id);
+          .eq("id", authData.user.id);
       }
 
-      setSuccess(`Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`);
-      setEmail('');
-      setNomeCompleto('');
-      setCargo('');
+      setSuccess(
+        `Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`,
+      );
+      setEmail("");
+      setNomeCompleto("");
+      setCargo("");
       setShowAddMember(false);
-      
+
       // Recarregar lista
       setTimeout(() => {
         loadTeam();
-        setSuccess('');
+        setSuccess("");
       }, 2000);
     } catch (err: any) {
-      console.error('Erro ao adicionar membro:', err);
-      setError(err.message || 'Erro ao adicionar membro');
+      console.error("Erro ao adicionar membro:", err);
+      setError(err.message || "Erro ao adicionar membro");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!confirm('Tem certeza que deseja remover este membro?')) return;
+    if (!confirm("Tem certeza que deseja remover este membro?")) return;
 
     try {
       // Deletar usuário (cascade vai deletar o perfil)
       const { error } = await supabase.auth.admin.deleteUser(memberId);
-      
+
       if (error) throw error;
 
-      setSuccess('Membro removido com sucesso!');
+      setSuccess("Membro removido com sucesso!");
       loadTeam();
-      setTimeout(() => setSuccess(''), 2000);
+      setTimeout(() => setSuccess(""), 2000);
     } catch (err: any) {
-      console.error('Erro ao deletar membro:', err);
-      setError(err.message || 'Erro ao remover membro');
+      console.error("Erro ao deletar membro:", err);
+      setError(err.message || "Erro ao remover membro");
     }
   };
 
@@ -234,7 +267,7 @@ export function Configuracoes() {
           </p>
         </div>
 
-        {currentUserRole === 'admin' && (
+        {currentUserRole === "admin" && (
           <button
             onClick={() => setShowAddMember(!showAddMember)}
             className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
@@ -261,7 +294,7 @@ export function Configuracoes() {
       )}
 
       {/* Formulário Adicionar Membro */}
-      {showAddMember && currentUserRole === 'admin' && (
+      {showAddMember && currentUserRole === "admin" && (
         <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
           <h3 className="text-xl font-bold text-primor-text-light mb-4 flex items-center gap-2">
             <UserPlus className="w-6 h-6 text-primor-primary" />
@@ -393,7 +426,7 @@ export function Configuracoes() {
                 <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
                   Data de Entrada
                 </th>
-                {currentUserRole === 'admin' && (
+                {currentUserRole === "admin" && (
                   <th className="px-6 py-4 text-center text-sm font-bold text-primor-text-light">
                     Ações
                   </th>
@@ -402,17 +435,21 @@ export function Configuracoes() {
             </thead>
             <tbody className="divide-y divide-primor-gray-medium">
               {profiles.map((profile) => (
-                <tr key={profile.id} className="hover:bg-primor-bg-light transition">
+                <tr
+                  key={profile.id}
+                  className="hover:bg-primor-bg-light transition"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-primor-primary/20 rounded-full flex items-center justify-center">
                         <span className="text-primor-primary font-bold text-lg">
-                          {profile.nome_completo?.charAt(0).toUpperCase() || '?'}
+                          {profile.nome_completo?.charAt(0).toUpperCase() ||
+                            "?"}
                         </span>
                       </div>
                       <div>
                         <p className="font-semibold text-primor-text-light">
-                          {profile.nome_completo || 'Sem nome'}
+                          {profile.nome_completo || "Sem nome"}
                         </p>
                         {profile.id === user?.id && (
                           <span className="text-xs text-primor-primary font-medium">
@@ -423,26 +460,28 @@ export function Configuracoes() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-primor-gray-dark">
-                    {profile.cargo || '-'}
+                    {profile.cargo || "-"}
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                        profile.role === 'admin'
-                          ? 'bg-primor-primary/20 text-primor-secondary'
-                          : 'bg-gray-200 text-gray-700'
+                        profile.role === "admin"
+                          ? "bg-primor-primary/20 text-primor-secondary"
+                          : "bg-gray-200 text-gray-700"
                       }`}
                     >
-                      {profile.role === 'admin' && <Shield className="w-3 h-3" />}
-                      {profile.role === 'admin' ? 'Administrador' : 'Membro'}
+                      {profile.role === "admin" && (
+                        <Shield className="w-3 h-3" />
+                      )}
+                      {profile.role === "admin" ? "Administrador" : "Membro"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-primor-gray-dark text-sm">
-                    {new Date(profile.created_at).toLocaleDateString('pt-BR')}
+                    {new Date(profile.created_at).toLocaleDateString("pt-BR")}
                   </td>
-                  {currentUserRole === 'admin' && (
+                  {currentUserRole === "admin" && (
                     <td className="px-6 py-4 text-center">
-                      {profile.id !== user?.id && profile.role !== 'admin' && (
+                      {profile.id !== user?.id && profile.role !== "admin" && (
                         <button
                           onClick={() => handleDeleteMember(profile.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
