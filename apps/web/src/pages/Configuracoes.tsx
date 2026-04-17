@@ -38,11 +38,11 @@ export function Configuracoes() {
     setLoading(true);
     try {
       // Buscar perfil do usuário atual
-      const { data: currentProfile, error: profileError } = await supabase
+      const { data: currentProfile, error: profileError } = (await supabase
         .from('profiles')
         .select('role, tenant_id')
         .eq('id', user.id)
-        .maybeSingle();
+        .maybeSingle()) as { data: { role: 'admin' | 'membro'; tenant_id: string } | null; error: any };
 
       if (profileError) {
         console.error('Erro ao buscar perfil:', profileError);
@@ -63,7 +63,7 @@ export function Configuracoes() {
         }
 
         // Criar perfil
-        const { data: newProfile, error: createError } = await supabase
+        const { data: newProfile, error: createError } = (await supabase
           .from('profiles')
           .insert({
             id: user.id,
@@ -72,33 +72,37 @@ export function Configuracoes() {
             role: 'admin', // Primeiro usuário é admin
           })
           .select('role, tenant_id')
-          .single();
+          .single()) as { data: { role: 'admin' | 'membro'; tenant_id: string } | null; error: any };
 
         if (createError) {
           console.error('Erro ao criar perfil:', createError);
           throw createError;
         }
 
-        setCurrentUserRole(newProfile.role);
+        if (!newProfile) {
+          throw new Error('Erro ao criar perfil: dados não retornados');
+        }
+
+        setCurrentUserRole(newProfile.role as 'admin' | 'membro');
 
         // Buscar todos os perfis do mesmo tenant
-        const { data: teamData, error: teamError } = await supabase
+        const { data: teamData, error: teamError } = (await supabase
           .from('profiles')
           .select('id, nome_completo, cargo, role, created_at')
           .eq('tenant_id', newProfile.tenant_id)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })) as { data: Profile[] | null; error: any };
 
         if (teamError) throw teamError;
         setProfiles(teamData || []);
       } else {
-        setCurrentUserRole(currentProfile.role);
+        setCurrentUserRole(currentProfile.role as 'admin' | 'membro');
 
         // Buscar todos os perfis do mesmo tenant
-        const { data: teamData, error: teamError } = await supabase
+        const { data: teamData, error: teamError } = (await supabase
           .from('profiles')
           .select('id, nome_completo, cargo, role, created_at')
           .eq('tenant_id', currentProfile.tenant_id)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })) as { data: Profile[] | null; error: any };
 
         if (teamError) throw teamError;
         setProfiles(teamData || []);
@@ -119,10 +123,15 @@ export function Configuracoes() {
 
     try {
       // Buscar tenant_id do usuário atual
+      const tenantId = user?.user_metadata?.tenant_id;
+      if (!tenantId) {
+        throw new Error('Tenant ID não encontrado');
+      }
+
       const { data: currentProfile, error: profileError } = await supabase
         .from('profiles')
         .select('tenant_id')
-        .eq('id', user?.id)
+        .eq('id', user?.id || '')
         .maybeSingle();
 
       if (profileError) throw profileError;
