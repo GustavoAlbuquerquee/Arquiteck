@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -54,6 +55,7 @@ export function Historico() {
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'membro' | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -65,8 +67,13 @@ export function Historico() {
   }, [user]);
 
   const loadTenant = async () => {
-    const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).maybeSingle();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id, role')
+      .eq('id', user!.id)
+      .maybeSingle();
     if (!profile) return;
+    setUserRole(profile.role as 'admin' | 'membro');
     const { data } = await supabase.from('tenants').select('nome_fantasia, telefone, logo_url').eq('id', profile.tenant_id).maybeSingle();
     if (data) setTenant(data as Tenant);
   };
@@ -135,23 +142,16 @@ export function Historico() {
     }
   };
 
-  const handleDelete = async (projetoId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.')) {
-      return;
-    }
+  const [briefingToDelete, setBriefingToDelete] = useState<string | null>(null);
 
+  const handleDelete = async () => {
+    if (!briefingToDelete || userRole !== 'admin') return;
     try {
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projetoId);
-
+      const { error } = await supabase.from('projects').delete().eq('id', briefingToDelete);
       if (error) throw error;
-
-      // Recarregar lista
+      setBriefingToDelete(null);
       loadProjetos();
       setShowModal(false);
-      alert('Projeto excluído com sucesso!');
     } catch (error: any) {
       console.error('Erro ao excluir projeto:', error);
       alert('Erro ao excluir projeto: ' + error.message);
@@ -614,13 +614,15 @@ export function Historico() {
                   <Edit className="w-5 h-5" />
                   Editar
                 </button>
-                <button
-                  onClick={() => handleDelete(selectedProjeto.id)}
-                  className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition shadow-md text-sm md:text-base"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  Excluir
-                </button>
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => setBriefingToDelete(selectedProjeto.id)}
+                    className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition shadow-md text-sm md:text-base"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Excluir
+                  </button>
+                )}
                 <button
                   onClick={() => setShowModal(false)}
                   className="w-full sm:flex-1 h-10 md:h-12 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-sm md:text-base"
@@ -913,6 +915,32 @@ export function Historico() {
             </div>
           </div>
         </div>
+      )}
+      {/* Modal de confirmação de exclusão de briefing */}
+      {briefingToDelete && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">Excluir Briefing</h3>
+            <p className="text-gray-600 text-sm">
+              Tem certeza que deseja excluir este briefing definitivamente? Todos os dados serão perdidos.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setBriefingToDelete(null)}
+                className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+              >
+                Sim, Excluir
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import InputMask from "react-input-mask";
+import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import type { Database } from "@/lib/supabase/types";
+
+// ── Cache em memória (persiste entre re-montagens do componente) ──
+let cachedTeam: { profiles: Profile[]; role: 'admin' | 'membro'; tenantId: string } | null = null;
+let cachedTenant: Tenant | null = null;
 import {
   Users,
   UserPlus,
@@ -15,6 +22,7 @@ import {
   Upload,
 } from "lucide-react";
 
+// Interfaces precisam estar antes do cache, então declaramos antes do componente
 interface Profile {
   id: string;
   nome_completo: string | null;
@@ -33,12 +41,10 @@ interface Tenant {
 
 export function Configuracoes() {
   const { user } = useAuth();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [currentUserRole, setCurrentUserRole] = useState<
-    "admin" | "membro" | null
-  >(null);
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profiles, setProfiles] = useState<Profile[]>(cachedTeam?.profiles ?? []);
+  const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'membro' | null>(cachedTeam?.role ?? null);
+  const [tenantId, setTenantId] = useState<string | null>(cachedTeam?.tenantId ?? null);
+  const [loading, setLoading] = useState(cachedTeam === null);
   const [showAddMember, setShowAddMember] = useState(false);
 
   // Form states - equipe
@@ -50,12 +56,13 @@ export function Configuracoes() {
   const [submitting, setSubmitting] = useState(false);
 
   // Dados da empresa
-  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(cachedTenant);
   const [tenantForm, setTenantForm] = useState({
-    nome_fantasia: "",
-    cnpj: "",
-    telefone: "",
+    nome_fantasia: cachedTenant?.nome_fantasia ?? '',
+    cnpj: cachedTenant?.cnpj ?? '',
+    telefone: cachedTenant?.telefone ?? '',
   });
+  const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [savingTenant, setSavingTenant] = useState(false);
@@ -68,14 +75,15 @@ export function Configuracoes() {
 
   const loadTeam = async () => {
     if (!user) return;
-    setLoading(true);
+    // Só mostra spinner se não há cache
+    if (!cachedTeam) setLoading(true);
     try {
       const { data: currentProfile, error: profileError } = (await supabase
-        .from("profiles")
-        .select("role, tenant_id")
-        .eq("id", user.id)
+        .from('profiles')
+        .select('role, tenant_id')
+        .eq('id', user.id)
         .maybeSingle()) as {
-        data: { role: "admin" | "membro"; tenant_id: string } | null;
+        data: { role: 'admin' | 'membro'; tenant_id: string } | null;
         error: any;
       };
 
@@ -84,53 +92,52 @@ export function Configuracoes() {
       if (!currentProfile) {
         const tid = user.user_metadata?.tenant_id;
         if (!tid) {
-          setError(
-            "Usuário não possui tenant_id. Faça logout e login novamente.",
-          );
+          setError('Usuário não possui tenant_id. Faça logout e login novamente.');
           setLoading(false);
           return;
         }
 
         const { data: newProfile, error: createError } = (await supabase
-          .from("profiles")
-          .insert({
-            id: user.id,
-            tenant_id: tid,
-            nome_completo: user.email,
-            role: "admin",
-          })
-          .select("role, tenant_id")
+          .from('profiles')
+          .insert({ id: user.id, tenant_id: tid, nome_completo: user.email, role: 'admin' })
+          .select('role, tenant_id')
           .single()) as {
-          data: { role: "admin" | "membro"; tenant_id: string } | null;
+          data: { role: 'admin' | 'membro'; tenant_id: string } | null;
           error: any;
         };
 
         if (createError) throw createError;
-        if (!newProfile) throw new Error("Erro ao criar perfil");
+        if (!newProfile) throw new Error('Erro ao criar perfil');
 
+        const { data: teamData } = await supabase
+          .from('profiles')
+          .select('id, nome_completo, cargo, role, created_at')
+          .eq('tenant_id', newProfile.tenant_id)
+          .order('created_at', { ascending: true });
+
+        const profiles = (teamData as Profile[]) || [];
+        cachedTeam = { profiles, role: newProfile.role, tenantId: newProfile.tenant_id };
         setCurrentUserRole(newProfile.role);
         setTenantId(newProfile.tenant_id);
+        setProfiles(profiles);
         await loadTenantData(newProfile.tenant_id);
-        const { data: teamData } = await supabase
-          .from("profiles")
-          .select("id, nome_completo, cargo, role, created_at")
-          .eq("tenant_id", newProfile.tenant_id)
-          .order("created_at", { ascending: true });
-        setProfiles((teamData as Profile[]) || []);
       } else {
-        setCurrentUserRole(currentProfile.role);
-        setTenantId(currentProfile.tenant_id);
-        await loadTenantData(currentProfile.tenant_id);
         const { data: teamData, error: teamError } = (await supabase
-          .from("profiles")
-          .select("id, nome_completo, cargo, role, created_at")
-          .eq("tenant_id", currentProfile.tenant_id)
-          .order("created_at", { ascending: true })) as {
+          .from('profiles')
+          .select('id, nome_completo, cargo, role, created_at')
+          .eq('tenant_id', currentProfile.tenant_id)
+          .order('created_at', { ascending: true })) as {
           data: Profile[] | null;
           error: any;
         };
         if (teamError) throw teamError;
-        setProfiles(teamData || []);
+
+        const profiles = teamData || [];
+        cachedTeam = { profiles, role: currentProfile.role, tenantId: currentProfile.tenant_id };
+        setCurrentUserRole(currentProfile.role);
+        setTenantId(currentProfile.tenant_id);
+        setProfiles(profiles);
+        await loadTenantData(currentProfile.tenant_id);
       }
     } catch (err: any) {
       setError(err.message);
@@ -141,18 +148,16 @@ export function Configuracoes() {
 
   const loadTenantData = async (tid: string) => {
     const { data } = await supabase
-      .from("tenants")
-      .select("id, nome_fantasia, cnpj, telefone, logo_url")
-      .eq("id", tid)
+      .from('tenants')
+      .select('id, nome_fantasia, cnpj, telefone, logo_url')
+      .eq('id', tid)
       .maybeSingle();
     if (data) {
-      setTenant(data as Tenant);
-      setTenantForm({
-        nome_fantasia: data.nome_fantasia || "",
-        cnpj: data.cnpj || "",
-        telefone: data.telefone || "",
-      });
-      if (data.logo_url) setLogoPreview(data.logo_url);
+      const t = data as Tenant;
+      cachedTenant = t;
+      setTenant(t);
+      setTenantForm({ nome_fantasia: t.nome_fantasia || '', cnpj: t.cnpj || '', telefone: t.telefone || '' });
+      if (t.logo_url) setLogoPreview(t.logo_url);
     }
   };
 
@@ -200,8 +205,9 @@ export function Configuracoes() {
           : null,
       );
       setLogoFile(null);
-      setTenantSuccess("Dados da empresa salvos com sucesso!");
-      setTimeout(() => setTenantSuccess(""), 3000);
+      setIsEditingCompany(false);
+      setTenantSuccess('Dados da empresa salvos com sucesso!');
+      setTimeout(() => setTenantSuccess(''), 3000);
     } catch (err: any) {
       setTenantError(err.message || "Erro ao salvar dados da empresa");
     } finally {
@@ -211,87 +217,93 @@ export function Configuracoes() {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setSubmitting(true);
 
     try {
       const { data: currentProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("tenant_id")
-        .eq("id", user?.id || "")
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user?.id || '')
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!currentProfile) throw new Error("Perfil não encontrado");
+      if (!currentProfile) throw new Error('Perfil não encontrado');
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Cliente temporário sem persistência de sessão — evita deslogar o Admin
+      const tempSupabase = createClient<Database>(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        { auth: { persistSession: false, autoRefreshToken: false } },
+      );
+
+      const { data: authData, error: authError } = await tempSupabase.auth.signUp({
         email,
-        password: "primor123",
+        password: 'primor123',
         options: {
           emailRedirectTo: undefined,
-          data: {
-            tenant_id: currentProfile.tenant_id,
-            nome_completo: nomeCompleto,
-          },
+          data: { tenant_id: currentProfile.tenant_id, nome_completo: nomeCompleto },
         },
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error("Usuário não foi criado");
+      if (!authData.user) throw new Error('Usuário não foi criado');
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const { data: profileExists } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", authData.user.id)
-        .maybeSingle();
+        .from('profiles').select('id').eq('id', authData.user.id).maybeSingle();
 
       if (!profileExists) {
-        const { error: insertError } = await supabase.from("profiles").insert({
+        const { error: insertError } = await supabase.from('profiles').insert({
           id: authData.user.id,
           tenant_id: currentProfile.tenant_id,
           nome_completo: nomeCompleto,
-          role: "membro",
+          role: 'membro',
           cargo: cargo || null,
         });
         if (insertError) throw insertError;
       } else if (cargo) {
-        await supabase
-          .from("profiles")
-          .update({ cargo })
-          .eq("id", authData.user.id);
+        await supabase.from('profiles').update({ cargo }).eq('id', authData.user.id);
       }
 
-      setSuccess(
-        `Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`,
-      );
-      setEmail("");
-      setNomeCompleto("");
-      setCargo("");
-      setShowAddMember(false);
-      setTimeout(() => {
-        loadTeam();
-        setSuccess("");
-      }, 2000);
+      // Invalida cache para forçar reload da lista
+      cachedTeam = null;
+      setSuccess(`Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`);
+      setEmail(''); setNomeCompleto(''); setCargo('');
+      setIsAddMemberModalOpen(false);
+      setTimeout(() => { loadTeam(); setSuccess(''); }, 2000);
     } catch (err: any) {
-      setError(err.message || "Erro ao adicionar membro");
+      setError(err.message || 'Erro ao adicionar membro');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteMember = async (memberId: string) => {
-    if (!confirm("Tem certeza que deseja remover este membro?")) return;
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
+
+  const handleDeleteMember = async () => {
+    if (!memberToDelete) return;
     try {
-      const { error } = await supabase.auth.admin.deleteUser(memberId);
+      const { error, count } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', memberToDelete)
+        .select();
+
       if (error) throw error;
-      setSuccess("Membro removido com sucesso!");
-      loadTeam();
-      setTimeout(() => setSuccess(""), 2000);
+      if (count === 0) throw new Error('Sem permissão para remover este membro.');
+
+      cachedTeam = null;
+      setProfiles(prev => prev.filter(p => p.id !== memberToDelete));
+      setMemberToDelete(null);
+      setSuccess('Membro removido com sucesso!');
+      setTimeout(() => setSuccess(''), 2000);
     } catch (err: any) {
-      setError(err.message || "Erro ao remover membro");
+      setMemberToDelete(null);
+      setError(err.message || 'Erro ao remover membro');
     }
   };
 
@@ -308,9 +320,20 @@ export function Configuracoes() {
       {/* ── SEÇÃO: DADOS DA EMPRESA (apenas admin) ── */}
       {currentUserRole === "admin" && (
         <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
-          <h2 className="text-xl font-bold text-primor-text-light mb-5 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-primor-primary" />
-            Dados da Empresa
+          <h2 className="text-xl font-bold text-primor-text-light mb-5 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-primor-primary" />
+              Dados da Empresa
+            </span>
+            {currentUserRole === 'admin' && !isEditingCompany && (
+              <button
+                type="button"
+                onClick={() => setIsEditingCompany(true)}
+                className="text-sm font-semibold px-4 h-9 bg-primor-primary hover:brightness-110 text-primor-text-dark rounded-lg transition"
+              >
+                Editar
+              </button>
+            )}
           </h2>
 
           {tenantError && (
@@ -336,14 +359,15 @@ export function Configuracoes() {
                   type="text"
                   value={tenantForm.nome_fantasia}
                   onChange={(e) =>
-                    setTenantForm((f) => ({
-                      ...f,
-                      nome_fantasia: e.target.value,
-                    }))
+                    setTenantForm((f) => ({ ...f, nome_fantasia: e.target.value }))
                   }
-                  className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                  className={`w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg outline-none transition ${
+                    !isEditingCompany
+                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-70'
+                      : 'focus:border-primor-primary'
+                  }`}
                   required
-                  disabled={savingTenant}
+                  disabled={savingTenant || !isEditingCompany}
                 />
               </div>
               <div>
@@ -356,14 +380,18 @@ export function Configuracoes() {
                   onChange={(e) =>
                     setTenantForm((f) => ({ ...f, cnpj: e.target.value }))
                   }
-                  disabled={savingTenant}
+                  disabled={savingTenant || !isEditingCompany}
                 >
                   {(inputProps: any) => (
                     <input
                       {...inputProps}
                       type="text"
                       placeholder="00.000.000/0000-00"
-                      className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                      className={`w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg outline-none transition ${
+                        !isEditingCompany
+                          ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-70'
+                          : 'focus:border-primor-primary'
+                      }`}
                     />
                   )}
                 </InputMask>
@@ -378,14 +406,18 @@ export function Configuracoes() {
                   onChange={(e) =>
                     setTenantForm((f) => ({ ...f, telefone: e.target.value }))
                   }
-                  disabled={savingTenant}
+                  disabled={savingTenant || !isEditingCompany}
                 >
                   {(inputProps: any) => (
                     <input
                       {...inputProps}
                       type="text"
                       placeholder="(00) 00000-0000"
-                      className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                      className={`w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg outline-none transition ${
+                        !isEditingCompany
+                          ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-70'
+                          : 'focus:border-primor-primary'
+                      }`}
                     />
                   )}
                 </InputMask>
@@ -404,35 +436,56 @@ export function Configuracoes() {
                       className="h-12 w-auto max-w-[120px] object-contain rounded border border-primor-gray-medium"
                     />
                   )}
-                  <label className="flex-1 flex items-center justify-center gap-2 h-12 border-2 border-dashed border-primor-gray-medium rounded-lg cursor-pointer hover:border-primor-primary transition text-sm text-primor-gray-dark">
-                    <Upload className="w-4 h-4" />
-                    {logoFile ? logoFile.name : "Selecionar imagem"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleLogoChange}
-                      disabled={savingTenant}
-                    />
-                  </label>
+                  {isEditingCompany && (
+                    <label className="flex-1 flex items-center justify-center gap-2 h-12 border-2 border-dashed border-primor-gray-medium rounded-lg cursor-pointer hover:border-primor-primary transition text-sm text-primor-gray-dark">
+                      <Upload className="w-4 h-4" />
+                      {logoFile ? logoFile.name : 'Selecionar imagem'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoChange}
+                        disabled={savingTenant}
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={savingTenant}
-              className="h-12 px-8 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center gap-2"
-            >
-              {savingTenant ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "Salvar Dados da Empresa"
-              )}
-            </button>
+            {isEditingCompany && (
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={savingTenant}
+                  className="h-12 px-8 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center gap-2"
+                >
+                  {savingTenant ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    'Salvar'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingCompany(false);
+                    setLogoFile(null);
+                    if (tenant) {
+                      setTenantForm({ nome_fantasia: tenant.nome_fantasia, cnpj: tenant.cnpj, telefone: tenant.telefone || '' });
+                      setLogoPreview(tenant.logo_url);
+                    }
+                  }}
+                  disabled={savingTenant}
+                  className="h-12 px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
           </form>
         </div>
       )}
@@ -451,7 +504,7 @@ export function Configuracoes() {
           </div>
           {currentUserRole === "admin" && (
             <button
-              onClick={() => setShowAddMember(!showAddMember)}
+              onClick={() => setIsAddMemberModalOpen(true)}
               className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
             >
               <UserPlus className="w-5 h-5" />
@@ -473,109 +526,7 @@ export function Configuracoes() {
           </div>
         )}
 
-        {showAddMember && currentUserRole === "admin" && (
-          <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
-            <h3 className="text-xl font-bold text-primor-text-light mb-4 flex items-center gap-2">
-              <UserPlus className="w-6 h-6 text-primor-primary" />
-              Adicionar Novo Membro
-            </h3>
-            <form onSubmit={handleAddMember} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-primor-text-light mb-2">
-                    Email *
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
-                      placeholder="membro@empresa.com"
-                      required
-                      disabled={submitting}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primor-text-light mb-2">
-                    Nome Completo *
-                  </label>
-                  <input
-                    type="text"
-                    value={nomeCompleto}
-                    onChange={(e) => setNomeCompleto(e.target.value)}
-                    className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
-                    placeholder="João Silva"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primor-text-light mb-2">
-                    Cargo (opcional)
-                  </label>
-                  <select
-                    value={cargo}
-                    onChange={(e) => setCargo(e.target.value)}
-                    className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition bg-white"
-                    disabled={submitting}
-                  >
-                    <option value="">Selecione um cargo</option>
-                    <option value="Projetista">Projetista</option>
-                    <option value="Marceneiro">Marceneiro</option>
-                    <option value="Montador">Montador</option>
-                    <option value="Auxiliar">Auxiliar</option>
-                    <option value="Vendedor">Vendedor</option>
-                    <option value="Administrativo">Administrativo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primor-text-light mb-2">
-                    Senha Padrão
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                    <input
-                      type="text"
-                      value="primor123"
-                      className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg bg-gray-100 text-gray-600"
-                      disabled
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 h-12 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
-                      Adicionando...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-5 h-5" />
-                      Adicionar Membro
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddMember(false)}
-                  className="flex-1 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
-                  disabled={submitting}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+        {/* Formulário movido para modal — ver createPortal abaixo */}
 
         <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium overflow-hidden">
           <div className="overflow-x-auto">
@@ -631,14 +582,16 @@ export function Configuracoes() {
                       {profile.cargo || "-"}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${profile.role === "admin" ? "bg-primor-primary/20 text-primor-secondary" : "bg-gray-200 text-gray-700"}`}
-                      >
-                        {profile.role === "admin" && (
+                      {profile.role === 'admin' ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primor-primary/20 text-primor-secondary">
                           <Shield className="w-3 h-3" />
-                        )}
-                        {profile.role === "admin" ? "Administrador" : "Membro"}
-                      </span>
+                          Administrador
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">
+                          Membro
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-primor-gray-dark text-sm">
                       {new Date(profile.created_at).toLocaleDateString("pt-BR")}
@@ -648,7 +601,7 @@ export function Configuracoes() {
                         {profile.id !== user?.id &&
                           profile.role !== "admin" && (
                             <button
-                              onClick={() => handleDeleteMember(profile.id)}
+                              onClick={() => setMemberToDelete(profile.id)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                               title="Remover membro"
                             >
@@ -670,6 +623,133 @@ export function Configuracoes() {
           )}
         </div>
       </div>
+      {/* Modal de confirmação de remoção de membro */}
+      {memberToDelete && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">Remover Membro</h3>
+            <p className="text-gray-600 text-sm">
+              Tem certeza que deseja remover este membro da organização? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setMemberToDelete(null)}
+                className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteMember}
+                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+              >
+                Confirmar Remoção
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal: Adicionar Membro */}
+      {isAddMemberModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-primor-primary" />
+                Adicionar Novo Membro
+              </h3>
+              <button
+                onClick={() => setIsAddMemberModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                disabled={submitting}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleAddMember} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-11 pl-10 pr-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition"
+                    placeholder="membro@empresa.com"
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
+                <input
+                  type="text"
+                  value={nomeCompleto}
+                  onChange={(e) => setNomeCompleto(e.target.value)}
+                  className="w-full h-11 px-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition"
+                  placeholder="João Silva"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cargo (opcional)</label>
+                <select
+                  value={cargo}
+                  onChange={(e) => setCargo(e.target.value)}
+                  className="w-full h-11 px-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition bg-white"
+                  disabled={submitting}
+                >
+                  <option value="">Selecione um cargo</option>
+                  <option value="Projetista">Projetista</option>
+                  <option value="Marceneiro">Marceneiro</option>
+                  <option value="Montador">Montador</option>
+                  <option value="Auxiliar">Auxiliar</option>
+                  <option value="Vendedor">Vendedor</option>
+                  <option value="Administrativo">Administrativo</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Padrão</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value="primor123"
+                    className="w-full h-11 pl-10 pr-4 border-2 border-gray-200 rounded-lg bg-gray-100 text-gray-500"
+                    disabled
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 h-11 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <><div className="w-4 h-4 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />Adicionando...</>
+                  ) : (
+                    <><UserPlus className="w-4 h-4" />Adicionar</>  
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberModalOpen(false)}
+                  className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+                  disabled={submitting}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
