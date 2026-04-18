@@ -15,7 +15,7 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 
 interface Cliente {
@@ -58,6 +58,7 @@ export function Historico() {
   const [userRole, setUserRole] = useState<'admin' | 'membro' | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (user) {
@@ -65,6 +66,18 @@ export function Historico() {
       loadTenant();
     }
   }, [user]);
+
+  // Auto-abre o projeto quando vem do deep link do Dashboard
+  useEffect(() => {
+    const urlProjetoId = searchParams.get('projetoId');
+    if (!urlProjetoId || loading || projetos.length === 0) return;
+    const projeto = projetos.find(p => p.id === urlProjetoId);
+    if (projeto) {
+      setSelectedProjeto(projeto);
+      setShowModal(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [projetos, loading]);
 
   const loadTenant = async () => {
     const { data: profile } = await supabase
