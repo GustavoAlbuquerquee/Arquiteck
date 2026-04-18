@@ -1,146 +1,233 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { Users, UserPlus, Shield, Trash2, AlertCircle, CheckCircle, Mail, Lock } from 'lucide-react';
+import { useState, useEffect } from "react";
+import InputMask from "react-input-mask";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import {
+  Users,
+  UserPlus,
+  Shield,
+  Trash2,
+  AlertCircle,
+  CheckCircle,
+  Mail,
+  Lock,
+  Building2,
+  Upload,
+} from "lucide-react";
 
 interface Profile {
   id: string;
   nome_completo: string | null;
   cargo: string | null;
-  role: 'admin' | 'membro';
+  role: "admin" | "membro";
   created_at: string;
+}
+
+interface Tenant {
+  id: string;
+  nome_fantasia: string;
+  cnpj: string;
+  telefone: string | null;
+  logo_url: string | null;
 }
 
 export function Configuracoes() {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'membro' | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<
+    "admin" | "membro" | null
+  >(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddMember, setShowAddMember] = useState(false);
-  
-  // Form states
-  const [email, setEmail] = useState('');
-  const [nomeCompleto, setNomeCompleto] = useState('');
-  const [cargo, setCargo] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
+  // Form states - equipe
+  const [email, setEmail] = useState("");
+  const [nomeCompleto, setNomeCompleto] = useState("");
+  const [cargo, setCargo] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Dados da empresa
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tenantForm, setTenantForm] = useState({
+    nome_fantasia: "",
+    cnpj: "",
+    telefone: "",
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [savingTenant, setSavingTenant] = useState(false);
+  const [tenantSuccess, setTenantSuccess] = useState("");
+  const [tenantError, setTenantError] = useState("");
+
   useEffect(() => {
-    if (user) {
-      loadTeam();
-    }
+    if (user) loadTeam();
   }, [user]);
 
   const loadTeam = async () => {
     if (!user) return;
-
     setLoading(true);
     try {
-      // Buscar perfil do usuário atual
       const { data: currentProfile, error: profileError } = (await supabase
-        .from('profiles')
-        .select('role, tenant_id')
-        .eq('id', user.id)
-        .maybeSingle()) as { data: { role: 'admin' | 'membro'; tenant_id: string } | null; error: any };
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", user.id)
+        .maybeSingle()) as {
+        data: { role: "admin" | "membro"; tenant_id: string } | null;
+        error: any;
+      };
 
-      if (profileError) {
-        console.error('Erro ao buscar perfil:', profileError);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
-      // Se não existe perfil, criar um
       if (!currentProfile) {
-        console.log('Perfil não encontrado, criando...');
-        
-        // Extrair tenant_id dos metadados do usuário
-        const tenantId = user.user_metadata?.tenant_id;
-        
-        if (!tenantId) {
-          setError('Usuário não possui tenant_id. Faça logout e login novamente.');
+        const tid = user.user_metadata?.tenant_id;
+        if (!tid) {
+          setError(
+            "Usuário não possui tenant_id. Faça logout e login novamente.",
+          );
           setLoading(false);
           return;
         }
 
-        // Criar perfil
         const { data: newProfile, error: createError } = (await supabase
-          .from('profiles')
+          .from("profiles")
           .insert({
             id: user.id,
-            tenant_id: tenantId,
+            tenant_id: tid,
             nome_completo: user.email,
-            role: 'admin', // Primeiro usuário é admin
+            role: "admin",
           })
-          .select('role, tenant_id')
-          .single()) as { data: { role: 'admin' | 'membro'; tenant_id: string } | null; error: any };
+          .select("role, tenant_id")
+          .single()) as {
+          data: { role: "admin" | "membro"; tenant_id: string } | null;
+          error: any;
+        };
 
-        if (createError) {
-          console.error('Erro ao criar perfil:', createError);
-          throw createError;
-        }
+        if (createError) throw createError;
+        if (!newProfile) throw new Error("Erro ao criar perfil");
 
-        if (!newProfile) {
-          throw new Error('Erro ao criar perfil: dados não retornados');
-        }
-
-        setCurrentUserRole(newProfile.role as 'admin' | 'membro');
-
-        // Buscar todos os perfis do mesmo tenant
-        const { data: teamData, error: teamError } = (await supabase
-          .from('profiles')
-          .select('id, nome_completo, cargo, role, created_at')
-          .eq('tenant_id', newProfile.tenant_id)
-          .order('created_at', { ascending: true })) as { data: Profile[] | null; error: any };
-
-        if (teamError) throw teamError;
-        setProfiles(teamData || []);
+        setCurrentUserRole(newProfile.role);
+        setTenantId(newProfile.tenant_id);
+        await loadTenantData(newProfile.tenant_id);
+        const { data: teamData } = await supabase
+          .from("profiles")
+          .select("id, nome_completo, cargo, role, created_at")
+          .eq("tenant_id", newProfile.tenant_id)
+          .order("created_at", { ascending: true });
+        setProfiles((teamData as Profile[]) || []);
       } else {
-        setCurrentUserRole(currentProfile.role as 'admin' | 'membro');
-
-        // Buscar todos os perfis do mesmo tenant
+        setCurrentUserRole(currentProfile.role);
+        setTenantId(currentProfile.tenant_id);
+        await loadTenantData(currentProfile.tenant_id);
         const { data: teamData, error: teamError } = (await supabase
-          .from('profiles')
-          .select('id, nome_completo, cargo, role, created_at')
-          .eq('tenant_id', currentProfile.tenant_id)
-          .order('created_at', { ascending: true })) as { data: Profile[] | null; error: any };
-
+          .from("profiles")
+          .select("id, nome_completo, cargo, role, created_at")
+          .eq("tenant_id", currentProfile.tenant_id)
+          .order("created_at", { ascending: true })) as {
+          data: Profile[] | null;
+          error: any;
+        };
         if (teamError) throw teamError;
         setProfiles(teamData || []);
       }
     } catch (err: any) {
-      console.error('Erro ao carregar equipe:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadTenantData = async (tid: string) => {
+    const { data } = await supabase
+      .from("tenants")
+      .select("id, nome_fantasia, cnpj, telefone, logo_url")
+      .eq("id", tid)
+      .maybeSingle();
+    if (data) {
+      setTenant(data as Tenant);
+      setTenantForm({
+        nome_fantasia: data.nome_fantasia || "",
+        cnpj: data.cnpj || "",
+        telefone: data.telefone || "",
+      });
+      if (data.logo_url) setLogoPreview(data.logo_url);
+    }
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const handleSaveTenant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tenantId) return;
+    setSavingTenant(true);
+    setTenantError("");
+    setTenantSuccess("");
+
+    try {
+      let logo_url = tenant?.logo_url ?? null;
+
+      if (logoFile) {
+        const ext = logoFile.name.split(".").pop();
+        const path = `${tenantId}/logo.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("tenant_logos")
+          .upload(path, logoFile, { upsert: true });
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from("tenant_logos")
+          .getPublicUrl(path);
+        logo_url = urlData.publicUrl;
+      }
+
+      const { error: updateError } = await supabase
+        .from("tenants")
+        .update({ ...tenantForm, logo_url })
+        .eq("id", tenantId);
+
+      if (updateError) throw updateError;
+
+      setTenant((prev) =>
+        prev
+          ? { ...prev, ...tenantForm, logo_url: logo_url ?? prev.logo_url }
+          : null,
+      );
+      setLogoFile(null);
+      setTenantSuccess("Dados da empresa salvos com sucesso!");
+      setTimeout(() => setTenantSuccess(""), 3000);
+    } catch (err: any) {
+      setTenantError(err.message || "Erro ao salvar dados da empresa");
+    } finally {
+      setSavingTenant(false);
+    }
+  };
+
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setSubmitting(true);
 
     try {
-      // Buscar tenant_id do usuário atual
-      const tenantId = user?.user_metadata?.tenant_id;
-      if (!tenantId) {
-        throw new Error('Tenant ID não encontrado');
-      }
-
       const { data: currentProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user?.id || '')
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user?.id || "")
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!currentProfile) throw new Error('Perfil não encontrado');
+      if (!currentProfile) throw new Error("Perfil não encontrado");
 
-      // Criar usuário no Supabase Auth SEM autoConfirm para evitar trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password: 'primor123',
+        password: "primor123",
         options: {
           emailRedirectTo: undefined,
           data: {
@@ -151,73 +238,60 @@ export function Configuracoes() {
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Usuário não foi criado');
+      if (!authData.user) throw new Error("Usuário não foi criado");
 
-      // Aguardar um pouco para o trigger executar
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Verificar se o perfil foi criado pelo trigger
       const { data: profileExists } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', authData.user.id)
+        .from("profiles")
+        .select("id")
+        .eq("id", authData.user.id)
         .maybeSingle();
 
-      // Se o trigger não criou, criar manualmente
       if (!profileExists) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            tenant_id: currentProfile.tenant_id,
-            nome_completo: nomeCompleto,
-            role: 'membro',
-            cargo: cargo || null,
-          });
-
+        const { error: insertError } = await supabase.from("profiles").insert({
+          id: authData.user.id,
+          tenant_id: currentProfile.tenant_id,
+          nome_completo: nomeCompleto,
+          role: "membro",
+          cargo: cargo || null,
+        });
         if (insertError) throw insertError;
       } else if (cargo) {
-        // Se o perfil existe e tem cargo, atualizar
         await supabase
-          .from('profiles')
+          .from("profiles")
           .update({ cargo })
-          .eq('id', authData.user.id);
+          .eq("id", authData.user.id);
       }
 
-      setSuccess(`Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`);
-      setEmail('');
-      setNomeCompleto('');
-      setCargo('');
+      setSuccess(
+        `Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`,
+      );
+      setEmail("");
+      setNomeCompleto("");
+      setCargo("");
       setShowAddMember(false);
-      
-      // Recarregar lista
       setTimeout(() => {
         loadTeam();
-        setSuccess('');
+        setSuccess("");
       }, 2000);
     } catch (err: any) {
-      console.error('Erro ao adicionar membro:', err);
-      setError(err.message || 'Erro ao adicionar membro');
+      setError(err.message || "Erro ao adicionar membro");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!confirm('Tem certeza que deseja remover este membro?')) return;
-
+    if (!confirm("Tem certeza que deseja remover este membro?")) return;
     try {
-      // Deletar usuário (cascade vai deletar o perfil)
       const { error } = await supabase.auth.admin.deleteUser(memberId);
-      
       if (error) throw error;
-
-      setSuccess('Membro removido com sucesso!');
+      setSuccess("Membro removido com sucesso!");
       loadTeam();
-      setTimeout(() => setSuccess(''), 2000);
+      setTimeout(() => setSuccess(""), 2000);
     } catch (err: any) {
-      console.error('Erro ao deletar membro:', err);
-      setError(err.message || 'Erro ao remover membro');
+      setError(err.message || "Erro ao remover membro");
     }
   };
 
@@ -230,250 +304,371 @@ export function Configuracoes() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light flex items-center gap-3">
-            <Users className="w-8 h-8 text-primor-primary" />
-            Gestão de Equipe
-          </h1>
-          <p className="text-primor-gray-dark mt-1">
-            Gerencie os membros da sua organização
-          </p>
-        </div>
-
-        {currentUserRole === 'admin' && (
-          <button
-            onClick={() => setShowAddMember(!showAddMember)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
-          >
-            <UserPlus className="w-5 h-5" />
-            Adicionar Membro
-          </button>
-        )}
-      </div>
-
-      {/* Alertas */}
-      {error && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-green-700 text-sm">{success}</p>
-        </div>
-      )}
-
-      {/* Formulário Adicionar Membro */}
-      {showAddMember && currentUserRole === 'admin' && (
+    <div className="space-y-8">
+      {/* ── SEÇÃO: DADOS DA EMPRESA (apenas admin) ── */}
+      {currentUserRole === "admin" && (
         <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
-          <h3 className="text-xl font-bold text-primor-text-light mb-4 flex items-center gap-2">
-            <UserPlus className="w-6 h-6 text-primor-primary" />
-            Adicionar Novo Membro
-          </h3>
+          <h2 className="text-xl font-bold text-primor-text-light mb-5 flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-primor-primary" />
+            Dados da Empresa
+          </h2>
 
-          <form onSubmit={handleAddMember} className="space-y-4">
+          {tenantError && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3 mb-4">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-red-700 text-sm">{tenantError}</p>
+            </div>
+          )}
+          {tenantSuccess && (
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3 mb-4">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <p className="text-green-700 text-sm">{tenantSuccess}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveTenant} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-primor-text-light mb-2">
-                  Email *
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
-                    placeholder="membro@empresa.com"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-              </div>
-
-              {/* Nome Completo */}
-              <div>
-                <label className="block text-sm font-medium text-primor-text-light mb-2">
-                  Nome Completo *
+                  Nome Fantasia *
                 </label>
                 <input
                   type="text"
-                  value={nomeCompleto}
-                  onChange={(e) => setNomeCompleto(e.target.value)}
+                  value={tenantForm.nome_fantasia}
+                  onChange={(e) =>
+                    setTenantForm((f) => ({
+                      ...f,
+                      nome_fantasia: e.target.value,
+                    }))
+                  }
                   className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
-                  placeholder="João Silva"
                   required
-                  disabled={submitting}
+                  disabled={savingTenant}
                 />
               </div>
-
-              {/* Cargo */}
               <div>
                 <label className="block text-sm font-medium text-primor-text-light mb-2">
-                  Cargo (opcional)
+                  CNPJ
                 </label>
-                <select
-                  value={cargo}
-                  onChange={(e) => setCargo(e.target.value)}
-                  className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition bg-white"
-                  disabled={submitting}
+                <InputMask
+                  mask="99.999.999/9999-99"
+                  value={tenantForm.cnpj}
+                  onChange={(e) =>
+                    setTenantForm((f) => ({ ...f, cnpj: e.target.value }))
+                  }
+                  disabled={savingTenant}
                 >
-                  <option value="">Selecione um cargo</option>
-                  <option value="Projetista">Projetista</option>
-                  <option value="Marceneiro">Marceneiro</option>
-                  <option value="Montador">Montador</option>
-                  <option value="Auxiliar">Auxiliar</option>
-                  <option value="Vendedor">Vendedor</option>
-                  <option value="Administrativo">Administrativo</option>
-                </select>
+                  {(inputProps: any) => (
+                    <input
+                      {...inputProps}
+                      type="text"
+                      placeholder="00.000.000/0000-00"
+                      className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                    />
+                  )}
+                </InputMask>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-primor-text-light mb-2">
+                  Telefone
+                </label>
+                <InputMask
+                  mask={tenantForm.telefone.replace(/\D/g, '').length <= 10 ? '(99) 9999-9999' : '(99) 99999-9999'}
+                  value={tenantForm.telefone}
+                  onChange={(e) =>
+                    setTenantForm((f) => ({ ...f, telefone: e.target.value }))
+                  }
+                  disabled={savingTenant}
+                >
+                  {(inputProps: any) => (
+                    <input
+                      {...inputProps}
+                      type="text"
+                      placeholder="(00) 00000-0000"
+                      className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                    />
+                  )}
+                </InputMask>
               </div>
 
-              {/* Senha Padrão (info) */}
+              {/* Upload de Logo */}
               <div>
                 <label className="block text-sm font-medium text-primor-text-light mb-2">
-                  Senha Padrão
+                  Logo da Empresa
                 </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                  <input
-                    type="text"
-                    value="primor123"
-                    className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg bg-gray-100 text-gray-600"
-                    disabled
-                  />
+                <div className="flex items-center gap-3">
+                  {logoPreview && (
+                    <img
+                      src={logoPreview}
+                      alt="Logo"
+                      className="h-12 w-auto max-w-[120px] object-contain rounded border border-primor-gray-medium"
+                    />
+                  )}
+                  <label className="flex-1 flex items-center justify-center gap-2 h-12 border-2 border-dashed border-primor-gray-medium rounded-lg cursor-pointer hover:border-primor-primary transition text-sm text-primor-gray-dark">
+                    <Upload className="w-4 h-4" />
+                    {logoFile ? logoFile.name : "Selecionar imagem"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                      disabled={savingTenant}
+                    />
+                  </label>
                 </div>
               </div>
             </div>
 
-            {/* Botões */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 h-12 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
-                    Adicionando...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-5 h-5" />
-                    Adicionar Membro
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAddMember(false)}
-                className="flex-1 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
-                disabled={submitting}
-              >
-                Cancelar
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={savingTenant}
+              className="h-12 px-8 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center gap-2"
+            >
+              {savingTenant ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar Dados da Empresa"
+              )}
+            </button>
           </form>
         </div>
       )}
 
-      {/* Lista de Membros */}
-      <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-primor-primary/10 border-b-2 border-primor-primary/20">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
-                  Nome
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
-                  Cargo
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
-                  Função
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
-                  Data de Entrada
-                </th>
-                {currentUserRole === 'admin' && (
-                  <th className="px-6 py-4 text-center text-sm font-bold text-primor-text-light">
-                    Ações
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-primor-gray-medium">
-              {profiles.map((profile) => (
-                <tr key={profile.id} className="hover:bg-primor-bg-light transition">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primor-primary/20 rounded-full flex items-center justify-center">
-                        <span className="text-primor-primary font-bold text-lg">
-                          {profile.nome_completo?.charAt(0).toUpperCase() || '?'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-primor-text-light">
-                          {profile.nome_completo || 'Sem nome'}
-                        </p>
-                        {profile.id === user?.id && (
-                          <span className="text-xs text-primor-primary font-medium">
-                            (Você)
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-primor-gray-dark">
-                    {profile.cargo || '-'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                        profile.role === 'admin'
-                          ? 'bg-primor-primary/20 text-primor-secondary'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      {profile.role === 'admin' && <Shield className="w-3 h-3" />}
-                      {profile.role === 'admin' ? 'Administrador' : 'Membro'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-primor-gray-dark text-sm">
-                    {new Date(profile.created_at).toLocaleDateString('pt-BR')}
-                  </td>
-                  {currentUserRole === 'admin' && (
-                    <td className="px-6 py-4 text-center">
-                      {profile.id !== user?.id && profile.role !== 'admin' && (
-                        <button
-                          onClick={() => handleDeleteMember(profile.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                          title="Remover membro"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* ── SEÇÃO: GESTÃO DE EQUIPE ── */}
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light flex items-center gap-3">
+              <Users className="w-8 h-8 text-primor-primary" />
+              Gestão de Equipe
+            </h1>
+            <p className="text-primor-gray-dark mt-1">
+              Gerencie os membros da sua organização
+            </p>
+          </div>
+          {currentUserRole === "admin" && (
+            <button
+              onClick={() => setShowAddMember(!showAddMember)}
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+            >
+              <UserPlus className="w-5 h-5" />
+              Adicionar Membro
+            </button>
+          )}
         </div>
 
-        {profiles.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-16 h-16 text-primor-gray-dark mx-auto mb-4 opacity-50" />
-            <p className="text-primor-gray-dark">Nenhum membro encontrado</p>
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 text-sm">{error}</p>
           </div>
         )}
+        {success && (
+          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <p className="text-green-700 text-sm">{success}</p>
+          </div>
+        )}
+
+        {showAddMember && currentUserRole === "admin" && (
+          <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
+            <h3 className="text-xl font-bold text-primor-text-light mb-4 flex items-center gap-2">
+              <UserPlus className="w-6 h-6 text-primor-primary" />
+              Adicionar Novo Membro
+            </h3>
+            <form onSubmit={handleAddMember} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-primor-text-light mb-2">
+                    Email *
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                      placeholder="membro@empresa.com"
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-primor-text-light mb-2">
+                    Nome Completo *
+                  </label>
+                  <input
+                    type="text"
+                    value={nomeCompleto}
+                    onChange={(e) => setNomeCompleto(e.target.value)}
+                    className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition"
+                    placeholder="João Silva"
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-primor-text-light mb-2">
+                    Cargo (opcional)
+                  </label>
+                  <select
+                    value={cargo}
+                    onChange={(e) => setCargo(e.target.value)}
+                    className="w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary outline-none transition bg-white"
+                    disabled={submitting}
+                  >
+                    <option value="">Selecione um cargo</option>
+                    <option value="Projetista">Projetista</option>
+                    <option value="Marceneiro">Marceneiro</option>
+                    <option value="Montador">Montador</option>
+                    <option value="Auxiliar">Auxiliar</option>
+                    <option value="Vendedor">Vendedor</option>
+                    <option value="Administrativo">Administrativo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-primor-text-light mb-2">
+                    Senha Padrão
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                    <input
+                      type="text"
+                      value="primor123"
+                      className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg bg-gray-100 text-gray-600"
+                      disabled
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 h-12 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
+                      Adicionando...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-5 h-5" />
+                      Adicionar Membro
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddMember(false)}
+                  className="flex-1 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
+                  disabled={submitting}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-primor-primary/10 border-b-2 border-primor-primary/20">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                    Nome
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                    Cargo
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                    Função
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                    Data de Entrada
+                  </th>
+                  {currentUserRole === "admin" && (
+                    <th className="px-6 py-4 text-center text-sm font-bold text-primor-text-light">
+                      Ações
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-primor-gray-medium">
+                {profiles.map((profile) => (
+                  <tr
+                    key={profile.id}
+                    className="hover:bg-primor-bg-light transition"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primor-primary/20 rounded-full flex items-center justify-center">
+                          <span className="text-primor-primary font-bold text-lg">
+                            {profile.nome_completo?.charAt(0).toUpperCase() ||
+                              "?"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-primor-text-light">
+                            {profile.nome_completo || "Sem nome"}
+                          </p>
+                          {profile.id === user?.id && (
+                            <span className="text-xs text-primor-primary font-medium">
+                              (Você)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-primor-gray-dark">
+                      {profile.cargo || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${profile.role === "admin" ? "bg-primor-primary/20 text-primor-secondary" : "bg-gray-200 text-gray-700"}`}
+                      >
+                        {profile.role === "admin" && (
+                          <Shield className="w-3 h-3" />
+                        )}
+                        {profile.role === "admin" ? "Administrador" : "Membro"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-primor-gray-dark text-sm">
+                      {new Date(profile.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                    {currentUserRole === "admin" && (
+                      <td className="px-6 py-4 text-center">
+                        {profile.id !== user?.id &&
+                          profile.role !== "admin" && (
+                            <button
+                              onClick={() => handleDeleteMember(profile.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                              title="Remover membro"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {profiles.length === 0 && (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-primor-gray-dark mx-auto mb-4 opacity-50" />
+              <p className="text-primor-gray-dark">Nenhum membro encontrado</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

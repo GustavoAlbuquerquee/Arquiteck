@@ -41,20 +41,35 @@ interface Projeto {
   checklists: Checklist[];
 }
 
+interface Tenant {
+  nome_fantasia: string;
+  telefone: string | null;
+  logo_url: string | null;
+}
+
 export function Historico() {
   const { user } = useAuth();
   const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       loadProjetos();
+      loadTenant();
     }
   }, [user]);
+
+  const loadTenant = async () => {
+    const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).maybeSingle();
+    if (!profile) return;
+    const { data } = await supabase.from('tenants').select('nome_fantasia, telefone, logo_url').eq('id', profile.tenant_id).maybeSingle();
+    if (data) setTenant(data as Tenant);
+  };
 
   const loadProjetos = async () => {
     try {
@@ -633,13 +648,19 @@ export function Historico() {
           <div ref={pdfRef} className="w-[210mm] bg-white p-8">
             <div className="space-y-6">
               <div
-                className="text-center border-b-2 border-gray-300 pb-4"
+                className="flex items-center justify-between border-b-2 border-gray-300 pb-4"
                 style={{ pageBreakInside: "avoid" }}
               >
-                <h1 className="text-3xl font-bold text-gray-900">Arquiteck</h1>
-                <p className="text-lg text-gray-600">
-                  Briefing de Primeira Visita
-                </p>
+                <div className="flex items-center gap-4">
+                  {tenant?.logo_url && (
+                    <img src={tenant.logo_url} alt="Logo" style={{ maxHeight: '60px', maxWidth: '120px', objectFit: 'contain' }} />
+                  )}
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{tenant?.nome_fantasia || 'Arquiteck'}</h1>
+                    {tenant?.telefone && <p className="text-sm text-gray-500">{tenant.telefone}</p>}
+                  </div>
+                </div>
+                <p className="text-base text-gray-600 font-medium">Briefing de Primeira Visita</p>
               </div>
 
               <div style={{ pageBreakInside: "avoid" }}>
