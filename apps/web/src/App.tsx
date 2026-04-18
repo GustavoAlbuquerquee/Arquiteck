@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { Dashboard } from '@/pages/Dashboard';
 import { NovaVisita, Configuracoes } from '@/pages';
 import { Historico } from '@/pages/Historico';
+import { Producao } from '@/pages/Producao';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { InstallPWA } from '@/components/InstallPWA';
@@ -30,6 +31,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="nova-visita" element={<NovaVisita />} />
             <Route path="historico" element={<Historico />} />
+            <Route path="producao" element={<Producao />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
 
