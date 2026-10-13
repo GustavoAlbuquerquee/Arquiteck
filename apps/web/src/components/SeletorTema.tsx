@@ -130,7 +130,11 @@ export function BotaoTema({ className = '' }: { className?: string }) {
         type="button"
         onClick={() => {
           definirTema(proximo);
-          setAnuncio(`Tema ${rotuloPreferencia(proximo).toLowerCase()} ativado`);
+          setAnuncio(
+            proximo === 'sistema'
+              ? 'Tema do sistema ativado'
+              : `Tema ${rotuloPreferencia(proximo).toLowerCase()} ativado`,
+          );
         }}
         aria-label={`Tema: ${atual}. Mudar para ${rotuloPreferencia(proximo).toLowerCase()}`}
         title={`Tema: ${atual}`}
