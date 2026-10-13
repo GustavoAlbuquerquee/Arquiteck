@@ -10,7 +10,7 @@ const menuItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/nova-visita', label: 'Briefing/Visita', icon: Plus },
   { path: '/historico', label: 'Histórico', icon: History },
-  { path: '/producao', label: 'Produção', icon: Kanban },
+  { path: '/producao', label: 'Jornada', icon: Kanban },
   { path: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
