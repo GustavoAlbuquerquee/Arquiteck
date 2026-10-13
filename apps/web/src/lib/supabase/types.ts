@@ -204,7 +204,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      salvar_briefing: {
+        Args: {
+          p_project_id: string | null
+          p_cliente: Json
+          p_projeto: Json
+          p_payload: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       checklist_tipo_etapa: "pre_producao" | "saida" | "instalacao"

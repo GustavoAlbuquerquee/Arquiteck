@@ -14,4 +14,4 @@ for f in supabase-schema.sql supabase-migration-profiles.sql supabase-migration-
          fase-12-white-label.sql fase-14-delete-auth-cascade.sql; do run "$f"; done
 run supabase/tests/01_seed.sql
 for f in supabase/migrations/*.sql; do run "$f"; done
-psql "$T" -f supabase/tests/02_rls_test.sql
+for f in supabase/tests/0[2-9]_*test.sql; do psql "$T" -f "$f"; done
