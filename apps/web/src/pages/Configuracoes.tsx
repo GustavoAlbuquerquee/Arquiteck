@@ -28,9 +28,11 @@ import {
   Building2,
   Upload,
   KeyRound,
+  SunMoon,
   X,
 } from "lucide-react";
 import { NovaSenhaForm } from "@/components/NovaSenhaForm";
+import { SeletorTema } from "@/components/SeletorTema";
 
 // Interfaces precisam estar antes do cache, então declaramos antes do componente
 interface Profile {
@@ -275,7 +277,7 @@ export function Configuracoes() {
       <header className="entrada">
         <p className="etiqueta">Oficina</p>
         <h1 className="titulo-pagina mt-2">Configurações</h1>
-        <p className="mt-2 text-primor-muted">Empresa, equipe e acesso</p>
+        <p className="mt-2 text-primor-muted">Empresa, equipe, acesso e aparência</p>
         <div aria-hidden="true" className="regua mt-8" />
       </header>
 
@@ -390,6 +392,7 @@ export function Configuracoes() {
                 </p>
                 <div className="flex items-center gap-3">
                   {logoPreview && (
+                    // Fundo branco nos dois temas: logos costumam ter tinta escura e fundo transparente
                     <img
                       src={logoPreview}
                       alt="Logo da empresa"
@@ -397,7 +400,7 @@ export function Configuracoes() {
                     />
                   )}
                   {isEditingCompany ? (
-                    <label className="flex min-h-[48px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-white px-3 text-sm font-medium text-primor-secondary transition-colors hover:border-primor-secondary hover:bg-primor-bg-light has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary">
+                    <label className="flex min-h-[48px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-primor-surface px-3 text-sm font-medium text-primor-secondary transition-colors hover:border-primor-secondary hover:bg-primor-bg-light has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary dark:has-[:focus-visible]:outline-primor-primary">
                       <Upload aria-hidden="true" className="h-4 w-4" />
                       <span className="truncate">{logoFile ? logoFile.name : 'Selecionar imagem'}</span>
                       <input
@@ -425,7 +428,7 @@ export function Configuracoes() {
                 >
                   {savingTenant ? (
                     <>
-                      <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-secondary border-t-transparent" />
+                      <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-on-primary border-t-transparent" />
                       Salvando...
                     </>
                   ) : (
@@ -528,7 +531,7 @@ export function Configuracoes() {
                   >
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div aria-hidden="true" className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-primor-secondary font-display text-lg font-semibold text-primor-primary">
+                        <div aria-hidden="true" className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-primor-madeira font-display text-lg font-semibold text-primor-primary">
                           {profile.nome_completo?.charAt(0).toUpperCase() ||
                             "?"}
                         </div>
@@ -549,7 +552,7 @@ export function Configuracoes() {
                     </td>
                     <td className="px-6 py-3.5">
                       {profile.role === 'admin' ? (
-                        <span className="inline-flex items-center gap-1 rounded-sm bg-primor-primary px-2 py-0.5 text-xs font-semibold text-primor-secondary">
+                        <span className="inline-flex items-center gap-1 rounded-sm bg-primor-primary px-2 py-0.5 text-xs font-semibold text-primor-on-primary">
                           <Shield aria-hidden="true" className="h-3 w-3" />
                           Administrador
                         </span>
@@ -569,7 +572,7 @@ export function Configuracoes() {
                             <button
                               type="button"
                               onClick={() => setMemberToDelete(profile.id)}
-                              className="btn-icon text-[#b42318] hover:bg-[#fdf1ef]"
+                              className="btn-icon text-primor-erro hover:bg-primor-erro-bg"
                               title="Remover membro"
                               aria-label={`Remover ${profile.nome_completo || "membro"}`}
                             >
@@ -607,15 +610,28 @@ export function Configuracoes() {
         </div>
       </section>
 
+      {/* ── SEÇÃO: APARÊNCIA (preferência deste aparelho) ── */}
+      <section aria-labelledby="titulo-aparencia" className="panel fita py-6 pl-7 pr-6 md:py-7 md:pl-9 md:pr-8">
+        <p className="etiqueta">{currentUserRole === "admin" ? "04" : "03"}</p>
+        <h2 id="titulo-aparencia" className="titulo-secao mt-1 flex items-center gap-2.5">
+          <SunMoon aria-hidden="true" strokeWidth={1.75} className="h-6 w-6 text-primor-primary-ink" />
+          Aparência
+        </h2>
+        <p className="mb-6 mt-1 max-w-prose text-primor-muted">
+          Tema da interface neste aparelho. Os PDFs continuam em papel branco.
+        </p>
+        <SeletorTema variante="papel" />
+      </section>
+
       {/* Modal de confirmação de remoção de membro */}
       {memberToDelete && createPortal(
-        <div className="fixed inset-0 z-modal flex items-center justify-center bg-primor-secondary-deep/60 p-4 animate-fade-in">
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-primor-veu/60 p-4 animate-fade-in">
           <div
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="titulo-remover-membro"
             aria-describedby="texto-remover-membro"
-            className="w-full max-w-md space-y-4 rounded-lg border-t-4 border-[#b42318] bg-white p-6 shadow-chapa-lg"
+            className="w-full max-w-md space-y-4 rounded-lg border-t-4 border-primor-erro bg-primor-surface p-6 shadow-chapa-lg dark:ring-1 dark:ring-primor-line"
           >
             <h3 id="titulo-remover-membro" className="font-display text-xl font-semibold text-primor-secondary">
               Remover membro
@@ -646,12 +662,12 @@ export function Configuracoes() {
 
       {/* Modal: Adicionar Membro */}
       {isAddMemberModalOpen && createPortal(
-        <div className="fixed inset-0 z-modal flex items-end justify-center bg-primor-secondary-deep/60 animate-fade-in sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-modal flex items-end justify-center bg-primor-veu/60 animate-fade-in sm:items-center sm:p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="titulo-novo-membro"
-            className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-xl bg-white p-6 shadow-chapa-lg sm:rounded-lg"
+            className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-xl bg-primor-surface p-6 shadow-chapa-lg dark:ring-1 dark:ring-primor-line sm:rounded-lg"
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
@@ -762,7 +778,7 @@ export function Configuracoes() {
                   className="btn btn-primary flex-1"
                 >
                   {submitting ? (
-                    <><span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-primor-secondary border-t-transparent" />Adicionando...</>
+                    <><span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-primor-on-primary border-t-transparent" />Adicionando...</>
                   ) : (
                     <><UserPlus aria-hidden="true" className="h-4 w-4" />Adicionar</>
                   )}
