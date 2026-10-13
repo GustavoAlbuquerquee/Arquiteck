@@ -3,6 +3,7 @@ import { UseFormRegister, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import SignatureCanvas from 'react-signature-canvas';
 import { ChecklistFormData } from '@/schemas/checklistSchema';
 import { FileText, Eraser, PenTool } from 'lucide-react';
+import { useUrlsAssinadas } from '@/lib/useUrlsAssinadas';
 
 interface Step3Props {
   register: UseFormRegister<ChecklistFormData>;
@@ -19,6 +20,7 @@ export function Step3Finalizacao({ register, setValue, errors, assinaturaAtual, 
   // Assinatura já salva no banco (modo edição): mostrada à parte, porque
   // desenhar uma imagem de outro domínio no canvas impede exportá-lo depois
   const assinaturaSalva = assinaturaAtual && !assinaturaAtual.startsWith('data:') ? assinaturaAtual : '';
+  const urlDaAssinatura = useUrlsAssinadas([assinaturaSalva]);
 
   // O passo desmonta ao voltar para o passo 2; ao remontar, redesenha a
   // assinatura que continua no formulário
@@ -72,7 +74,7 @@ export function Step3Finalizacao({ register, setValue, errors, assinaturaAtual, 
           <div className="mb-3">
             <p className="text-sm text-gray-600 mb-2">Assinatura atual. Assine abaixo apenas se quiser substituí-la.</p>
             <img
-              src={assinaturaSalva}
+              src={urlDaAssinatura(assinaturaSalva)}
               alt="Assinatura atual"
               className="max-h-32 border-2 border-gray-200 rounded-lg bg-white"
             />

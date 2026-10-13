@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { comprimirImagem } from "@/lib/image";
+import { useUrlsAssinadas } from "@/lib/useUrlsAssinadas";
 
 interface Step2Props {
   register: UseFormRegister<ChecklistFormData>;
@@ -74,6 +75,8 @@ export function Step2Levantamento({
   const eletrodomesticosSelecionados = watch("eletrodomesticos") || [];
   const especificacoes = watch("especificacoesAmbiente");
   const fotosAmbiente = watch("fotosAmbiente") || [];
+  // Fotos já salvas ficam no bucket privado: exibidas por URL assinada
+  const urlDaFoto = useUrlsAssinadas(fotosAmbiente);
 
   const handleAddMovel = () => {
     appendMovel({
@@ -807,7 +810,7 @@ export function Step2Levantamento({
                   className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group"
                 >
                   <img
-                    src={foto}
+                    src={urlDaFoto(foto)}
                     alt={`Foto ${index + 1}`}
                     className="w-full h-full object-cover"
                   />

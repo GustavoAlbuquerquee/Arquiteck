@@ -27,7 +27,9 @@ import {
   Lock,
   Building2,
   Upload,
+  KeyRound,
 } from "lucide-react";
+import { NovaSenhaForm } from "@/components/NovaSenhaForm";
 
 // Interfaces precisam estar antes do cache, então declaramos antes do componente
 interface Profile {
@@ -215,7 +217,7 @@ export function Configuracoes() {
       // Invalida cache para forçar reload da lista
       cachedTeam = null;
       setSuccess(
-        `Membro ${nomeCompleto} adicionado! Login: ${email} — senha inicial: ${senhaInicial}. Anote e repasse ao membro.`,
+        `Membro ${nomeCompleto} adicionado! Login: ${email} — senha inicial: ${senhaInicial}. Repasse ao membro; ele pode trocá-la em Configurações > Alterar Senha.`,
       );
       setEmail(''); setNomeCompleto(''); setCargo(''); setSenhaInicial(gerarSenhaInicial());
       setIsAddMemberModalOpen(false);
@@ -570,6 +572,21 @@ export function Configuracoes() {
           )}
         </div>
       </div>
+
+      {/* ── SEÇÃO: MINHA CONTA (todos os usuários) ── */}
+      <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
+        <h2 className="text-xl font-bold text-primor-text-light mb-1 flex items-center gap-2">
+          <KeyRound className="w-6 h-6 text-primor-primary" />
+          Alterar Senha
+        </h2>
+        <p className="text-primor-gray-dark text-sm mb-5">
+          Membros cadastrados com senha inicial devem trocá-la aqui no primeiro acesso.
+        </p>
+        <div className="max-w-md">
+          <NovaSenhaForm />
+        </div>
+      </div>
+
       {/* Modal de confirmação de remoção de membro */}
       {memberToDelete && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -674,7 +691,7 @@ export function Configuracoes() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Gerada automaticamente. Repasse ao membro após o cadastro.
+                  Gerada automaticamente. Repasse ao membro; ele troca em Configurações no primeiro acesso.
                 </p>
               </div>
               {error && (

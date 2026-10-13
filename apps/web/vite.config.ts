@@ -35,7 +35,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
-        // Apenas arquivos públicos do Storage (fotos, assinaturas, logos).
+        // Apenas arquivos públicos do Storage (logos). Fotos e assinaturas ficam
+        // no bucket privado e usam URLs assinadas, que não entram neste cache.
         // Respostas da API (REST/Auth) não são cacheadas: a chave do cache é só a URL,
         // então dados de um usuário poderiam ser servidos a outro no mesmo aparelho.
         runtimeCaching: [
