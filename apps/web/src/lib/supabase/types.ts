@@ -127,33 +127,106 @@ export type Database = {
           },
         ]
       }
+      project_eventos: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          de_etapa: Database["public"]["Enums"]["project_status"] | null
+          id: string
+          mensagem: string | null
+          origem: string
+          para_etapa: Database["public"]["Enums"]["project_status"] | null
+          project_id: string
+          tenant_id: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          de_etapa?: Database["public"]["Enums"]["project_status"] | null
+          id?: string
+          mensagem?: string | null
+          origem?: string
+          para_etapa?: Database["public"]["Enums"]["project_status"] | null
+          project_id: string
+          tenant_id?: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          de_etapa?: Database["public"]["Enums"]["project_status"] | null
+          id?: string
+          mensagem?: string | null
+          origem?: string
+          para_etapa?: Database["public"]["Enums"]["project_status"] | null
+          project_id?: string
+          tenant_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_eventos_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_eventos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_eventos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_id: string
           created_at: string | null
           data_prevista_instalacao: string | null
+          etapa_desde: string
           id: string
+          proximo_followup_at: string | null
           status: Database["public"]["Enums"]["project_status"] | null
           tenant_id: string
-          titulo_ambiente: string
+          titulo_ambiente: string | null
+          ultimo_contato_cliente_at: string | null
+          ultimo_contato_nosso_at: string | null
         }
         Insert: {
           client_id: string
           created_at?: string | null
           data_prevista_instalacao?: string | null
+          etapa_desde?: string
           id?: string
+          proximo_followup_at?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
           tenant_id: string
-          titulo_ambiente: string
+          titulo_ambiente?: string | null
+          ultimo_contato_cliente_at?: string | null
+          ultimo_contato_nosso_at?: string | null
         }
         Update: {
           client_id?: string
           created_at?: string | null
           data_prevista_instalacao?: string | null
+          etapa_desde?: string
           id?: string
+          proximo_followup_at?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
           tenant_id?: string
-          titulo_ambiente?: string
+          titulo_ambiente?: string | null
+          ultimo_contato_cliente_at?: string | null
+          ultimo_contato_nosso_at?: string | null
         }
         Relationships: [
           {
@@ -204,6 +277,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      criar_lead: {
+        Args: {
+          p_nome: string
+          p_telefone?: string | null
+          p_observacao?: string | null
+        }
+        Returns: string
+      }
       salvar_briefing: {
         Args: {
           p_project_id: string | null
@@ -217,7 +298,11 @@ export type Database = {
     Enums: {
       checklist_tipo_etapa: "pre_producao" | "saida" | "instalacao"
       project_status:
+        | "novo_contato"
+        | "em_conversa"
+        | "visita"
         | "orcamento"
+        | "fechado"
         | "pre_producao"
         | "producao"
         | "instalacao"
@@ -351,7 +436,11 @@ export const Constants = {
     Enums: {
       checklist_tipo_etapa: ["pre_producao", "saida", "instalacao"],
       project_status: [
+        "novo_contato",
+        "em_conversa",
+        "visita",
         "orcamento",
+        "fechado",
         "pre_producao",
         "producao",
         "instalacao",
