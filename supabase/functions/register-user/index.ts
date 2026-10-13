@@ -26,6 +26,13 @@ serve(async (req) => {
       )
     }
 
+    if (String(password).length < 6 || String(cnpj).replace(/\D/g, '').length !== 14) {
+      return new Response(
+        JSON.stringify({ error: 'Senha ou CNPJ inválidos' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // 1. Criar tenant
     const { data: tenant, error: tenantError } = await supabaseAdmin
       .from('tenants')
@@ -34,13 +41,15 @@ serve(async (req) => {
       .single()
 
     if (tenantError) {
+      const duplicado = tenantError.code === '23505'
       return new Response(
-        JSON.stringify({ error: `Erro ao criar empresa: ${tenantError.message}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: duplicado ? 'Este CNPJ já está cadastrado' : 'Erro ao criar empresa' }),
+        { status: duplicado ? 409 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     // 2. Criar usuário via Admin API
+    // tenant/role em app_metadata: só o service_role grava, e é o que o trigger usa
     const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -48,13 +57,35 @@ serve(async (req) => {
       user_metadata: {
         tenant_id: tenant.id,
         nome_completo: nome_completo || ''
+      },
+      app_metadata: {
+        tenant_id: tenant.id,
+        role: 'admin'
       }
     })
 
-    if (userError) {
+    if (userError || !user.user) {
+      await supabaseAdmin.from('tenants').delete().eq('id', tenant.id)
+      const jaExiste = userError?.message?.toLowerCase().includes('already')
+      return new Response(
+        JSON.stringify({ error: jaExiste ? 'Este e-mail já está cadastrado' : 'Erro ao criar usuário' }),
+        { status: jaExiste ? 409 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 3. Garantir o perfil de admin (o trigger normalmente já criou)
+    const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
+      id: user.user.id,
+      tenant_id: tenant.id,
+      nome_completo: nome_completo || email,
+      role: 'admin'
+    })
+
+    if (profileError) {
+      await supabaseAdmin.auth.admin.deleteUser(user.user.id)
       await supabaseAdmin.from('tenants').delete().eq('id', tenant.id)
       return new Response(
-        JSON.stringify({ error: `Erro ao criar usuário: ${userError.message}` }),
+        JSON.stringify({ error: 'Erro ao criar perfil' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -68,9 +99,9 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
+  } catch (_error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Erro inesperado ao criar conta' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

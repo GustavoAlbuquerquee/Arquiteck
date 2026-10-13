@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import InputMask from "react-input-mask";
-import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import type { Database } from "@/lib/supabase/types";
+import { invokeFunction } from "@/lib/supabase/functions";
 
 // ── Cache em memória (persiste entre re-montagens do componente) ──
-let cachedTeam: { profiles: Profile[]; role: 'admin' | 'membro'; tenantId: string } | null = null;
-let cachedTenant: Tenant | null = null;
+// Guardado por usuário para não exibir dados de outra conta após trocar de login na mesma aba
+let cachedTeam: { userId: string; profiles: Profile[]; role: 'admin' | 'membro'; tenantId: string } | null = null;
+let cachedTenant: { userId: string; tenant: Tenant } | null = null;
+
+// Senha inicial aleatória sugerida ao cadastrar um membro
+function gerarSenhaInicial(tamanho = 10) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const valores = crypto.getRandomValues(new Uint32Array(tamanho));
+  return Array.from(valores, (v) => chars[v % chars.length]).join('');
+}
 import {
   Users,
   UserPlus,
@@ -41,26 +48,30 @@ interface Tenant {
 
 export function Configuracoes() {
   const { user } = useAuth();
+  if (cachedTeam && cachedTeam.userId !== user?.id) cachedTeam = null;
+  if (cachedTenant && cachedTenant.userId !== user?.id) cachedTenant = null;
+  const tenantCache = cachedTenant?.tenant ?? null;
+
   const [profiles, setProfiles] = useState<Profile[]>(cachedTeam?.profiles ?? []);
   const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'membro' | null>(cachedTeam?.role ?? null);
   const [tenantId, setTenantId] = useState<string | null>(cachedTeam?.tenantId ?? null);
   const [loading, setLoading] = useState(cachedTeam === null);
-  const [showAddMember, setShowAddMember] = useState(false);
 
   // Form states - equipe
   const [email, setEmail] = useState("");
   const [nomeCompleto, setNomeCompleto] = useState("");
   const [cargo, setCargo] = useState("");
+  const [senhaInicial, setSenhaInicial] = useState(gerarSenhaInicial);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Dados da empresa
-  const [tenant, setTenant] = useState<Tenant | null>(cachedTenant);
+  const [tenant, setTenant] = useState<Tenant | null>(tenantCache);
   const [tenantForm, setTenantForm] = useState({
-    nome_fantasia: cachedTenant?.nome_fantasia ?? '',
-    cnpj: cachedTenant?.cnpj ?? '',
-    telefone: cachedTenant?.telefone ?? '',
+    nome_fantasia: tenantCache?.nome_fantasia ?? '',
+    cnpj: tenantCache?.cnpj ?? '',
+    telefone: tenantCache?.telefone ?? '',
   });
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -90,37 +101,8 @@ export function Configuracoes() {
       if (profileError) throw profileError;
 
       if (!currentProfile) {
-        const tid = user.user_metadata?.tenant_id;
-        if (!tid) {
-          setError('Usuário não possui tenant_id. Faça logout e login novamente.');
-          setLoading(false);
-          return;
-        }
-
-        const { data: newProfile, error: createError } = (await supabase
-          .from('profiles')
-          .insert({ id: user.id, tenant_id: tid, nome_completo: user.email, role: 'admin' })
-          .select('role, tenant_id')
-          .single()) as {
-          data: { role: 'admin' | 'membro'; tenant_id: string } | null;
-          error: any;
-        };
-
-        if (createError) throw createError;
-        if (!newProfile) throw new Error('Erro ao criar perfil');
-
-        const { data: teamData } = await supabase
-          .from('profiles')
-          .select('id, nome_completo, cargo, role, created_at')
-          .eq('tenant_id', newProfile.tenant_id)
-          .order('created_at', { ascending: true });
-
-        const profiles = (teamData as Profile[]) || [];
-        cachedTeam = { profiles, role: newProfile.role, tenantId: newProfile.tenant_id };
-        setCurrentUserRole(newProfile.role);
-        setTenantId(newProfile.tenant_id);
-        setProfiles(profiles);
-        await loadTenantData(newProfile.tenant_id);
+        // Perfis são criados apenas pelo cadastro / Edge Functions
+        setError('Seu usuário não está vinculado a nenhuma empresa. Fale com o administrador da conta.');
       } else {
         const { data: teamData, error: teamError } = (await supabase
           .from('profiles')
@@ -133,7 +115,7 @@ export function Configuracoes() {
         if (teamError) throw teamError;
 
         const profiles = teamData || [];
-        cachedTeam = { profiles, role: currentProfile.role, tenantId: currentProfile.tenant_id };
+        cachedTeam = { userId: user.id, profiles, role: currentProfile.role, tenantId: currentProfile.tenant_id };
         setCurrentUserRole(currentProfile.role);
         setTenantId(currentProfile.tenant_id);
         setProfiles(profiles);
@@ -154,7 +136,7 @@ export function Configuracoes() {
       .maybeSingle();
     if (data) {
       const t = data as Tenant;
-      cachedTenant = t;
+      if (user) cachedTenant = { userId: user.id, tenant: t };
       setTenant(t);
       setTenantForm({ nome_fantasia: t.nome_fantasia || '', cnpj: t.cnpj || '', telefone: t.telefone || '' });
       if (t.logo_url) setLogoPreview(t.logo_url);
@@ -222,58 +204,22 @@ export function Configuracoes() {
     setSubmitting(true);
 
     try {
-      const { data: currentProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user?.id || '')
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (!currentProfile) throw new Error('Perfil não encontrado');
-
-      // Cliente temporário sem persistência de sessão — evita deslogar o Admin
-      const tempSupabase = createClient<Database>(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY,
-        { auth: { persistSession: false, autoRefreshToken: false } },
-      );
-
-      const { data: authData, error: authError } = await tempSupabase.auth.signUp({
+      // Edge Function valida que quem chama é admin e cria o membro no mesmo tenant
+      await invokeFunction('create-member', {
         email,
-        password: 'primor123',
-        options: {
-          emailRedirectTo: undefined,
-          data: { tenant_id: currentProfile.tenant_id, nome_completo: nomeCompleto },
-        },
+        password: senhaInicial,
+        nome_completo: nomeCompleto,
+        cargo: cargo || null,
       });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Usuário não foi criado');
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const { data: profileExists } = await supabase
-        .from('profiles').select('id').eq('id', authData.user.id).maybeSingle();
-
-      if (!profileExists) {
-        const { error: insertError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          tenant_id: currentProfile.tenant_id,
-          nome_completo: nomeCompleto,
-          role: 'membro',
-          cargo: cargo || null,
-        });
-        if (insertError) throw insertError;
-      } else if (cargo) {
-        await supabase.from('profiles').update({ cargo }).eq('id', authData.user.id);
-      }
 
       // Invalida cache para forçar reload da lista
       cachedTeam = null;
-      setSuccess(`Membro ${nomeCompleto} adicionado com sucesso! Senha padrão: primor123`);
-      setEmail(''); setNomeCompleto(''); setCargo('');
+      setSuccess(
+        `Membro ${nomeCompleto} adicionado! Login: ${email} — senha inicial: ${senhaInicial}. Anote e repasse ao membro.`,
+      );
+      setEmail(''); setNomeCompleto(''); setCargo(''); setSenhaInicial(gerarSenhaInicial());
       setIsAddMemberModalOpen(false);
-      setTimeout(() => { loadTeam(); setSuccess(''); }, 2000);
+      loadTeam();
     } catch (err: any) {
       setError(err.message || 'Erro ao adicionar membro');
     } finally {
@@ -287,14 +233,15 @@ export function Configuracoes() {
   const handleDeleteMember = async () => {
     if (!memberToDelete) return;
     try {
-      const { error, count } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', memberToDelete)
-        .select();
+        .select('id');
 
       if (error) throw error;
-      if (count === 0) throw new Error('Sem permissão para remover este membro.');
+      // A RLS não retorna erro quando bloqueia: apenas nenhuma linha é removida
+      if (!data || data.length === 0) throw new Error('Sem permissão para remover este membro.');
 
       cachedTeam = null;
       setProfiles(prev => prev.filter(p => p.id !== memberToDelete));
@@ -504,7 +451,7 @@ export function Configuracoes() {
           </div>
           {currentUserRole === "admin" && (
             <button
-              onClick={() => setIsAddMemberModalOpen(true)}
+              onClick={() => { setError(''); setIsAddMemberModalOpen(true); }}
               className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
             >
               <UserPlus className="w-5 h-5" />
@@ -713,17 +660,29 @@ export function Configuracoes() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Padrão</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Inicial *</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    value="primor123"
-                    className="w-full h-11 pl-10 pr-4 border-2 border-gray-200 rounded-lg bg-gray-100 text-gray-500"
-                    disabled
+                    value={senhaInicial}
+                    onChange={(e) => setSenhaInicial(e.target.value)}
+                    className="w-full h-11 pl-10 pr-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition font-mono"
+                    minLength={8}
+                    required
+                    disabled={submitting}
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Gerada automaticamente. Repasse ao membro após o cadastro.
+                </p>
               </div>
+              {error && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
               <div className="flex gap-3 pt-1">
                 <button
                   type="submit"

@@ -117,7 +117,6 @@ export function Historico() {
   const handleVerDetalhes = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
     setShowModal(true);
-    console.log("📋 Detalhes do Projeto:", projeto);
   };
 
   const handleDownloadPDF = async () => {
@@ -160,8 +159,10 @@ export function Historico() {
   const handleDelete = async () => {
     if (!briefingToDelete || userRole !== 'admin') return;
     try {
-      const { error } = await supabase.from('projects').delete().eq('id', briefingToDelete);
+      const { data, error } = await supabase.from('projects').delete().eq('id', briefingToDelete).select('id');
       if (error) throw error;
+      // A RLS não retorna erro quando bloqueia: apenas nenhuma linha é removida
+      if (!data || data.length === 0) throw new Error('sem permissão para excluir este projeto.');
       setBriefingToDelete(null);
       loadProjetos();
       setShowModal(false);

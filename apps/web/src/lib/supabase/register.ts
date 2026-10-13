@@ -1,4 +1,4 @@
-import { supabase } from './client';
+import { invokeFunction } from './functions';
 
 export async function registerUser(
   email: string,
@@ -7,19 +7,11 @@ export async function registerUser(
   nomeFantasia: string,
   cnpj: string
 ) {
-  const response = await supabase.functions.invoke('register-user', {
-    body: { 
-      email, 
-      password, 
-      nome_completo: nomeCompleto, 
-      nome_fantasia: nomeFantasia, 
-      cnpj 
-    },
+  return invokeFunction('register-user', {
+    email,
+    password,
+    nome_completo: nomeCompleto,
+    nome_fantasia: nomeFantasia,
+    cnpj,
   });
-
-  if (response.error) {
-    throw response.error;
-  }
-
-  return response.data;
 }
