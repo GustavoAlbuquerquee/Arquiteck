@@ -1,16 +1,21 @@
-/**
- * Representação visual das etapas do projeto, da visita à instalação.
- * Só apresentação: os nomes das etapas continuam vindo de cada tela.
- */
-export const ORDEM_ETAPAS = ['orcamento', 'pre_producao', 'producao', 'instalacao', 'concluido'] as const;
+import { ORDEM_ETAPAS, indiceEtapa } from '@/lib/jornada/etapas';
 
-export function indiceEtapa(status: string | null | undefined) {
-  return ORDEM_ETAPAS.indexOf((status ?? '') as (typeof ORDEM_ETAPAS)[number]);
-}
+/**
+ * Representação visual das etapas do projeto, do primeiro contato à
+ * instalação. A ordem e os nomes vêm de src/lib/jornada/etapas.ts.
+ */
+export { ORDEM_ETAPAS, indiceEtapa };
 
 /** Classes do selo de etapa: tons da própria paleta, do mais claro ao mais firme */
 export function classeSeloEtapa(status: string | null | undefined) {
   switch (status) {
+    case 'novo_contato':
+      return 'bg-primor-surface text-primor-secondary border-dashed border-primor-line-strong';
+    case 'em_conversa':
+    case 'visita':
+      return 'bg-primor-paper-deep text-primor-secondary border-primor-line-strong';
+    case 'fechado':
+      return 'bg-primor-realce text-primor-secondary border-primor-line-strong';
     case 'orcamento':
       return 'bg-primor-surface text-primor-secondary border-primor-line-strong';
     case 'pre_producao':

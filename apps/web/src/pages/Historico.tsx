@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { classeSeloEtapa } from "@/components/marca/Etapas";
+import { ROTULO_ETAPA } from "@/lib/jornada/etapas";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { formatarData } from "@/lib/date";
@@ -37,7 +38,7 @@ interface Checklist {
 
 interface Projeto {
   id: string;
-  titulo_ambiente: string;
+  titulo_ambiente: string | null;
   status: string | null;
   data_prevista_instalacao: string | null;
   created_at: string | null;
@@ -227,14 +228,8 @@ export function Historico() {
 
   const getStatusLabel = (status: string | null) => {
     if (!status) return "Sem Status";
-    const labels: Record<string, string> = {
-      orcamento: "Orçamento",
-      pre_producao: "Pré-Produção",
-      producao: "Produção",
-      instalacao: "Instalação",
-      concluido: "Concluído",
-    };
-    return labels[status] || status;
+    // Rótulos das 9 etapas da jornada (fonte única em lib/jornada/etapas)
+    return ROTULO_ETAPA[status] || status;
   };
 
   // Loading State
@@ -340,7 +335,7 @@ export function Historico() {
                   <div className="min-w-0">
                     <dt className="etiqueta">Ambiente</dt>
                     <dd className="mt-0.5 font-medium text-primor-secondary">
-                      {projeto.titulo_ambiente}
+                      {projeto.titulo_ambiente || "A definir"}
                     </dd>
                   </div>
                 </div>
@@ -447,7 +442,7 @@ export function Historico() {
                   <dl className="space-y-2.5 rounded-md bg-primor-bg-light p-4 text-[15px]">
                     <div>
                       <dt className="text-sm text-primor-muted">Ambiente</dt>
-                      <dd className="font-medium">{selectedProjeto.titulo_ambiente}</dd>
+                      <dd className="font-medium">{selectedProjeto.titulo_ambiente || "A definir"}</dd>
                     </div>
                     <div>
                       <dt className="text-sm text-primor-muted">Status</dt>

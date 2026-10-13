@@ -6,22 +6,18 @@ import { FolderOpen, Users, TrendingUp, Plus, ArrowRight } from 'lucide-react';
 import { Contador } from '@/components/marca/Contador';
 import { MedidorEtapa } from '@/components/marca/Etapas';
 import { SimboloEncaixe } from '@/components/marca/Marca';
+import { ROTULO_ETAPA } from '@/lib/jornada/etapas';
 
 interface ProjetoRecente {
   id: string;
-  titulo_ambiente: string;
+  titulo_ambiente: string | null;
   status: string | null;
   created_at: string | null;
   clients: { nome: string } | null;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  orcamento: 'Orçamento',
-  pre_producao: 'Pré-Produção',
-  producao: 'Produção',
-  instalacao: 'Instalação',
-  concluido: 'Concluído',
-};
+// Rótulos das 9 etapas da jornada (fonte única em lib/jornada/etapas)
+const STATUS_LABEL: Record<string, string> = ROTULO_ETAPA;
 
 const dataDeHoje = () =>
   new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
