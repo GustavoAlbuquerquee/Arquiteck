@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@arquiteck/ui": "workspace:*",
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.47.10",
     "@types/html2pdf.js": "^0.10.0",

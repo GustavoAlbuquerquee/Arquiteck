@@ -33,7 +33,9 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp}'],
+        // Fontes self-hosted: só os subconjuntos latinos, para o app funcionar offline
+        // com a tipografia certa sem precachear cirílico/vietnamita
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp}', '**/*-latin-*.woff2'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         // Apenas arquivos públicos do Storage (logos). Fotos e assinaturas ficam
         // no bucket privado e usam URLs assinadas, que não entram neste cache.
