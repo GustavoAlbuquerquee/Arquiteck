@@ -24,3 +24,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# PWA (gerado pelo vite-plugin-pwa em modo dev)
+dev-dist
