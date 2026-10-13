@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogIn, Mail, Lock, AlertCircle } from "lucide-react";
+import { LogIn, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
+  const [linkEnviado, setLinkEnviado] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -24,6 +27,32 @@ export function Login() {
     } else {
       navigate("/");
     }
+  };
+
+  const handleRecuperar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    });
+    setLoading(false);
+    if (error) {
+      setError(
+        error.status === 429
+          ? "Muitas tentativas. Aguarde alguns minutos e tente de novo."
+          : "Não foi possível enviar o link. Tente novamente.",
+      );
+      return;
+    }
+    // Mesma mensagem exista ou não a conta, para não revelar quais e-mails existem
+    setLinkEnviado(true);
+  };
+
+  const alternarRecuperacao = () => {
+    setRecuperando((atual) => !atual);
+    setError("");
+    setLinkEnviado(false);
   };
 
   return (
@@ -51,7 +80,7 @@ export function Login() {
           </div>
 
           <h2 className="text-2xl font-bold text-center text-primor-text-light mb-6">
-            Entrar na sua conta
+            {recuperando ? "Recuperar senha" : "Entrar na sua conta"}
           </h2>
 
           {/* Alerta de Erro */}
@@ -62,7 +91,41 @@ export function Login() {
             </div>
           )}
 
-          {/* Formulário */}
+          {recuperando && linkEnviado && (
+            <div className="mb-4 bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <p className="text-green-700 text-sm">
+                Se houver uma conta com esse e-mail, enviamos um link para criar uma nova senha. Confira também a caixa de spam.
+              </p>
+            </div>
+          )}
+
+          {recuperando ? (
+            <form onSubmit={handleRecuperar} className="space-y-4">
+              <p className="text-sm text-primor-gray-dark">
+                Informe o e-mail da sua conta para receber um link de redefinição.
+              </p>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                <input
+                  type="email"
+                  aria-label="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
+                  placeholder="seu@email.com"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+              >
+                {loading ? "Enviando..." : "Enviar link"}
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
@@ -119,6 +182,17 @@ export function Login() {
               )}
             </button>
           </form>
+          )}
+
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={alternarRecuperacao}
+              className="text-sm text-primor-primary hover:brightness-110 font-semibold"
+            >
+              {recuperando ? "Voltar para o login" : "Esqueci minha senha"}
+            </button>
+          </div>
 
           {/* Link para Registro */}
           <div className="mt-6 text-center">

@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { supabase, getCurrentTenantId } from "@/lib/supabase";
 import html2pdf from "html2pdf.js";
-import { uploadBase64Image, storagePathFromPublicUrl } from "@/lib/supabase/storage";
+import { uploadBase64Image, caminhoNoBucket } from "@/lib/supabase/storage";
+import { useUrlsAssinadas } from "@/lib/useUrlsAssinadas";
 import { useSearchParams } from "react-router-dom";
 import { formatarData } from "@/lib/date";
 
@@ -66,6 +67,11 @@ export function ChecklistWizard() {
   // Trava síncrona contra duplo toque no "Salvar": o state `loading` só
   // muda depois da validação assíncrona, tarde demais para o segundo clique
   const salvandoRef = useRef(false);
+  // Bucket privado: as imagens do PDF usam URLs assinadas
+  const urlDaImagem = useUrlsAssinadas([
+    ...(savedData?.fotosAmbiente ?? []),
+    savedData?.assinatura,
+  ]);
 
   const {
     register,
@@ -355,15 +361,16 @@ export function ChecklistWizard() {
     // Arquivos enviados nesta tentativa. Se algo falhar, são apagados para
     // não ficarem órfãos no Storage.
     const enviados: string[] = [];
+    // Devolve o caminho no bucket (privado), que é o que vai para o payload
     const enviar = async (base64: string, path: string) => {
-      const url = await uploadBase64Image(base64, path, BUCKET_VISTORIAS);
-      if (!url) {
+      const caminho = await uploadBase64Image(base64, path, BUCKET_VISTORIAS);
+      if (!caminho) {
         throw new Error(
           "Não foi possível enviar as fotos ou a assinatura. Verifique a conexão e tente de novo. Nada foi salvo.",
         );
       }
-      enviados.push(path);
-      return url;
+      enviados.push(caminho);
+      return caminho;
     };
 
     try {
@@ -384,7 +391,8 @@ export function ChecklistWizard() {
           )
         : data.assinatura;
 
-      // 2. Fotos novas (base64). As que já são URL ficam como estão.
+      // 2. Fotos novas (base64). As já salvas (caminho, ou URL nos briefings
+      // antigos) ficam como estão.
       setLoadingMessage("A enviar fotos...");
       const resultados = await Promise.allSettled(
         (data.fotosAmbiente ?? []).map((foto) =>
@@ -433,7 +441,7 @@ export function ChecklistWizard() {
       // briefing. Falhar aqui não desfaz o que já foi salvo.
       const removidos = arquivosOriginais
         .filter((url) => url !== assinaturaUrl && !fotosUrls.includes(url))
-        .map((url) => storagePathFromPublicUrl(url, BUCKET_VISTORIAS))
+        .map((valor) => caminhoNoBucket(valor, BUCKET_VISTORIAS))
         .filter((path): path is string => !!path);
       if (removidos.length > 0) {
         await supabase.storage.from(BUCKET_VISTORIAS).remove(removidos);
@@ -874,7 +882,7 @@ export function ChecklistWizard() {
                       {savedData.fotosAmbiente.map((foto, idx) => (
                         <img
                           key={idx}
-                          src={foto}
+                          src={urlDaImagem(foto)}
                           alt={`Foto ${idx + 1}`}
                           style={{ maxHeight: "200px", objectFit: "contain" }}
                         />
@@ -897,7 +905,7 @@ export function ChecklistWizard() {
                   Assinatura
                 </h2>
                 <img
-                  src={savedData.assinatura}
+                  src={urlDaImagem(savedData.assinatura)}
                   alt="Assinatura"
                   style={{
                     maxWidth: "400px",

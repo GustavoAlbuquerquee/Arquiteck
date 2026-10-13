@@ -8,6 +8,7 @@ import { Historico } from '@/pages/Historico';
 import { Producao } from '@/pages/Producao';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
+import { RedefinirSenha } from '@/pages/RedefinirSenha';
 import { InstallPWA } from '@/components/InstallPWA';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           {/* Rotas Públicas */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
           {/* Rotas Privadas */}
           <Route

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
-import { storagePathFromPublicUrl } from "@/lib/supabase/storage";
+import { caminhoNoBucket } from "@/lib/supabase/storage";
+import { useUrlsAssinadas } from "@/lib/useUrlsAssinadas";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Calendar,
@@ -56,6 +57,13 @@ export function Historico() {
   const [loading, setLoading] = useState(true);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [showModal, setShowModal] = useState(false);
+  // Fotos e assinaturas ficam no bucket privado: exibidas por URL assinada
+  const urlDaImagem = useUrlsAssinadas(
+    (selectedProjeto?.checklists ?? []).flatMap((c) => {
+      const p = c.payload ?? {};
+      return [p.assinatura_url, p.assinatura, ...(p.fotosAmbiente ?? []), ...(p.fotos ?? [])];
+    }),
+  );
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'membro' | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -171,7 +179,7 @@ export function Historico() {
           return [p.assinatura_url, p.assinatura, ...(p.fotosAmbiente ?? []), ...(p.fotos ?? [])];
         })
         .filter((url): url is string => typeof url === 'string')
-        .map((url) => storagePathFromPublicUrl(url, 'vistorias'))
+        .map((valor) => caminhoNoBucket(valor, 'vistorias'))
         .filter((path): path is string => !!path);
 
       // Cada briefing cria o próprio cliente. Se ele não tiver outros projetos,
@@ -593,10 +601,10 @@ export function Historico() {
                                     Assinatura do Cliente:
                                   </p>
                                   <img
-                                    src={
+                                    src={urlDaImagem(
                                       checklist.payload.assinatura_url ||
-                                      checklist.payload.assinatura
-                                    }
+                                        checklist.payload.assinatura,
+                                    )}
                                     alt="Assinatura do Cliente"
                                     className="max-h-32 object-contain border bg-white rounded p-2"
                                   />
@@ -619,14 +627,14 @@ export function Historico() {
                                       []
                                     ).map((fotoUrl: string, idx: number) => (
                                       <a
-                                        href={fotoUrl}
+                                        href={urlDaImagem(fotoUrl)}
                                         target="_blank"
                                         rel="noreferrer"
                                         key={idx}
                                         className="block transition hover:opacity-80"
                                       >
                                         <img
-                                          src={fotoUrl}
+                                          src={urlDaImagem(fotoUrl)}
                                           alt={`Foto do ambiente ${idx + 1}`}
                                           className="w-full h-32 object-cover rounded-lg shadow-sm border border-gray-200"
                                         />
@@ -912,7 +920,7 @@ export function Historico() {
                         (foto: string, idx: number) => (
                           <img
                             key={idx}
-                            src={foto}
+                            src={urlDaImagem(foto)}
                             alt={`Foto ${idx + 1}`}
                             style={{ maxHeight: "200px", objectFit: "contain" }}
                           />
@@ -950,7 +958,7 @@ export function Historico() {
                     Assinatura
                   </h2>
                   <img
-                    src={selectedProjeto.checklists[0].payload.assinatura_url}
+                    src={urlDaImagem(selectedProjeto.checklists[0].payload.assinatura_url)}
                     alt="Assinatura"
                     style={{
                       maxWidth: "400px",
