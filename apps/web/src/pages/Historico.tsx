@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
+import { formatarData } from "@/lib/date";
 
 interface Cliente {
   id: string;
@@ -174,11 +175,7 @@ export function Historico() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Data não informada";
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatarData(dateString);
   };
 
   const getStatusColor = (status: string | null) => {

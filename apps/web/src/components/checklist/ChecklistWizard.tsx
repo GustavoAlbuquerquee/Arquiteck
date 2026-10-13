@@ -18,6 +18,7 @@ import { supabase, getCurrentTenantId } from "@/lib/supabase";
 import html2pdf from "html2pdf.js";
 import { uploadBase64Image, storagePathFromPublicUrl } from "@/lib/supabase/storage";
 import { useSearchParams } from "react-router-dom";
+import { formatarData } from "@/lib/date";
 
 const BUCKET_VISTORIAS = "vistorias";
 
@@ -44,13 +45,6 @@ const valoresIniciais: ChecklistFormData = {
   observacoes: "",
   assinatura: "",
 };
-
-// "2026-10-13" -> "13/10/2026". new Date("2026-10-13") é lido como UTC e,
-// no fuso do Brasil, mostraria o dia anterior.
-function formatarData(iso: string) {
-  const [ano, mes, dia] = iso.split("-");
-  return ano && mes && dia ? `${dia}/${mes}/${ano}` : iso;
-}
 
 export function ChecklistWizard() {
   const [searchParams, setSearchParams] = useSearchParams();
