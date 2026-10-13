@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
+import { storagePathFromPublicUrl } from "@/lib/supabase/storage";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Calendar,
@@ -160,10 +161,46 @@ export function Historico() {
   const handleDelete = async () => {
     if (!briefingToDelete || userRole !== 'admin') return;
     try {
-      const { data, error } = await supabase.from('projects').delete().eq('id', briefingToDelete).select('id');
+      const projeto = projetos.find((p) => p.id === briefingToDelete);
+
+      // Fotos e assinaturas de todos os checklists do projeto, para apagar do
+      // Storage depois (antes ficavam órfãs no bucket)
+      const arquivos = (projeto?.checklists ?? [])
+        .flatMap((c) => {
+          const p = c.payload ?? {};
+          return [p.assinatura_url, p.assinatura, ...(p.fotosAmbiente ?? []), ...(p.fotos ?? [])];
+        })
+        .filter((url): url is string => typeof url === 'string')
+        .map((url) => storagePathFromPublicUrl(url, 'vistorias'))
+        .filter((path): path is string => !!path);
+
+      // Cada briefing cria o próprio cliente. Se ele não tiver outros projetos,
+      // apaga o cliente (o banco apaga projeto e checklists em cascata);
+      // senão, só o projeto.
+      let apagarCliente = false;
+      const clienteId = projeto?.clients?.id;
+      if (clienteId) {
+        const { count, error: countError } = await supabase
+          .from('projects')
+          .select('id', { count: 'exact', head: true })
+          .eq('client_id', clienteId);
+        if (countError) throw countError;
+        apagarCliente = count === 1;
+      }
+
+      const { data, error } = apagarCliente
+        ? await supabase.from('clients').delete().eq('id', clienteId!).select('id')
+        : await supabase.from('projects').delete().eq('id', briefingToDelete).select('id');
       if (error) throw error;
       // A RLS não retorna erro quando bloqueia: apenas nenhuma linha é removida
       if (!data || data.length === 0) throw new Error('sem permissão para excluir este projeto.');
+
+      if (arquivos.length > 0) {
+        // Falhar aqui não desfaz a exclusão; os arquivos só ficam no bucket
+        const { error: storageError } = await supabase.storage.from('vistorias').remove(arquivos);
+        if (storageError) console.error('Erro ao apagar arquivos do briefing:', storageError);
+      }
+
       setBriefingToDelete(null);
       loadProjetos();
       setShowModal(false);
