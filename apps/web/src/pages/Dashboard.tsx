@@ -145,16 +145,16 @@ export function Dashboard() {
 
       {/* Métricas: uma ficha só, dividida em cotas, em vez de três cards iguais */}
       <section aria-label="Indicadores" className="panel fita entrada overflow-hidden" style={{ ['--i' as string]: 1 }}>
-        <dl className="grid grid-cols-1 divide-y divide-primor-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <dl className="grid grid-cols-3 divide-x divide-primor-line">
           {metricas.map(({ rotulo, valor, icone: Icone }) => (
-            <div key={rotulo} className="flex items-start justify-between gap-4 px-6 py-5 sm:px-7 sm:py-6">
+            <div key={rotulo} className="flex items-start justify-between gap-4 py-4 pl-4 pr-2 sm:px-7 sm:py-6">
               <div>
                 <dt className="etiqueta">{rotulo}</dt>
-                <dd className="mt-2 font-mono text-4xl font-medium tracking-tight text-primor-secondary tabular md:text-5xl">
+                <dd className="mt-2 font-mono text-3xl font-medium tracking-tight text-primor-secondary tabular sm:text-4xl md:text-5xl">
                   <Contador valor={valor} />
                 </dd>
               </div>
-              <Icone aria-hidden="true" strokeWidth={1.5} className="mt-1 h-6 w-6 text-primor-primary-ink" />
+              <Icone aria-hidden="true" strokeWidth={1.5} className="mt-1 hidden h-6 w-6 text-primor-primary-ink sm:block" />
             </div>
           ))}
         </dl>
