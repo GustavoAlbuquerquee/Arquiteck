@@ -12,15 +12,15 @@ export function indiceEtapa(status: string | null | undefined) {
 export function classeSeloEtapa(status: string | null | undefined) {
   switch (status) {
     case 'orcamento':
-      return 'bg-white text-primor-secondary border-primor-line-strong';
+      return 'bg-primor-surface text-primor-secondary border-primor-line-strong';
     case 'pre_producao':
-      return 'bg-[#fdf4e6] text-primor-secondary border-primor-primary';
+      return 'bg-primor-realce text-primor-secondary border-primor-primary';
     case 'producao':
-      return 'bg-primor-primary text-primor-secondary border-primor-primary';
+      return 'bg-primor-primary text-primor-on-primary border-primor-primary';
     case 'instalacao':
-      return 'bg-primor-secondary text-white border-primor-secondary';
+      return 'bg-primor-secondary text-primor-on-secondary border-primor-secondary';
     case 'concluido':
-      return 'bg-[#eef7f1] text-[#05603a] border-[#067647]';
+      return 'bg-primor-sucesso-bg text-primor-sucesso-ink border-primor-sucesso';
     default:
       return 'bg-primor-paper-deep text-primor-muted border-primor-line';
   }
@@ -47,7 +47,7 @@ export function MedidorEtapa({
         {ORDEM_ETAPAS.map((etapa, i) => (
           <span
             key={etapa}
-            className={`w-[3px] rounded-[1px] ${i <= atual ? (atual === ORDEM_ETAPAS.length - 1 ? 'bg-[#067647]' : 'bg-primor-primary-ink') : 'bg-primor-line'} ${
+            className={`w-[3px] rounded-[1px] ${i <= atual ? (atual === ORDEM_ETAPAS.length - 1 ? 'bg-primor-sucesso' : 'bg-primor-primary-ink') : 'bg-primor-line'} ${
               i === 0 || i === ORDEM_ETAPAS.length - 1 ? 'h-3.5' : 'h-2.5'
             }`}
           />

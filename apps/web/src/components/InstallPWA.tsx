@@ -73,7 +73,7 @@ export function InstallPWA() {
       aria-label="Instalar o aplicativo"
       className="on-dark fixed bottom-4 left-4 right-4 z-modal animate-fade-in md:left-auto md:right-6 md:max-w-sm"
     >
-      <div className="relative overflow-hidden rounded-lg bg-primor-secondary text-white shadow-chapa-lg">
+      <div className="relative overflow-hidden rounded-lg bg-primor-madeira text-white shadow-chapa-lg dark:ring-1 dark:ring-white/10">
         <VeioMadeira opacidade={0.1} />
         <div aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-primor-primary" />
         <div className="relative flex items-start gap-3 py-4 pl-5 pr-2">

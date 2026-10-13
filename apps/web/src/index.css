@@ -7,18 +7,109 @@
 @tailwind utilities;
 
 /* ------------------------------------------------------------------
-   Base
+   Tokens de cor (canais RGB, consumidos pelo tailwind.config.js)
+
+   Claro: a paleta original da Primor, sem alteração.
+   Escuro: a oficina à noite. Fundo de nogueira, superfícies em imbuia,
+   tinta creme de marfim e o mesmo âmbar da marca como destaque.
+   Razões de contraste conferidas (WCAG AA) estão ao lado de cada par.
+
+   .tema-claro força a paleta clara num trecho da página mesmo com .dark no
+   <html>: usado nos modelos de PDF, que são impressos em papel branco.
    ------------------------------------------------------------------ */
 @layer base {
+  :root,
+  .tema-claro {
+    --primor-primary: 240 160 45; /* #F0A02D */
+    --primor-primary-hover: 243 173 74; /* #f3ad4a */
+    --primor-on-primary: 96 56 41; /* #603829 sobre âmbar: 4.7:1 */
+    --primor-secondary: 96 56 41; /* #603829: 9.4:1 sobre bg-light */
+    --primor-secondary-deep: 74 43 31; /* #4a2b1f */
+    --primor-on-secondary: 255 255 255;
+    --primor-bg-light: 251 247 244; /* #fbf7f4 */
+    --primor-surface: 255 255 255;
+    --primor-paper-deep: 243 235 228; /* #f3ebe4 */
+    --primor-madeira: 96 56 41; /* #603829 */
+    --primor-gray-medium: 224 224 224;
+    --primor-gray-dark: 90 90 90;
+    --primor-primary-ink: 154 91 12; /* #9A5B0C: 5.1:1 sobre bg-light */
+    --primor-muted: 111 85 71; /* #6f5547: 6.4:1 sobre bg-light */
+    --primor-line: 232 223 216; /* #e8dfd8 */
+    --primor-line-strong: 154 128 114; /* #9a8072: 3.7:1 sobre branco */
+    --primor-placeholder: 140 116 102; /* #8c7466 */
+    --primor-realce: 253 244 230; /* #fdf4e6 */
+    --primor-veu: 74 43 31; /* #4a2b1f */
+    --primor-erro: 180 35 24; /* #b42318 */
+    --primor-erro-bg: 253 241 239; /* #fdf1ef */
+    --primor-erro-ink: 138 28 19; /* #8a1c13 */
+    --primor-sucesso: 6 118 71; /* #067647 */
+    --primor-sucesso-bg: 238 247 241; /* #eef7f1 */
+    --primor-sucesso-ink: 5 96 58; /* #05603a */
+    /* Contorno de foco e acento de checkbox */
+    --primor-foco: var(--primor-secondary);
+
+    --sombra-chapa: 0 1px 0 rgba(96, 56, 41, 0.06), 0 10px 24px -14px rgba(96, 56, 41, 0.28);
+    --sombra-chapa-lg: 0 1px 0 rgba(96, 56, 41, 0.08), 0 28px 56px -24px rgba(74, 43, 31, 0.42);
+    /* Grão de papel bem sutil: quebra a chapada digital do fundo */
+    --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .38 0 0 0 0 .22 0 0 0 0 .16 .07 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --seta-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23603829' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --primor-primary: 240 160 45; /* #F0A02D, o mesmo âmbar da marca */
+    --primor-primary-hover: 244 178 90; /* #F4B25A */
+    --primor-on-primary: 42 24 16; /* #2A1810 sobre âmbar: 7.9:1 */
+    --primor-secondary: 243 230 216; /* #F3E6D8 marfim: 15.0:1 sobre fundo, 13.9:1 sobre superfície */
+    --primor-secondary-deep: 255 247 238; /* #FFF7EE, hover da tinta */
+    --primor-on-secondary: 42 24 16; /* #2A1810 sobre marfim: 13.9:1 */
+    --primor-bg-light: 27 18 13; /* #1B120D nogueira */
+    --primor-surface: 38 25 20; /* #261914 imbuia */
+    --primor-paper-deep: 51 34 26; /* #33221A, superfície rebaixada/hover */
+    --primor-madeira: 47 28 19; /* #2F1C13, painéis em madeira */
+    --primor-gray-medium: 74 58 50;
+    --primor-gray-dark: 194 170 152;
+    --primor-primary-ink: 242 174 78; /* #F2AE4E: 8.9:1 sobre superfície, 7.9:1 sobre rebaixada */
+    --primor-muted: 194 170 152; /* #C2AA98: 7.7:1 sobre superfície, 6.9:1 sobre rebaixada */
+    --primor-line: 63 44 34; /* #3F2C22 */
+    --primor-line-strong: 140 112 96; /* #8C7060: 3.7:1 sobre superfície */
+    --primor-placeholder: 154 131 115; /* #9A8373: 4.8:1 sobre superfície */
+    --primor-realce: 61 42 21; /* #3D2A15: marfim sobre ele 11.1:1 */
+    --primor-veu: 8 5 3;
+    --primor-erro: 249 112 102; /* #F97066: 6.1:1 sobre superfície */
+    --primor-erro-bg: 59 26 21; /* #3B1A15 */
+    --primor-erro-ink: 253 162 155; /* #FDA29B sobre erro-bg: 8.1:1 */
+    --primor-sucesso: 71 205 137; /* #47CD89: 8.4:1 sobre superfície */
+    --primor-sucesso-bg: 18 41 29; /* #12291D */
+    --primor-sucesso-ink: 117 224 167; /* #75E0A7 sobre sucesso-bg: 9.5:1 */
+    /* Âmbar no foco: 7.9:1 sobre a superfície */
+    --primor-foco: var(--primor-primary);
+
+    --sombra-chapa: 0 1px 0 rgba(0, 0, 0, 0.35), 0 10px 24px -14px rgba(0, 0, 0, 0.75);
+    --sombra-chapa-lg: 0 1px 0 rgba(0, 0, 0, 0.4), 0 28px 56px -24px rgba(0, 0, 0, 0.85);
+    /* Grão em âmbar bem fraco: serragem sobre a bancada */
+    --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .94 0 0 0 0 .63 0 0 0 0 .18 .045 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --seta-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23F3E6D8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+    color-scheme: dark;
+  }
+
+  /* Trecho que é impresso: papel branco e tinta marrom, em qualquer tema */
+  .tema-claro {
+    background-color: #ffffff;
+    color: rgb(var(--primor-secondary));
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    @apply bg-primor-bg-light;
   }
 
   body {
     @apply bg-primor-bg-light font-sans text-primor-secondary antialiased;
-    /* Grão de papel bem sutil: quebra a chapada digital do fundo */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .38 0 0 0 0 .22 0 0 0 0 .16 .07 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-image: var(--grao);
     font-feature-settings: 'ss01', 'cv11';
   }
 
@@ -34,22 +125,22 @@
 
   /* Foco visível em tudo que é clicável. Marrom no claro, âmbar no escuro. */
   :where(a, button, input, select, textarea, summary, label, [tabindex]):focus-visible {
-    outline: 3px solid theme('colors.primor-secondary');
+    outline: 3px solid rgb(var(--primor-foco));
     outline-offset: 2px;
   }
 
   .on-dark :where(a, button, input, select, textarea, summary, label, [tabindex]):focus-visible {
-    outline-color: theme('colors.primor-primary');
+    outline-color: rgb(var(--primor-primary));
   }
 
   ::selection {
     background: rgba(240, 160, 45, 0.35);
-    color: theme('colors.primor-secondary-deep');
+    color: rgb(var(--primor-secondary-deep));
   }
 
   input[type='checkbox'],
   input[type='radio'] {
-    accent-color: theme('colors.primor-secondary');
+    accent-color: rgb(var(--primor-foco));
   }
 }
 
@@ -81,20 +172,21 @@
   }
 
   .btn-primary {
-    @apply bg-primor-primary text-primor-secondary;
+    @apply bg-primor-primary text-primor-on-primary;
     box-shadow:
       inset 0 -2px 0 rgba(74, 43, 31, 0.28),
       0 1px 2px rgba(96, 56, 41, 0.18);
   }
   .btn-primary:hover:not(:disabled) {
-    background-color: #f3ad4a;
+    background-color: rgb(var(--primor-primary-hover));
   }
   .btn-primary:active:not(:disabled) {
     box-shadow: inset 0 1px 0 rgba(74, 43, 31, 0.28);
   }
 
+  /* Marrom no claro; no escuro vira marfim com texto de nogueira */
   .btn-secondary {
-    @apply bg-primor-secondary text-white;
+    @apply bg-primor-secondary text-primor-on-secondary;
     box-shadow:
       inset 0 -2px 0 rgba(0, 0, 0, 0.25),
       0 1px 2px rgba(96, 56, 41, 0.2);
@@ -104,7 +196,7 @@
   }
 
   .btn-outline {
-    @apply border-[1.5px] border-primor-line-strong bg-white text-primor-secondary;
+    @apply border-[1.5px] border-primor-line-strong bg-primor-surface text-primor-secondary;
   }
   .btn-outline:hover:not(:disabled) {
     @apply border-primor-secondary bg-primor-paper-deep;
@@ -117,6 +209,7 @@
     @apply bg-primor-paper-deep;
   }
 
+  /* Vermelho fixo nos dois temas: texto branco 6.6:1 */
   .btn-danger {
     @apply bg-[#b42318] text-white;
     box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
@@ -137,7 +230,7 @@
 
   /* Campos: borda com 3.5:1, halo âmbar no foco (inspirado no "Focus Field" do MicroKit) */
   .field {
-    @apply block min-h-[48px] w-full rounded-md border-[1.5px] border-primor-line-strong bg-white px-3.5 text-base text-primor-secondary placeholder:text-[#8c7466];
+    @apply block min-h-[48px] w-full rounded-md border-[1.5px] border-primor-line-strong bg-primor-surface px-3.5 text-base text-primor-secondary placeholder:text-primor-placeholder;
     transition:
       border-color 160ms ease,
       box-shadow 160ms ease,
@@ -156,14 +249,14 @@
     @apply cursor-not-allowed border-primor-line bg-primor-paper-deep text-primor-muted;
   }
   .field[aria-invalid='true'] {
-    @apply border-[#b42318];
+    @apply border-primor-erro;
   }
   textarea.field {
     @apply py-3 leading-relaxed;
   }
   select.field {
     @apply appearance-none bg-no-repeat pr-10;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23603829' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: var(--seta-select);
     background-position: right 0.75rem center;
   }
   .field-icon {
@@ -180,7 +273,7 @@
     @apply mt-1.5 text-sm text-primor-muted;
   }
   .field-error {
-    @apply mt-1.5 text-sm font-medium text-[#b42318];
+    @apply mt-1.5 text-sm font-medium text-primor-erro;
   }
 
   /* Sufixo de unidade dentro do campo (mm) */
@@ -190,7 +283,7 @@
 
   /* Superfícies */
   .panel {
-    @apply rounded-lg border border-primor-line bg-white shadow-chapa;
+    @apply rounded-lg border border-primor-line bg-primor-surface shadow-chapa;
   }
 
   /* "Fita de borda": faixa âmbar na lateral, como o acabamento de uma chapa de MDF */
@@ -249,13 +342,13 @@
     @apply flex items-start gap-3 rounded-md border-l-4 px-4 py-3 text-sm leading-relaxed;
   }
   .alerta-erro {
-    @apply border-[#b42318] bg-[#fdf1ef] text-[#8a1c13];
+    @apply border-primor-erro bg-primor-erro-bg text-primor-erro-ink;
   }
   .alerta-sucesso {
-    @apply border-[#067647] bg-[#eef7f1] text-[#05603a];
+    @apply border-primor-sucesso bg-primor-sucesso-bg text-primor-sucesso-ink;
   }
   .alerta-info {
-    @apply border-primor-primary bg-[#fdf4e6] text-primor-secondary;
+    @apply border-primor-primary bg-primor-realce text-primor-secondary;
   }
 
   /* Esqueleto de carregamento */
@@ -265,16 +358,16 @@
 
   /* Tile de opção (checkbox) com alvo de toque grande */
   .opcao {
-    @apply flex min-h-[52px] cursor-pointer items-center gap-3 rounded-md border-[1.5px] border-primor-line bg-white px-3.5 py-2.5 text-[15px] font-medium text-primor-secondary transition-colors;
+    @apply flex min-h-[52px] cursor-pointer items-center gap-3 rounded-md border-[1.5px] border-primor-line bg-primor-surface px-3.5 py-2.5 text-[15px] font-medium text-primor-secondary transition-colors;
   }
   .opcao:hover {
     @apply border-primor-line-strong;
   }
   .opcao:has(input:checked) {
-    @apply border-primor-secondary bg-[#fdf4e6];
+    @apply border-primor-secondary bg-primor-realce;
   }
   .opcao:has(input:focus-visible) {
-    outline: 3px solid theme('colors.primor-secondary');
+    outline: 3px solid rgb(var(--primor-foco));
     outline-offset: 2px;
   }
   .opcao input[type='checkbox'] {
@@ -339,6 +432,20 @@
   }
   .esqueleto {
     animation: pulso-esqueleto 1.6s ease-in-out infinite;
+  }
+
+  /* Troca de tema: as cores cruzam em 220ms. A classe só é posta pelo
+     src/lib/tema.ts e só quando o usuário não pediu menos movimento. */
+  html.tema-trocando,
+  html.tema-trocando *,
+  html.tema-trocando *::before,
+  html.tema-trocando *::after {
+    transition:
+      background-color 220ms ease,
+      border-color 220ms ease,
+      color 220ms ease,
+      fill 220ms ease,
+      box-shadow 220ms ease !important;
   }
 }
 

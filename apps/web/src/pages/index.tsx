@@ -17,7 +17,7 @@ export function Checklists() {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Histórico</h1>
-      <p className="text-gray-600">Em desenvolvimento...</p>
+      <p className="text-primor-muted">Em desenvolvimento...</p>
     </div>
   );
 }

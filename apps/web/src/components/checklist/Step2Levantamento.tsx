@@ -200,7 +200,7 @@ export function Step2Levantamento({
             return (
               <div
                 key={field.id}
-                className="fita rounded-lg border border-primor-line bg-white py-5 pl-6 pr-4 shadow-chapa md:py-6 md:pl-8 md:pr-6"
+                className="fita rounded-lg border border-primor-line bg-primor-surface py-5 pl-6 pr-4 shadow-chapa md:py-6 md:pl-8 md:pr-6"
               >
                 <div className="mb-5 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -219,7 +219,7 @@ export function Step2Levantamento({
                     type="button"
                     onClick={() => removeMovel(index)}
                     aria-label={`Remover ${movel?.nome || `móvel ${index + 1}`}`}
-                    className="btn-icon text-[#b42318] hover:bg-[#fdf1ef]"
+                    className="btn-icon text-primor-erro hover:bg-primor-erro-bg"
                   >
                     <Trash2 aria-hidden="true" className="h-5 w-5" />
                   </button>
@@ -762,11 +762,11 @@ export function Step2Levantamento({
             return (
               <div
                 key={eletro}
-                className={`rounded-md border-[1.5px] bg-white transition-colors ${
-                  isChecked ? "border-primor-secondary bg-[#fdf4e6]" : "border-primor-line"
+                className={`rounded-md border-[1.5px] transition-colors ${
+                  isChecked ? "border-primor-secondary bg-primor-realce" : "border-primor-line bg-primor-surface"
                 } ${isChecked && index >= 0 ? "md:col-span-2" : ""}`}
               >
-                <label className="flex min-h-[56px] cursor-pointer items-center gap-3 rounded-md px-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary">
+                <label className="flex min-h-[56px] cursor-pointer items-center gap-3 rounded-md px-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary dark:has-[:focus-visible]:outline-primor-primary">
                   <input
                     type="checkbox"
                     checked={isChecked}
@@ -843,8 +843,8 @@ export function Step2Levantamento({
           Fotos do ambiente e anotações manuais
         </h3>
 
-        <label className="block cursor-pointer rounded-md has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary">
-          <div className="rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-primor-bg-light px-6 py-9 text-center transition-colors hover:border-primor-secondary hover:bg-[#fdf4e6]">
+        <label className="block cursor-pointer rounded-md has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary dark:has-[:focus-visible]:outline-primor-primary">
+          <div className="rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-primor-bg-light px-6 py-9 text-center transition-colors hover:border-primor-secondary hover:bg-primor-realce">
             <Camera aria-hidden="true" strokeWidth={1.5} className="mx-auto mb-3 h-10 w-10 text-primor-primary-ink" />
             <p className="font-semibold text-primor-secondary">
               Clique para adicionar fotos

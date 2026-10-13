@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+// Aplica a preferência de tema e passa a acompanhar o sistema (ver index.html)
+import './lib/tema';
 import { registerSW } from 'virtual:pwa-register';
 
 // Registrar Service Worker
@@ -22,7 +24,7 @@ const missingEnv = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'].filter(
 if (missingEnv.length > 0) {
   root.render(
     <div className="min-h-screen flex items-center justify-center bg-primor-bg-light p-4">
-      <div className="max-w-md bg-white rounded-xl shadow p-6 text-primor-secondary">
+      <div className="max-w-md bg-primor-surface rounded-xl shadow p-6 text-primor-secondary">
         <h1 className="text-xl font-bold mb-2">Configuração incompleta</h1>
         <p className="text-sm mb-3">
           Defina as variáveis abaixo em <code>apps/web/.env</code> (veja <code>.env.example</code>) e
