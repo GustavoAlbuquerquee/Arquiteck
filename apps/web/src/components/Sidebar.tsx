@@ -4,6 +4,7 @@ import { LogOut, LayoutDashboard, Plus, History, Settings, Menu, X, Kanban } fro
 import { useState } from 'react';
 import { Marca } from '@/components/marca/Marca';
 import { VeioMadeira } from '@/components/marca/VeioMadeira';
+import { BotaoTema, SeletorTema } from '@/components/SeletorTema';
 
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,28 +28,31 @@ export function Sidebar() {
   return (
     <>
       {/* Barra superior - Mobile */}
-      <header className="on-dark fixed inset-x-0 top-0 z-topbar flex h-16 items-center justify-between overflow-hidden bg-primor-secondary px-4 text-white shadow-chapa lg:hidden">
+      <header className="on-dark fixed inset-x-0 top-0 z-topbar flex h-16 items-center justify-between overflow-hidden bg-primor-madeira px-4 text-white shadow-chapa dark:border-b dark:border-white/10 lg:hidden">
         <VeioMadeira opacidade={0.1} />
         <div className="relative">
           <Marca tom="claro" subtitulo={null} />
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          aria-label="Abrir menu"
-          aria-expanded={isOpen}
-          aria-controls="menu-lateral"
-          className="btn-icon relative text-primor-primary hover:bg-white/10"
-        >
-          <Menu aria-hidden="true" className="h-6 w-6" />
-        </button>
+        <div className="relative flex items-center gap-1">
+          <BotaoTema className="text-primor-primary hover:bg-white/10" />
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            aria-label="Abrir menu"
+            aria-expanded={isOpen}
+            aria-controls="menu-lateral"
+            className="btn-icon text-primor-primary hover:bg-white/10"
+          >
+            <Menu aria-hidden="true" className="h-6 w-6" />
+          </button>
+        </div>
       </header>
 
       {/* Overlay - Mobile */}
       {isOpen && (
         <div
           aria-hidden="true"
-          className="fixed inset-0 z-drawer bg-primor-secondary-deep/60 animate-fade-in lg:hidden"
+          className="fixed inset-0 z-drawer bg-primor-veu/60 animate-fade-in lg:hidden"
           onClick={closeSidebar}
         />
       )}
@@ -58,7 +62,7 @@ export function Sidebar() {
         id="menu-lateral"
         aria-label="Menu principal"
         className={`
-          on-dark fixed inset-y-0 left-0 z-modal flex w-72 flex-col overflow-hidden bg-primor-secondary text-white shadow-chapa-lg
+          on-dark fixed inset-y-0 left-0 z-modal flex w-72 flex-col overflow-hidden bg-primor-madeira text-white shadow-chapa-lg dark:border-r dark:border-white/10
           transform transition-[transform,visibility] duration-300 ease-out
           lg:sticky lg:top-0 lg:z-auto lg:h-[100dvh] lg:translate-x-0 lg:shadow-none
           ${isOpen ? 'visible translate-x-0' : 'invisible -translate-x-full lg:visible lg:translate-x-0'}
@@ -124,6 +128,9 @@ export function Sidebar() {
         </nav>
 
         <div className="relative border-t border-white/15 px-3 pb-5 pt-4">
+          <div className="mb-4">
+            <SeletorTema variante="madeira" />
+          </div>
           {user?.email && (
             <p className="mb-3 truncate px-3 font-mono text-xs text-white/70" title={user.email}>
               {user.email}
