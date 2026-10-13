@@ -2,6 +2,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, LayoutDashboard, Plus, History, Settings, Menu, X, Kanban } from 'lucide-react';
 import { useState } from 'react';
+import { Marca } from '@/components/marca/Marca';
+import { VeioMadeira } from '@/components/marca/VeioMadeira';
 
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,66 +26,96 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Botão Hamburger - Mobile */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-primor-secondary text-primor-primary rounded-lg shadow-lg"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
+      {/* Barra superior - Mobile */}
+      <header className="on-dark fixed inset-x-0 top-0 z-topbar flex h-16 items-center justify-between overflow-hidden bg-primor-secondary px-4 text-white shadow-chapa md:hidden">
+        <VeioMadeira opacidade={0.1} />
+        <div className="relative">
+          <Marca tom="claro" subtitulo={null} />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label="Abrir menu"
+          aria-expanded={isOpen}
+          aria-controls="menu-lateral"
+          className="btn-icon relative text-primor-primary hover:bg-white/10"
+        >
+          <Menu aria-hidden="true" className="h-6 w-6" />
+        </button>
+      </header>
 
       {/* Overlay - Mobile */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          aria-hidden="true"
+          className="fixed inset-0 z-drawer bg-primor-secondary-deep/60 animate-fade-in md:hidden"
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
       <aside
+        id="menu-lateral"
+        aria-label="Menu principal"
         className={`
-          fixed md:static inset-y-0 left-0 z-50
-          w-64 bg-primor-secondary text-primor-text-dark min-h-screen p-4 flex flex-col shadow-xl
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          on-dark fixed inset-y-0 left-0 z-modal flex w-72 flex-col overflow-hidden bg-primor-secondary text-white shadow-chapa-lg
+          transform transition-[transform,visibility] duration-300 ease-out
+          md:sticky md:top-0 md:z-auto md:h-[100dvh] md:translate-x-0 md:shadow-none
+          ${isOpen ? 'visible translate-x-0' : 'invisible -translate-x-full md:visible md:translate-x-0'}
         `}
       >
-        {/* Botão Fechar - Mobile */}
-        <button
-          onClick={closeSidebar}
-          className="md:hidden absolute top-4 right-4 p-2 text-primor-primary hover:bg-primor-secondary/80 rounded-lg"
-        >
-          <X className="w-6 h-6" />
-        </button>
+        <VeioMadeira opacidade={0.1} />
 
-        <div className="mb-8 pb-6 border-b border-primor-primary/30">
-          <h1 className="text-2xl font-bold text-primor-primary">Arquiteck</h1>
-          <p className="text-sm text-primor-text-dark/80 mt-1">Primor Móveis</p>
-          {user?.email && (
-            <p className="text-xs text-primor-text-dark/60 mt-2 truncate">{user.email}</p>
-          )}
+        <div className="relative flex items-start justify-between px-6 pb-6 pt-7">
+          <Marca tom="claro" />
+          {/* Botão Fechar - Mobile */}
+          <button
+            type="button"
+            onClick={closeSidebar}
+            aria-label="Fechar menu"
+            className="btn-icon -mr-2 -mt-2 text-primor-primary hover:bg-white/10 md:hidden"
+          >
+            <X aria-hidden="true" className="h-6 w-6" />
+          </button>
         </div>
-        
-        <nav className="flex-1">
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
+
+        {/* Régua decorativa separando a marca do menu */}
+        <div aria-hidden="true" className="regua relative mx-6 !text-primor-primary !opacity-40" />
+
+        <nav aria-label="Seções" className="relative flex-1 overflow-y-auto px-3 pt-5">
+          <ul className="space-y-1">
+            {menuItems.map((item, i) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
+
               return (
                 <li key={item.path}>
                   <Link
                     to={item.path}
                     onClick={closeSidebar}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`group relative flex min-h-[48px] items-center gap-3 rounded-md px-3 transition-colors ${
                       isActive
-                        ? 'bg-primor-primary text-primor-secondary font-semibold shadow-md'
-                        : 'text-primor-text-dark/80 hover:bg-primor-secondary/80 hover:text-primor-primary'
+                        ? 'bg-white/10 font-semibold text-white'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
+                    {/* Fita de borda âmbar marca a seção atual */}
+                    <span
+                      aria-hidden="true"
+                      className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-sm bg-primor-primary transition-opacity ${
+                        isActive ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    <Icon
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className={`h-5 w-5 ${isActive ? 'text-primor-primary' : 'text-white/70 group-hover:text-primor-primary'}`}
+                    />
+                    <span className="flex-1">{item.label}</span>
+                    <span aria-hidden="true" className="font-mono text-[11px] text-white/60 tabular">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
                   </Link>
                 </li>
               );
@@ -91,14 +123,22 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        {/* Botão de Logout */}
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-primor-text-dark/80 hover:bg-red-600 hover:text-white transition-all mt-4 border border-primor-text-dark/20 hover:border-red-600"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Sair</span>
-        </button>
+        <div className="relative border-t border-white/15 px-3 pb-5 pt-4">
+          {user?.email && (
+            <p className="mb-3 truncate px-3 font-mono text-xs text-white/70" title={user.email}>
+              {user.email}
+            </p>
+          )}
+          {/* Botão de Logout */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex min-h-[48px] w-full items-center gap-3 rounded-md border border-white/20 px-3 text-white/85 transition-colors hover:border-white/40 hover:bg-white/10 hover:text-white"
+          >
+            <LogOut aria-hidden="true" strokeWidth={1.75} className="h-5 w-5" />
+            <span>Sair</span>
+          </button>
+        </div>
       </aside>
     </>
   );
