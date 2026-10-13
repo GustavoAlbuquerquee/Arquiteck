@@ -628,7 +628,7 @@ export function Producao() {
               type="search"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar cliente ou ambiente"
+              placeholder="Buscar cliente…"
               className="field field-icon"
             />
           </div>
