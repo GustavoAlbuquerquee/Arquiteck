@@ -231,6 +231,19 @@
     opacity: 0.55;
   }
 
+  /* Trena: faixa âmbar com marcações, usada no progresso do briefing */
+  .trena {
+    @apply bg-primor-primary;
+    background-image:
+      linear-gradient(to right, rgba(74, 43, 31, 0.55) 1px, transparent 1px),
+      linear-gradient(to right, rgba(74, 43, 31, 0.3) 1px, transparent 1px);
+    background-size:
+      40px 100%,
+      8px 45%;
+    background-repeat: repeat-x;
+    background-position: 0 0;
+  }
+
   /* Alertas */
   .alerta {
     @apply flex items-start gap-3 rounded-md border-l-4 px-4 py-3 text-sm leading-relaxed;

@@ -9,125 +9,152 @@ interface Step1Props {
   control: Control<ChecklistFormData>;
 }
 
+const rotulo = 'field-label flex items-center gap-2 text-[15px]';
+const icone = 'h-[18px] w-[18px] text-primor-primary-ink';
+const campo = 'field min-h-[52px] text-base md:text-lg';
+
 export function Step1DadosBasicos({ register, errors, control }: Step1Props) {
   return (
-    <div className="space-y-4 md:space-y-6 w-full overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Dados Básicos do Atendimento</h2>
-
-      {/* Nome do Cliente */}
-      <div className="w-full">
-        <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
-          <User className="w-5 h-5 md:w-6 md:h-6" />
-          Nome do Cliente
-        </label>
-        <input
-          type="text"
-          {...register('nomeCliente')}
-          className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-          placeholder="Digite o nome do cliente"
-        />
-        {errors.nomeCliente && (
-          <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.nomeCliente.message}</p>
-        )}
+    <div className="w-full space-y-6">
+      <div>
+        <p className="etiqueta">Etapa 01</p>
+        <h2 className="titulo-secao mt-1">Dados básicos do atendimento</h2>
       </div>
 
-      {/* Telefone */}
-      <div className="w-full">
-        <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
-          <Phone className="w-5 h-5 md:w-6 md:h-6" />
-          Telefone
-        </label>
-        <Controller
-          name="telefone"
-          control={control}
-          render={({ field }) => (
-            <InputMask
-              mask="(99) 99999-9999"
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-            >
-              {(inputProps: any) => (
-                <input
-                  {...inputProps}
-                  type="tel"
-                  className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                  placeholder="(11) 98765-4321"
-                />
-              )}
-            </InputMask>
+      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
+        {/* Nome do Cliente */}
+        <div className="w-full">
+          <label htmlFor="briefing-cliente" className={rotulo}>
+            <User aria-hidden="true" strokeWidth={1.75} className={icone} />
+            Nome do cliente
+          </label>
+          <input
+            id="briefing-cliente"
+            type="text"
+            aria-invalid={!!errors.nomeCliente}
+            aria-describedby={errors.nomeCliente ? 'briefing-cliente-erro' : undefined}
+            {...register('nomeCliente')}
+            className={campo}
+            placeholder="Digite o nome do cliente"
+          />
+          {errors.nomeCliente && (
+            <p id="briefing-cliente-erro" className="field-error">{errors.nomeCliente.message}</p>
           )}
-        />
-        {errors.telefone && (
-          <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.telefone.message}</p>
-        )}
+        </div>
+
+        {/* Telefone */}
+        <div className="w-full">
+          <label htmlFor="briefing-telefone" className={rotulo}>
+            <Phone aria-hidden="true" strokeWidth={1.75} className={icone} />
+            Telefone
+          </label>
+          <Controller
+            name="telefone"
+            control={control}
+            render={({ field }) => (
+              <InputMask
+                mask="(99) 99999-9999"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              >
+                {(inputProps: any) => (
+                  <input
+                    {...inputProps}
+                    id="briefing-telefone"
+                    type="tel"
+                    aria-invalid={!!errors.telefone}
+                    aria-describedby={errors.telefone ? 'briefing-telefone-erro' : undefined}
+                    className={`${campo} font-mono tabular`}
+                    placeholder="(11) 98765-4321"
+                  />
+                )}
+              </InputMask>
+            )}
+          />
+          {errors.telefone && (
+            <p id="briefing-telefone-erro" className="field-error">{errors.telefone.message}</p>
+          )}
+        </div>
       </div>
 
       {/* Endereço */}
       <div className="w-full">
-        <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
-          <MapPin className="w-5 h-5 md:w-6 md:h-6" />
+        <label htmlFor="briefing-endereco" className={rotulo}>
+          <MapPin aria-hidden="true" strokeWidth={1.75} className={icone} />
           Endereço
         </label>
         <input
+          id="briefing-endereco"
           type="text"
+          aria-invalid={!!errors.endereco}
+          aria-describedby={errors.endereco ? 'briefing-endereco-erro' : undefined}
           {...register('endereco')}
-          className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+          className={campo}
           placeholder="Rua, número, bairro, cidade"
         />
         {errors.endereco && (
-          <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.endereco.message}</p>
+          <p id="briefing-endereco-erro" className="field-error">{errors.endereco.message}</p>
         )}
       </div>
 
       {/* Ambientes e Móveis */}
       <div className="w-full">
-        <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
-          <Home className="w-5 h-5 md:w-6 md:h-6" />
-          Ambientes e Móveis
+        <label htmlFor="briefing-ambiente" className={rotulo}>
+          <Home aria-hidden="true" strokeWidth={1.75} className={icone} />
+          Ambientes e móveis
         </label>
         <input
+          id="briefing-ambiente"
           type="text"
+          aria-invalid={!!errors.tituloAmbiente}
+          aria-describedby={errors.tituloAmbiente ? 'briefing-ambiente-erro' : undefined}
           {...register('tituloAmbiente')}
-          className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+          className={campo}
           placeholder="Ex: Cozinha Planejada, Dormitório Casal"
         />
         {errors.tituloAmbiente && (
-          <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.tituloAmbiente.message}</p>
+          <p id="briefing-ambiente-erro" className="field-error">{errors.tituloAmbiente.message}</p>
         )}
       </div>
 
       {/* Data e Horário - Grid Responsivo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full">
+      <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
         {/* Data do Atendimento */}
-        <div className="w-full box-border overflow-hidden">
-          <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
-            <Calendar className="w-5 h-5 md:w-6 md:h-6" />
-            Data do Atendimento
+        <div className="w-full min-w-0">
+          <label htmlFor="briefing-data" className={rotulo}>
+            <Calendar aria-hidden="true" strokeWidth={1.75} className={icone} />
+            Data do atendimento
           </label>
           <input
+            id="briefing-data"
             type="date"
+            aria-invalid={!!errors.dataAtendimento}
+            aria-describedby={errors.dataAtendimento ? 'briefing-data-erro' : undefined}
             {...register('dataAtendimento')}
-            className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition box-border"
+            className={`${campo} box-border font-mono tabular`}
           />
           {errors.dataAtendimento && (
-            <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.dataAtendimento.message}</p>
+            <p id="briefing-data-erro" className="field-error">{errors.dataAtendimento.message}</p>
           )}
         </div>
 
         {/* Horário da Visita */}
-        <div className="w-full box-border overflow-hidden">
-          <label className="flex items-center gap-2 text-base md:text-lg font-medium text-gray-700 mb-2 md:mb-3">
-            <Clock className="w-5 h-5 md:w-6 md:h-6" />
-            Horário da Visita
+        <div className="w-full min-w-0">
+          <label htmlFor="briefing-horario" className={rotulo}>
+            <Clock aria-hidden="true" strokeWidth={1.75} className={icone} />
+            Horário da visita
           </label>
           <input
+            id="briefing-horario"
             type="time"
+            aria-invalid={!!errors.horarioVisita}
+            aria-describedby={errors.horarioVisita ? 'briefing-horario-erro' : undefined}
             {...register('horarioVisita')}
-            className="w-full h-12 md:h-14 px-3 md:px-4 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition box-border"
+            className={`${campo} box-border font-mono tabular`}
           />
           {errors.horarioVisita && (
-            <p className="text-red-500 text-xs md:text-sm mt-1 md:mt-2">{errors.horarioVisita.message}</p>
+            <p id="briefing-horario-erro" className="field-error">{errors.horarioVisita.message}</p>
           )}
         </div>
       </div>
