@@ -8,12 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icon-192x192.png', 'icon-512x512.png'],
+      includeAssets: ['favicon.ico', 'favicon.svg', 'favicon-96x96.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Arquiteck Vistorias',
         short_name: 'Arquiteck',
         description: 'Sistema de gestão de vistorias, checklists e entrega de obras de marcenaria',
-        theme_color: '#2563eb',
+        theme_color: '#603829',
         background_color: '#ffffff',
         orientation: 'portrait',
         display: 'standalone',

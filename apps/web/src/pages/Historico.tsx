@@ -117,7 +117,6 @@ export function Historico() {
   const handleVerDetalhes = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
     setShowModal(true);
-    console.log("📋 Detalhes do Projeto:", projeto);
   };
 
   const handleDownloadPDF = async () => {

@@ -89,21 +89,8 @@ export function ChecklistWizard() {
         "horarioVisita",
       ]);
 
-      console.log("🔵 Validação Step 1:", { 
-        isValid, 
-        errors,
-        values: {
-          nomeCliente: watch("nomeCliente"),
-          telefone: watch("telefone"),
-          endereco: watch("endereco"),
-          tituloAmbiente: watch("tituloAmbiente"),
-          dataAtendimento: watch("dataAtendimento"),
-          horarioVisita: watch("horarioVisita"),
-        }
-      });
 
       if (!isValid) {
-        console.log("❌ Validação falhou no Step 1. Erros:", errors);
         setError("Preencha todos os campos obrigatórios do Step 1");
         return;
       }
@@ -121,15 +108,8 @@ export function ChecklistWizard() {
         "fotosAmbiente",
       ]);
 
-      console.log("🔵 Validação Step 2:", { 
-        isStep2Valid, 
-        errors,
-        moveis: watch("moveis"),
-        especificacoesAmbiente: watch("especificacoesAmbiente")
-      });
 
       if (!isStep2Valid) {
-        console.log("❌ Validação Zod falhou no Step 2. Erros:", errors);
         setError(
           "Preencha todos os campos obrigatórios destacados em vermelho.",
         );
@@ -140,22 +120,8 @@ export function ChecklistWizard() {
       // Validar manualmente os móveis
       const moveis = watch("moveis");
 
-      console.log("🔵 Validação manual dos móveis:", { 
-        moveis, 
-        length: moveis?.length,
-        moveisDetalhado: moveis?.map((m, i) => ({
-          index: i,
-          nome: m.nome,
-          largura: m.largura,
-          altura: m.altura,
-          profundidade: m.profundidade,
-          profundidadeTipo: typeof m.profundidade,
-          profundidadeVazio: m.profundidade === '' || m.profundidade === null || m.profundidade === undefined
-        }))
-      });
 
       if (!moveis || moveis.length === 0) {
-        console.log("❌ Nenhum móvel adicionado");
         setError("Adicione pelo menos um móvel");
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -171,7 +137,6 @@ export function ChecklistWizard() {
       
       if (moveisComErro.length > 0) {
         const moveisList = moveisComErro.join(', ');
-        console.log(`❌ Móveis sem profundidade: ${moveisList}`);
         setError(
           moveisComErro.length === 1
             ? `Móvel ${moveisList}: Preencha o campo PROFUNDIDADE (está vazio)`
@@ -186,13 +151,11 @@ export function ChecklistWizard() {
       for (let i = 0; i < moveis.length; i++) {
         const movel = moveis[i];
 
-        console.log(`🔵 Validando móvel ${i + 1}:`, movel);
 
         if (
           movel.temPuxador &&
           (!movel.tipoPuxador || !movel.detalhesPuxador)
         ) {
-          console.log(`❌ Móvel ${i + 1}: Falta dados do puxador`);
           setError(`Móvel ${i + 1}: Preencha o tipo e detalhes do puxador`);
           hasError = true;
           break;
@@ -346,7 +309,6 @@ export function ChecklistWizard() {
         assinatura: payload.assinatura_url || "",
       };
 
-      console.log("🟢 Dados carregados e formatados:", formData);
 
       setExistingClientId(data.clients.id);
       setExistingChecklistId(checklist?.id || null);
@@ -360,7 +322,6 @@ export function ChecklistWizard() {
   };
 
   const onSubmit = async (data: ChecklistFormData) => {
-    console.log("🔵 onSubmit chamado", { isEditMode, projectId, data });
     setLoading(true);
     setError("");
 
@@ -457,7 +418,6 @@ export function ChecklistWizard() {
           if (checklistError) throw checklistError;
         }
 
-        console.log("✅ Briefing atualizado com sucesso!");
 
         const dataComUrls = {
           ...data,
@@ -556,11 +516,6 @@ export function ChecklistWizard() {
 
         if (checklistError) throw checklistError;
 
-        console.log("🎉 Briefing salvo com sucesso!", {
-          cliente,
-          projeto,
-          payload,
-        });
 
         // Atualizar savedData com URLs para o PDF
         const dataComUrls = {
@@ -806,17 +761,6 @@ export function ChecklistWizard() {
                 key="btn-salvar"
                 type="submit"
                 disabled={loading}
-                onClick={() => {
-                  console.log("🔴 Botão clicado", {
-                    errors,
-                    errorsDetalhado: JSON.stringify(errors, null, 2),
-                    isEditMode,
-                    loading,
-                  });
-                  if (errors.moveis) {
-                    console.log("❌ Erros nos móveis:", errors.moveis);
-                  }
-                }}
                 className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-secondary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition text-base md:text-lg md:ml-auto shadow-md"
               >
                 {loading ? (

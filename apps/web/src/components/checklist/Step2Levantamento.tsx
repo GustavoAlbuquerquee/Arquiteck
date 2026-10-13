@@ -247,11 +247,7 @@ export function Step2Levantamento({
                       </label>
                       <input
                         type="text"
-                        {...register(`moveis.${index}.profundidade`, {
-                          onChange: (e) => {
-                            console.log(`📏 Profundidade Móvel ${index + 1}:`, e.target.value, typeof e.target.value);
-                          }
-                        })}
+                        {...register(`moveis.${index}.profundidade`)}
                         className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                         placeholder="600"
                       />
@@ -808,8 +804,9 @@ export function Step2Levantamento({
                   <button
                     type="button"
                     onClick={() => handleRemoveFoto(index)}
-                    className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
                     title="Remover foto"
+                    aria-label="Remover foto"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
