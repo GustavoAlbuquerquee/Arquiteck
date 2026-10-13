@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "@/lib/supabase/register";
 import { supabase } from "@/lib/supabase";
 import { UserPlus, Mail, Lock, AlertCircle, CheckCircle, Building2, User } from "lucide-react";
+import { AuthShell } from "@/components/marca/AuthShell";
 
 export function Register() {
   const [email, setEmail] = useState("");
@@ -84,7 +85,7 @@ export function Register() {
 
       setSuccess(true);
       setLoading(false);
-      
+
       setTimeout(() => {
         navigate("/");
       }, 1500);
@@ -95,218 +96,212 @@ export function Register() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-primor-bg-light flex items-center justify-center p-4">
-      <div className="w-[90%] md:w-full max-w-md">
-        {/* Logo/Título */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primor-secondary mb-2">Arquiteck</h1>
-          <p className="text-primor-primary font-semibold text-lg">Primor Móveis</p>
-          <p className="text-primor-gray-dark mt-1">Criar nova conta</p>
-        </div>
+  const bloqueado = loading || success;
 
-        {/* Card de Registro */}
-        <div className="bg-primor-bg rounded-2xl shadow-2xl p-8 border border-primor-gray-medium">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-primor-primary/10 p-3 rounded-full">
-              <UserPlus className="w-8 h-8 text-primor-primary" />
+  return (
+    <AuthShell
+      etiqueta="Cadastro · nova marcenaria"
+      titulo="Criar sua conta"
+      descricao="Cadastre a empresa e o primeiro acesso. Depois você convida a equipe em Configurações."
+      rodape={
+        <p>
+          Já tem uma conta?{" "}
+          <Link to="/login" className="link">
+            Fazer login
+          </Link>
+        </p>
+      }
+    >
+      <div aria-live="polite" className="space-y-3">
+        {/* Alerta de Erro */}
+        {error && (
+          <div className="alerta alerta-erro animate-fade-in">
+            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Alerta de Sucesso */}
+        {success && (
+          <div className="alerta alerta-sucesso animate-fade-in">
+            <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold">Conta criada.</p>
+              <p className="mt-0.5">Redirecionando para o sistema...</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Formulário */}
+      <form onSubmit={handleSubmit} className="mt-5 space-y-8">
+        <fieldset className="space-y-5">
+          <legend className="etiqueta mb-4 flex w-full items-center gap-3">
+            <span>01 · Você e a empresa</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-primor-line" />
+          </legend>
+
+          {/* Nome Completo */}
+          <div>
+            <label htmlFor="cadastro-nome" className="field-label">
+              Nome completo <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+            </label>
+            <div className="relative">
+              <User aria-hidden="true" className="field-icon-slot" />
+              <input
+                id="cadastro-nome"
+                type="text"
+                autoComplete="name"
+                value={nomeCompleto}
+                onChange={(e) => setNomeCompleto(e.target.value)}
+                className="field field-icon"
+                placeholder="Mariana Teixeira"
+                required
+                disabled={bloqueado}
+              />
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-center text-primor-text-light mb-6">
-            Criar sua conta
-          </h2>
-
-          {/* Alerta de Erro */}
-          {error && (
-            <div className="mb-4 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-700 text-sm">{error}</p>
+          {/* Nome da Empresa */}
+          <div>
+            <label htmlFor="cadastro-empresa" className="field-label">
+              Nome da empresa <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+            </label>
+            <div className="relative">
+              <Building2 aria-hidden="true" className="field-icon-slot" />
+              <input
+                id="cadastro-empresa"
+                type="text"
+                autoComplete="organization"
+                value={nomeEmpresa}
+                onChange={(e) => setNomeEmpresa(e.target.value)}
+                className="field field-icon"
+                placeholder="Primor Móveis"
+                required
+                disabled={bloqueado}
+              />
             </div>
-          )}
+          </div>
 
-          {/* Alerta de Sucesso */}
-          {success && (
-            <div className="mb-4 bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-green-700 text-sm font-semibold">
-                  Conta criada com sucesso!
-                </p>
-                <p className="text-green-600 text-xs mt-1">
-                  Redirecionando para o sistema...
-                </p>
-              </div>
+          {/* CNPJ */}
+          <div>
+            <label htmlFor="cadastro-cnpj" className="field-label">
+              CNPJ <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+            </label>
+            <div className="relative">
+              <Building2 aria-hidden="true" className="field-icon-slot" />
+              <input
+                id="cadastro-cnpj"
+                type="text"
+                inputMode="numeric"
+                value={cnpj}
+                onChange={handleCNPJChange}
+                className="field field-icon font-mono tabular"
+                placeholder="12.345.678/0001-90"
+                maxLength={18}
+                required
+                disabled={bloqueado}
+              />
             </div>
-          )}
+          </div>
+        </fieldset>
 
-          {/* Formulário */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Nome Completo */}
-            <div>
-              <label className="block text-sm font-medium text-primor-text-light mb-2">
-                Nome Completo *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                <input
-                  type="text"
-                  value={nomeCompleto}
-                  onChange={(e) => setNomeCompleto(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
-                  placeholder="João Silva"
-                  required
-                  disabled={loading || success}
-                />
-              </div>
+        <fieldset className="space-y-5">
+          <legend className="etiqueta mb-4 flex w-full items-center gap-3">
+            <span>02 · Acesso</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-primor-line" />
+          </legend>
+
+          {/* Email */}
+          <div>
+            <label htmlFor="cadastro-email" className="field-label">
+              Email
+            </label>
+            <div className="relative">
+              <Mail aria-hidden="true" className="field-icon-slot" />
+              <input
+                id="cadastro-email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="field field-icon"
+                placeholder="seu@email.com"
+                required
+                disabled={bloqueado}
+              />
             </div>
+          </div>
 
-            {/* Nome da Empresa */}
-            <div>
-              <label className="block text-sm font-medium text-primor-text-light mb-2">
-                Nome da Empresa *
-              </label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                <input
-                  type="text"
-                  value={nomeEmpresa}
-                  onChange={(e) => setNomeEmpresa(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
-                  placeholder="Primor Móveis"
-                  required
-                  disabled={loading || success}
-                />
-              </div>
-            </div>
-
-            {/* CNPJ */}
-            <div>
-              <label className="block text-sm font-medium text-primor-text-light mb-2">
-                CNPJ *
-              </label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                <input
-                  type="text"
-                  value={cnpj}
-                  onChange={handleCNPJChange}
-                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
-                  placeholder="12.345.678/0001-90"
-                  maxLength={18}
-                  required
-                  disabled={loading || success}
-                />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-primor-text-light mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
-                  placeholder="seu@email.com"
-                  required
-                  disabled={loading || success}
-                />
-              </div>
-            </div>
-
+          <div className="grid gap-5 sm:grid-cols-2">
             {/* Senha */}
             <div>
-              <label className="block text-sm font-medium text-primor-text-light mb-2">
+              <label htmlFor="cadastro-senha" className="field-label">
                 Senha
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                <Lock aria-hidden="true" className="field-icon-slot" />
                 <input
+                  id="cadastro-senha"
                   type="password"
+                  autoComplete="new-password"
+                  aria-describedby="cadastro-senha-dica"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
+                  className="field field-icon"
                   placeholder="••••••••"
                   required
-                  disabled={loading || success}
+                  disabled={bloqueado}
                 />
               </div>
-              <p className="text-xs text-primor-gray-dark mt-1">
+              <p id="cadastro-senha-dica" className="field-hint">
                 Mínimo de 6 caracteres
               </p>
             </div>
 
             {/* Confirmar Senha */}
             <div>
-              <label className="block text-sm font-medium text-primor-text-light mb-2">
-                Confirmar Senha
+              <label htmlFor="cadastro-confirmar" className="field-label">
+                Confirmar senha
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+                <Lock aria-hidden="true" className="field-icon-slot" />
                 <input
+                  id="cadastro-confirmar"
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light"
+                  className="field field-icon"
                   placeholder="••••••••"
                   required
-                  disabled={loading || success}
+                  disabled={bloqueado}
                 />
               </div>
             </div>
-
-
-
-            {/* Botão de Registro */}
-            <button
-              type="submit"
-              disabled={loading || success}
-              className="w-full h-12 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center justify-center gap-2 shadow-md"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
-                  Criando conta...
-                </>
-              ) : success ? (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Conta criada!
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-5 h-5" />
-                  Criar conta
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Link para Login */}
-          <div className="mt-6 text-center">
-            <p className="text-primor-gray-dark text-sm">
-              Já tem uma conta?{" "}
-              <Link
-                to="/login"
-                className="text-primor-primary hover:brightness-110 font-semibold"
-              >
-                Fazer login
-              </Link>
-            </p>
           </div>
-        </div>
+        </fieldset>
 
-        {/* Footer */}
-        <p className="text-center text-primor-gray-dark text-sm mt-6">
-          © {new Date().getFullYear()} Arquiteck - Primor Móveis. Todos os
-          direitos reservados.
-        </p>
-      </div>
-    </div>
+        {/* Botão de Registro */}
+        <button type="submit" disabled={bloqueado} className="btn btn-primary btn-lg w-full">
+          {loading ? (
+            <>
+              <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-secondary border-t-transparent" />
+              Criando conta...
+            </>
+          ) : success ? (
+            <>
+              <CheckCircle aria-hidden="true" className="h-5 w-5" />
+              Conta criada
+            </>
+          ) : (
+            <>
+              <UserPlus aria-hidden="true" className="h-5 w-5" />
+              Criar conta
+            </>
+          )}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

@@ -51,30 +51,31 @@ export function NovaSenhaForm({ onSucesso }: { onSucesso?: () => void }) {
     onSucesso?.();
   };
 
-  const inputClass =
-    "w-full h-12 pl-10 pr-4 border-2 border-primor-gray-medium rounded-lg focus:border-primor-primary focus:ring-2 focus:ring-primor-primary/20 outline-none transition bg-primor-bg-light";
+  const inputClass = "field field-icon";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {erro && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700 text-sm">{erro}</p>
-        </div>
-      )}
-      {sucesso && (
-        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-green-700 text-sm">Senha alterada com sucesso.</p>
-        </div>
-      )}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div aria-live="polite" className="space-y-3">
+        {erro && (
+          <div className="alerta alerta-erro animate-fade-in">
+            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <p>{erro}</p>
+          </div>
+        )}
+        {sucesso && (
+          <div className="alerta alerta-sucesso animate-fade-in">
+            <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <p>Senha alterada com sucesso.</p>
+          </div>
+        )}
+      </div>
 
       <div>
-        <label htmlFor="nova-senha" className="block text-sm font-medium text-primor-text-light mb-2">
+        <label htmlFor="nova-senha" className="field-label">
           Nova senha
         </label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+          <Lock aria-hidden="true" className="field-icon-slot" />
           <input
             id="nova-senha"
             type="password"
@@ -89,11 +90,11 @@ export function NovaSenhaForm({ onSucesso }: { onSucesso?: () => void }) {
       </div>
 
       <div>
-        <label htmlFor="confirmar-senha" className="block text-sm font-medium text-primor-text-light mb-2">
+        <label htmlFor="confirmar-senha" className="field-label">
           Confirmar nova senha
         </label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primor-gray-dark" />
+          <Lock aria-hidden="true" className="field-icon-slot" />
           <input
             id="confirmar-senha"
             type="password"
@@ -110,7 +111,7 @@ export function NovaSenhaForm({ onSucesso }: { onSucesso?: () => void }) {
       <button
         type="submit"
         disabled={salvando}
-        className="w-full md:w-auto px-6 h-12 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+        className="btn btn-primary w-full md:w-auto"
       >
         {salvando ? "Salvando..." : "Salvar nova senha"}
       </button>
