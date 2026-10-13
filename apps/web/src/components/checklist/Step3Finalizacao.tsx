@@ -95,7 +95,9 @@ export function Step3Finalizacao({ register, setValue, errors, assinaturaAtual, 
           </div>
         )}
 
-        <div className="relative rounded-lg border border-primor-line bg-white p-2 shadow-chapa">
+        {/* Quadro de assinatura sempre em papel branco com traço escuro (tema-claro),
+            para a imagem salva ficar legível no PDF em qualquer tema */}
+        <div className="tema-claro relative rounded-lg border border-primor-line bg-white p-2 shadow-chapa">
           <SignatureCanvas
             ref={signatureRef}
             clearOnResize={false}

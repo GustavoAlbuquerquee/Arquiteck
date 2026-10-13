@@ -539,8 +539,8 @@ export function ChecklistWizard() {
 
       {showSuccessAlert && savedData && (
         <div role="status" className="panel mb-6 animate-fade-in overflow-hidden">
-          <div className="flex items-start gap-4 border-l-4 border-[#067647] px-5 py-6 md:px-7">
-            <CheckCircle aria-hidden="true" className="h-7 w-7 flex-shrink-0 text-[#067647]" />
+          <div className="flex items-start gap-4 border-l-4 border-primor-sucesso px-5 py-6 md:px-7">
+            <CheckCircle aria-hidden="true" className="h-7 w-7 flex-shrink-0 text-primor-sucesso" />
             <div className="flex-1">
               <p className="etiqueta">Briefing · {savedData.nomeCliente}</p>
               <h3 className="mt-1 font-display text-2xl font-semibold text-primor-secondary">
@@ -688,7 +688,7 @@ export function ChecklistWizard() {
               >
                 {loading ? (
                   <>
-                    <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-on-secondary border-t-transparent" />
                     <span aria-live="polite">
                       {loadingMessage ||
                         (isEditMode ? "Atualizando..." : "Salvando...")}
@@ -718,7 +718,8 @@ export function ChecklistWizard() {
             zIndex: -10,
           }}
         >
-          <div ref={pdfRef} className="w-[210mm] bg-white p-8">
+          {/* tema-claro: papel branco e tinta escura mesmo com o app no modo escuro */}
+          <div ref={pdfRef} className="tema-claro w-[210mm] bg-white p-8">
             <div className="space-y-6">
               <div
                 className="text-center border-b-2 border-gray-300 pb-4"
