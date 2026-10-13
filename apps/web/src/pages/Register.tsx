@@ -286,7 +286,7 @@ export function Register() {
         <button type="submit" disabled={bloqueado} className="btn btn-primary btn-lg w-full">
           {loading ? (
             <>
-              <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-secondary border-t-transparent" />
+              <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-on-primary border-t-transparent" />
               Criando conta...
             </>
           ) : success ? (

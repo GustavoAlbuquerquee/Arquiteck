@@ -30,7 +30,7 @@ export function AuthShell({
   return (
     <div className="min-h-[100dvh] lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* Painel da marca */}
-      <aside className="on-dark relative overflow-hidden bg-primor-secondary text-white">
+      <aside className="on-dark relative overflow-hidden bg-primor-madeira text-white dark:border-r dark:border-white/10">
         <VeioMadeira />
         {/* Mobile: faixa compacta só com a marca */}
         <div className="relative px-5 py-5 lg:hidden">

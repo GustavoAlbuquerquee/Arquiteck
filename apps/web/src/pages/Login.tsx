@@ -162,7 +162,7 @@ export function Login() {
           <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
             {loading ? (
               <>
-                <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-secondary border-t-transparent" />
+                <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-on-primary border-t-transparent" />
                 Entrando...
               </>
             ) : (
