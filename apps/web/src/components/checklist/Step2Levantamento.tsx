@@ -5,6 +5,7 @@ import {
   Control,
   useFieldArray,
   UseFormSetValue,
+  UseFormGetValues,
 } from "react-hook-form";
 import {
   ChecklistFormData,
@@ -27,6 +28,7 @@ import {
   Package,
 } from "lucide-react";
 import { useState } from "react";
+import { comprimirImagem } from "@/lib/image";
 
 interface Step2Props {
   register: UseFormRegister<ChecklistFormData>;
@@ -34,6 +36,7 @@ interface Step2Props {
   errors: FieldErrors<ChecklistFormData>;
   control: Control<ChecklistFormData>;
   setValue: UseFormSetValue<ChecklistFormData>;
+  getValues: UseFormGetValues<ChecklistFormData>;
 }
 
 export function Step2Levantamento({
@@ -42,8 +45,10 @@ export function Step2Levantamento({
   errors,
   control,
   setValue,
+  getValues,
 }: Step2Props) {
-  const [fotosPreview, setFotosPreview] = useState<string[]>([]);
+  const [processandoFotos, setProcessandoFotos] = useState(false);
+  const [fotoErro, setFotoErro] = useState("");
 
   // useFieldArray para móveis dinâmicos
   const {
@@ -109,42 +114,42 @@ export function Step2Levantamento({
   };
 
   const handleFotosChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const input = e.target;
+    const files = Array.from(input.files ?? []);
+    // Limpa o input para que escolher o mesmo arquivo de novo dispare onChange
+    input.value = "";
+    if (files.length === 0) return;
 
-    const fotosBase64: string[] = [];
-    const previews: string[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const reader = new FileReader();
-
-      await new Promise((resolve) => {
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          fotosBase64.push(base64);
-          previews.push(base64);
-          resolve(null);
-        };
-        reader.readAsDataURL(file);
-      });
+    setFotoErro("");
+    setProcessandoFotos(true);
+    const novas: string[] = [];
+    let falhas = 0;
+    for (const file of files) {
+      try {
+        novas.push(await comprimirImagem(file));
+      } catch {
+        falhas++;
+      }
     }
+    setProcessandoFotos(false);
 
-    // Concatenar com fotos existentes
-    const novasFotos = [...fotosAmbiente, ...fotosBase64];
-    setValue("fotosAmbiente", novasFotos);
-    setFotosPreview([...fotosPreview, ...previews]);
+    // Lê o valor atual do form (não o do render) para não perder fotos
+    // adicionadas enquanto as anteriores eram processadas
+    setValue("fotosAmbiente", [...(getValues("fotosAmbiente") || []), ...novas]);
+    if (falhas > 0) {
+      setFotoErro(
+        falhas === 1
+          ? "Não foi possível carregar 1 foto. Tente adicioná-la de novo."
+          : `Não foi possível carregar ${falhas} fotos. Tente adicioná-las de novo.`,
+      );
+    }
   };
 
   const handleRemoveFoto = (indexToRemove: number) => {
-    const novasFotos = fotosAmbiente.filter(
-      (_, index) => index !== indexToRemove,
+    setValue(
+      "fotosAmbiente",
+      fotosAmbiente.filter((_, index) => index !== indexToRemove),
     );
-    const novosPreviews = fotosPreview.filter(
-      (_, index) => index !== indexToRemove,
-    );
-    setValue("fotosAmbiente", novasFotos);
-    setFotosPreview(novosPreviews);
   };
 
   return (
@@ -769,29 +774,34 @@ export function Step2Levantamento({
               Clique para adicionar fotos
             </p>
             <p className="text-sm text-gray-500">
-              Ou arraste e solte aqui (múltiplas fotos)
+              {processandoFotos
+                ? "Processando fotos..."
+                : "Você pode escolher várias fotos de uma vez"}
             </p>
             <input
               type="file"
               multiple
               accept="image/*"
               onChange={handleFotosChange}
+              disabled={processandoFotos}
               className="hidden"
             />
           </div>
         </label>
 
+        {fotoErro && <p className="text-red-500 text-sm mt-2">{fotoErro}</p>}
+
         {/* Preview das Fotos */}
-        {fotosPreview.length > 0 && (
+        {fotosAmbiente.length > 0 && (
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-700 mb-2">
-              {fotosPreview.length}{" "}
-              {fotosPreview.length === 1
+              {fotosAmbiente.length}{" "}
+              {fotosAmbiente.length === 1
                 ? "foto adicionada"
                 : "fotos adicionadas"}
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {fotosPreview.map((foto, index) => (
+              {fotosAmbiente.map((foto, index) => (
                 <div
                   key={index}
                   className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group"

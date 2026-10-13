@@ -50,23 +50,15 @@ export async function uploadBase64Image(
 }
 
 /**
- * Faz upload de múltiplas imagens Base64
- * @param base64Array - Array de strings Base64
- * @param pathPrefix - Prefixo do caminho (ex: tenant_id/fotos)
- * @param bucket - Nome do bucket
- * @returns Array de URLs públicas
+ * Extrai o caminho do arquivo dentro do bucket a partir da URL pública
+ * (o inverso de getPublicUrl). Devolve null se a URL não for desse bucket.
  */
-export async function uploadMultipleBase64Images(
-  base64Array: string[],
-  pathPrefix: string,
+export function storagePathFromPublicUrl(
+  url: string,
   bucket: string = 'vistorias'
-): Promise<string[]> {
-  const uploadPromises = base64Array.map((base64, index) => {
-    const timestamp = Date.now();
-    const path = `${pathPrefix}/foto-${timestamp}-${index}.jpg`;
-    return uploadBase64Image(base64, path, bucket);
-  });
-
-  const results = await Promise.all(uploadPromises);
-  return results.filter((url): url is string => url !== null);
+): string | null {
+  const marcador = `/storage/v1/object/public/${bucket}/`;
+  const i = url.indexOf(marcador);
+  if (i === -1) return null;
+  return decodeURIComponent(url.slice(i + marcador.length).split('?')[0]);
 }
