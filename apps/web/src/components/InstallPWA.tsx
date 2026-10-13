@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
+import { VeioMadeira } from '@/components/marca/VeioMadeira';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -67,38 +68,41 @@ export function InstallPWA() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-50 animate-fade-in">
-      <div className="bg-primor-secondary text-white rounded-xl shadow-2xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="bg-white/20 rounded-lg p-2 flex-shrink-0">
-            <Download className="w-6 h-6" />
-          </div>
+    <div
+      role="region"
+      aria-label="Instalar o aplicativo"
+      className="on-dark fixed bottom-4 left-4 right-4 z-modal animate-fade-in md:left-auto md:right-6 md:max-w-sm"
+    >
+      <div className="relative overflow-hidden rounded-lg bg-primor-madeira text-white shadow-chapa-lg dark:ring-1 dark:ring-white/10">
+        <VeioMadeira opacidade={0.1} />
+        <div aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-primor-primary" />
+        <div className="relative flex items-start gap-3 py-4 pl-5 pr-2">
+          <Download aria-hidden="true" strokeWidth={1.75} className="mt-0.5 h-6 w-6 flex-shrink-0 text-primor-primary" />
           <div className="flex-1">
-            <h3 className="font-bold text-lg mb-1">Instalar Arquiteck</h3>
-            <p className="text-sm text-white/80 mb-3">
+            <h3 className="font-display text-lg font-semibold">Instalar o Arquiteck</h3>
+            <p className="mb-3 mt-0.5 text-sm text-white/80">
               Instale o app no seu dispositivo para acesso rápido e uso offline
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleInstallClick}
-                className="flex-1 bg-primor-primary text-white font-semibold py-2 px-4 rounded-lg hover:brightness-110 transition"
-              >
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={handleInstallClick} className="btn btn-primary btn-sm flex-1">
                 Instalar
               </button>
               <button
+                type="button"
                 onClick={handleDismiss}
-                className="bg-white/10 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/20 transition"
+                className="btn btn-sm text-white hover:bg-white/10"
               >
                 Agora não
               </button>
             </div>
           </div>
           <button
+            type="button"
             onClick={handleDismiss}
             aria-label="Fechar"
-            className="text-white/80 hover:text-white transition flex-shrink-0"
+            className="btn-icon flex-shrink-0 text-white/80 hover:bg-white/10 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X aria-hidden="true" className="h-5 w-5" />
           </button>
         </div>
       </div>

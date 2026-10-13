@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { KeyRound, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { NovaSenhaForm } from "@/components/NovaSenhaForm";
+import { AuthShell } from "@/components/marca/AuthShell";
 
 // Página aberta pelo link de "Esqueci minha senha". O supabase-js lê o token
 // da URL sozinho e cria uma sessão de recuperação; com ela, o usuário define
@@ -44,53 +45,45 @@ export function RedefinirSenha() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-primor-bg-light flex items-center justify-center p-4">
-      <div className="w-[90%] md:w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primor-secondary mb-2">Arquiteck</h1>
-          <p className="text-primor-gray-dark mt-1">Redefinir senha</p>
-        </div>
-
-        <div className="bg-primor-bg rounded-2xl shadow-2xl p-8 border border-primor-gray-medium">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-primor-primary/10 p-3 rounded-full">
-              <KeyRound className="w-8 h-8 text-primor-primary" />
-            </div>
+    <AuthShell
+      etiqueta="Acesso · redefinir senha"
+      titulo={estado === "pronto" ? "Escolha uma nova senha" : "Redefinir senha"}
+      rodape={
+        <p>
+          Lembrou a senha?{" "}
+          <Link to="/login" className="link">
+            Voltar para o login
+          </Link>
+        </p>
+      }
+    >
+      <div aria-live="polite">
+        {estado === "verificando" && (
+          <div className="flex items-center gap-3 py-4 text-primor-muted">
+            <KeyRound aria-hidden="true" className="h-5 w-5 text-primor-primary-ink" />
+            <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-primary border-t-transparent" />
+            <span>Verificando o link...</span>
           </div>
+        )}
 
-          {estado === "verificando" && (
-            <div className="flex justify-center py-6">
-              <div className="w-8 h-8 border-4 border-primor-primary border-t-transparent rounded-full animate-spin" />
+        {estado === "invalido" && (
+          <div className="space-y-5">
+            <div className="alerta alerta-erro">
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              <p>
+                Este link é inválido ou expirou. Peça um novo na tela de login, em "Esqueci minha senha".
+              </p>
             </div>
-          )}
-
-          {estado === "invalido" && (
-            <div className="space-y-4">
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-red-700 text-sm">
-                  Este link é inválido ou expirou. Peça um novo na tela de login, em "Esqueci minha senha".
-                </p>
-              </div>
-              <Link
-                to="/login"
-                className="block text-center text-primor-primary hover:brightness-110 font-semibold"
-              >
-                Voltar para o login
-              </Link>
-            </div>
-          )}
-
-          {estado === "pronto" && (
-            <>
-              <h2 className="text-2xl font-bold text-center text-primor-text-light mb-6">
-                Escolha uma nova senha
-              </h2>
-              <NovaSenhaForm onSucesso={() => setTimeout(() => navigate("/"), 1500)} />
-            </>
-          )}
-        </div>
+            <Link to="/login" className="btn btn-outline w-full">
+              Voltar para o login
+            </Link>
+          </div>
+        )}
       </div>
-    </div>
+
+      {estado === "pronto" && (
+        <NovaSenhaForm onSucesso={() => setTimeout(() => navigate("/"), 1500)} />
+      )}
+    </AuthShell>
   );
 }

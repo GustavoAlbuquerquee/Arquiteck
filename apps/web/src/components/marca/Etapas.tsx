@@ -1,0 +1,68 @@
+import { ORDEM_ETAPAS, indiceEtapa } from '@/lib/jornada/etapas';
+
+/**
+ * Representação visual das etapas do projeto, do primeiro contato à
+ * instalação. A ordem e os nomes vêm de src/lib/jornada/etapas.ts.
+ */
+export { ORDEM_ETAPAS, indiceEtapa };
+
+/** Classes do selo de etapa: tons da própria paleta, do mais claro ao mais firme */
+export function classeSeloEtapa(status: string | null | undefined) {
+  switch (status) {
+    case 'novo_contato':
+      return 'bg-primor-surface text-primor-secondary border-dashed border-primor-line-strong';
+    case 'em_conversa':
+    case 'visita':
+      return 'bg-primor-paper-deep text-primor-secondary border-primor-line-strong';
+    case 'fechado':
+      return 'bg-primor-realce text-primor-secondary border-primor-line-strong';
+    case 'orcamento':
+      return 'bg-primor-surface text-primor-secondary border-primor-line-strong';
+    case 'pre_producao':
+      return 'bg-primor-realce text-primor-secondary border-primor-primary';
+    case 'producao':
+      return 'bg-primor-primary text-primor-on-primary border-primor-primary';
+    case 'instalacao':
+      return 'bg-primor-secondary text-primor-on-secondary border-primor-secondary';
+    case 'concluido':
+      return 'bg-primor-sucesso-bg text-primor-sucesso-ink border-primor-sucesso';
+    default:
+      return 'bg-primor-paper-deep text-primor-muted border-primor-line';
+  }
+}
+
+/**
+ * Medidor de etapas em forma de régua: cinco marcações, preenchidas até a etapa
+ * atual. O texto da etapa vem junto (a cor nunca é a única informação).
+ */
+export function MedidorEtapa({
+  status,
+  rotulo,
+  compacto = false,
+}: {
+  status: string | null | undefined;
+  rotulo: string;
+  compacto?: boolean;
+}) {
+  const atual = indiceEtapa(status);
+
+  return (
+    <span className="inline-flex items-center gap-2" title={rotulo}>
+      <span aria-hidden="true" className="flex items-end gap-[3px]">
+        {ORDEM_ETAPAS.map((etapa, i) => (
+          <span
+            key={etapa}
+            className={`w-[3px] rounded-[1px] ${i <= atual ? (atual === ORDEM_ETAPAS.length - 1 ? 'bg-primor-sucesso' : 'bg-primor-primary-ink') : 'bg-primor-line'} ${
+              i === 0 || i === ORDEM_ETAPAS.length - 1 ? 'h-3.5' : 'h-2.5'
+            }`}
+          />
+        ))}
+      </span>
+      <span
+        className={`font-medium text-primor-secondary ${compacto ? 'text-xs' : 'text-sm'}`}
+      >
+        {rotulo}
+      </span>
+    </span>
+  );
+}

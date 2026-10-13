@@ -7,8 +7,31 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#603829" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Sistema de gestão de vistorias e checklists para móveis planejados" />
     <title>Arquiteck - Primor Móveis</title>
+    <!--
+      Tema antes da primeira pintura, para não piscar o claro.
+      Mesma regra de src/lib/tema.ts: preferência salva em "arquiteck-tema"
+      (claro | escuro | sistema), padrão sistema.
+    -->
+    <script>
+      (function () {
+        var pref = 'sistema';
+        try {
+          var salvo = localStorage.getItem('arquiteck-tema');
+          if (salvo === 'claro' || salvo === 'escuro' || salvo === 'sistema') pref = salvo;
+        } catch (e) {}
+        var escuro =
+          pref === 'escuro' ||
+          (pref === 'sistema' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var raiz = document.documentElement;
+        if (escuro) raiz.classList.add('dark');
+        raiz.style.colorScheme = escuro ? 'dark' : 'light';
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', escuro ? '#2F1C13' : '#603829');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

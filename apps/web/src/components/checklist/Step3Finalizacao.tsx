@@ -45,79 +45,93 @@ export function Step3Finalizacao({ register, setValue, errors, assinaturaAtual, 
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Finalização e Assinatura</h2>
+    <div className="space-y-8">
+      <div>
+        <p className="etiqueta">Etapa 03</p>
+        <h2 className="titulo-secao mt-1">Finalização e assinatura</h2>
+      </div>
 
       {/* Observações */}
       <div>
-        <label className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-3">
-          <FileText className="w-6 h-6" />
-          Observações e Ressalvas
+        <label htmlFor="briefing-observacoes" className="field-label flex items-center gap-2 text-[15px]">
+          <FileText aria-hidden="true" strokeWidth={1.75} className="h-[18px] w-[18px] text-primor-primary-ink" />
+          Observações e ressalvas
         </label>
         <textarea
+          id="briefing-observacoes"
+          aria-describedby="briefing-observacoes-dica"
           {...register('observacoes')}
           rows={6}
-          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition resize-none"
+          className="field resize-none text-base md:text-lg"
           placeholder="Digite aqui observações importantes, pendências ou ressalvas sobre a vistoria..."
         />
-        <p className="text-sm text-gray-500 mt-2">Campo opcional</p>
+        <p id="briefing-observacoes-dica" className="field-hint">Campo opcional</p>
+      </div>
+
+      {/* Termo de Aceite: lido antes de assinar */}
+      <div className="alerta alerta-info">
+        <p className="leading-relaxed">
+          <strong>Termo de aceite:</strong> Ao assinar este documento, declaro que todas as informações
+          prestadas são verdadeiras e que o serviço foi executado conforme especificado. Estou ciente
+          das condições acordadas e autorizo o prosseguimento do projeto.
+        </p>
       </div>
 
       {/* Assinatura */}
       <div>
-        <label className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-3">
-          <PenTool className="w-6 h-6" />
-          Termo de Aceite - Assinatura Digital
-        </label>
-        
+        <p id="rotulo-assinatura" className="field-label flex items-center gap-2 text-[15px]">
+          <PenTool aria-hidden="true" strokeWidth={1.75} className="h-[18px] w-[18px] text-primor-primary-ink" />
+          Termo de aceite - assinatura digital
+        </p>
+
         {assinaturaSalva && (
-          <div className="mb-3">
-            <p className="text-sm text-gray-600 mb-2">Assinatura atual. Assine abaixo apenas se quiser substituí-la.</p>
+          <div className="mb-4 rounded-md border border-primor-line bg-primor-bg-light p-3">
+            <p className="mb-2 text-sm text-primor-muted">Assinatura atual. Assine abaixo apenas se quiser substituí-la.</p>
             <img
               src={urlDaAssinatura(assinaturaSalva)}
               alt="Assinatura atual"
-              className="max-h-32 border-2 border-gray-200 rounded-lg bg-white"
+              className="max-h-32 rounded-md border border-primor-line bg-white"
             />
           </div>
         )}
 
-        <div className="border-4 border-gray-300 rounded-lg bg-white p-2">
+        {/* Quadro de assinatura sempre em papel branco com traço escuro (tema-claro),
+            para a imagem salva ficar legível no PDF em qualquer tema */}
+        <div className="tema-claro relative rounded-lg border border-primor-line bg-white p-2 shadow-chapa">
           <SignatureCanvas
             ref={signatureRef}
             clearOnResize={false}
             canvasProps={{
               className: 'w-full h-64 touch-none',
-              style: { border: '2px dashed #cbd5e1', borderRadius: '8px' }
+              style: { border: '1.5px dashed #9a8072', borderRadius: '6px' },
+              role: 'img',
+              'aria-labelledby': 'rotulo-assinatura',
             }}
             backgroundColor="white"
             onEnd={handleEndSignature}
           />
+          {/* Linha de assinatura impressa: decorativa, não entra na imagem salva */}
+          <div aria-hidden="true" className="pointer-events-none absolute bottom-12 left-8 right-8 flex items-end gap-2">
+            <span className="font-display text-xl leading-none text-primor-line-strong">×</span>
+            <span className="mb-1 h-px flex-1 bg-primor-line-strong/70" />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between mt-3">
-          <p className="text-sm text-gray-600">Assine com o dedo ou caneta stylus</p>
+        <div className="mt-3 flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+          <p className="text-sm text-primor-muted">Assine com o dedo ou caneta stylus</p>
           <button
             type="button"
             onClick={handleClearSignature}
-            className="flex items-center gap-2 px-6 h-12 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
+            className="btn btn-outline"
           >
-            <Eraser className="w-5 h-5" />
-            Limpar Assinatura
+            <Eraser aria-hidden="true" className="h-5 w-5" />
+            Limpar assinatura
           </button>
         </div>
 
         {errors.assinatura && (
-          <p className="text-red-500 text-sm mt-2">{errors.assinatura.message}</p>
+          <p role="alert" className="field-error">{errors.assinatura.message}</p>
         )}
-      </div>
-
-      {/* Termo de Aceite */}
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-gray-700 leading-relaxed">
-          <strong>Termo de Aceite:</strong> Ao assinar este documento, declaro que todas as informações 
-          prestadas são verdadeiras e que o serviço foi executado conforme especificado. Estou ciente 
-          das condições acordadas e autorizo o prosseguimento do projeto.
-        </p>
       </div>
     </div>
   );

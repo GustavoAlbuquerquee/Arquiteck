@@ -509,16 +509,16 @@ export function ChecklistWizard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-2 md:px-4">
+    <div className="mx-auto max-w-4xl">
       {/* Loading State - Carregando Dados */}
       {loadingData && (
-        <div className="mb-6 bg-blue-100 border-2 border-blue-500 rounded-lg p-6 flex items-start gap-4 animate-fade-in">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin flex-shrink-0" />
+        <div role="status" className="alerta alerta-info mb-6 animate-fade-in px-5 py-5">
+          <Loader2 aria-hidden="true" className="h-6 w-6 flex-shrink-0 animate-spin text-primor-primary-ink" />
           <div>
-            <h3 className="text-xl font-bold text-blue-800 mb-2">
+            <h3 className="font-display text-lg font-semibold">
               Carregando dados do briefing...
             </h3>
-            <p className="text-blue-700">
+            <p className="mt-1">
               Aguarde enquanto buscamos as informações.
             </p>
           </div>
@@ -526,118 +526,104 @@ export function ChecklistWizard() {
       )}
 
       {error && (
-        <div className="mb-6 bg-red-100 border-2 border-red-500 rounded-lg p-4 md:p-6 flex items-start gap-3 md:gap-4 animate-fade-in">
-          <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
+        <div role="alert" className="alerta alerta-erro mb-6 animate-fade-in px-5 py-5 text-base">
+          <AlertCircle aria-hidden="true" className="mt-0.5 h-6 w-6 flex-shrink-0" />
           <div>
-            <h3 className="text-lg md:text-xl font-bold text-red-800 mb-2">
-              Erro ao Prosseguir
+            <h3 className="font-display text-lg font-semibold">
+              Erro ao prosseguir
             </h3>
-            <p className="text-red-700">{error}</p>
+            <p className="mt-1">{error}</p>
           </div>
         </div>
       )}
 
       {showSuccessAlert && savedData && (
-        <div className="mb-6 bg-green-100 border-2 border-green-500 rounded-lg p-4 md:p-6 animate-fade-in">
-          <div className="flex items-start gap-4 mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
-            <div>
-              <h3 className="text-lg md:text-xl font-bold text-green-800 mb-2">
+        <div role="status" className="panel mb-6 animate-fade-in overflow-hidden">
+          <div className="flex items-start gap-4 border-l-4 border-primor-sucesso px-5 py-6 md:px-7">
+            <CheckCircle aria-hidden="true" className="h-7 w-7 flex-shrink-0 text-primor-sucesso" />
+            <div className="flex-1">
+              <p className="etiqueta">Briefing · {savedData.nomeCliente}</p>
+              <h3 className="mt-1 font-display text-2xl font-semibold text-primor-secondary">
                 {isEditMode
-                  ? "Briefing Atualizado com Sucesso!"
-                  : "Briefing Salvo com Sucesso!"}
+                  ? "Briefing atualizado com sucesso"
+                  : "Briefing salvo com sucesso"}
               </h3>
-              <p className="text-green-700">
+              <p className="mt-1 text-primor-muted">
                 Os dados foram {isEditMode ? "atualizados" : "registrados"} no
                 sistema.
               </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  className="btn btn-primary w-full sm:w-auto"
+                >
+                  <FileDown aria-hidden="true" className="h-5 w-5" />
+                  Baixar resumo em PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNovoFormulario}
+                  className="btn btn-outline w-full sm:w-auto"
+                >
+                  Novo formulário
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleDownloadPDF}
-              className="flex items-center justify-center gap-2 px-4 md:px-6 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition w-full sm:w-auto"
-            >
-              <FileDown className="w-5 h-5" />
-              Baixar Resumo em PDF
-            </button>
-            <button
-              onClick={handleNovoFormulario}
-              className="flex items-center justify-center gap-2 px-4 md:px-6 h-12 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition w-full sm:w-auto"
-            >
-              Novo Formulário
-            </button>
           </div>
         </div>
       )}
 
       {!showSuccessAlert && (
-        <div className="mb-6 md:mb-8">
-          <div className="relative overflow-x-auto pb-2">
-            <div
-              className="absolute top-6 left-0 right-0 h-1 bg-primor-gray-medium"
-              style={{ left: "15%", right: "15%" }}
-            />
-            <div
-              className="absolute top-6 h-1 bg-primor-primary transition-all duration-300"
-              style={{
-                left: "15%",
-                width:
-                  currentStep === 1 ? "0%" : currentStep === 2 ? "35%" : "70%",
-              }}
-            />
-            <div className="relative flex justify-between items-start min-w-[300px]">
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition z-10 ${
-                    currentStep >= 1
-                      ? "bg-primor-primary text-primor-text-dark"
-                      : "bg-primor-gray-medium text-primor-gray-dark"
-                  }`}
-                >
-                  1
-                </div>
-                <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primor-gray-dark text-center">
-                  Dados Básicos
-                </span>
-              </div>
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition z-10 ${
-                    currentStep >= 2
-                      ? "bg-primor-primary text-primor-text-dark"
-                      : "bg-primor-gray-medium text-primor-gray-dark"
-                  }`}
-                >
-                  2
-                </div>
-                <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primor-gray-dark text-center">
-                  Levantamento
-                </span>
-              </div>
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition z-10 ${
-                    currentStep >= 3
-                      ? "bg-primor-primary text-primor-text-dark"
-                      : "bg-primor-gray-medium text-primor-gray-dark"
-                  }`}
-                >
-                  3
-                </div>
-                <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primor-gray-dark text-center">
-                  Finalização
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        // Progresso em forma de trena: cada etapa é um trecho da fita
+        <nav aria-label="Etapas do briefing" className="mb-6 md:mb-8">
+          <ol className="grid grid-cols-3 gap-2 md:gap-3">
+            {["Dados básicos", "Levantamento", "Finalização"].map(
+              (rotulo, i) => {
+                const etapa = i + 1;
+                const alcancada = currentStep >= etapa;
+                const atual = currentStep === etapa;
+                return (
+                  <li key={rotulo} aria-current={atual ? "step" : undefined}>
+                    <div
+                      aria-hidden="true"
+                      className={`h-2.5 rounded-[2px] transition-colors duration-300 ${
+                        alcancada ? "trena" : "bg-primor-line"
+                      }`}
+                    />
+                    <div className="mt-2.5 flex flex-col gap-0.5 md:flex-row md:items-baseline md:gap-2">
+                      <span
+                        className={`font-mono text-xs tabular ${
+                          alcancada ? "text-primor-primary-ink" : "text-primor-muted"
+                        }`}
+                      >
+                        {String(etapa).padStart(2, "0")}
+                      </span>
+                      <span
+                        className={`text-sm leading-tight ${
+                          atual
+                            ? "font-semibold text-primor-secondary"
+                            : "font-medium text-primor-muted"
+                        }`}
+                      >
+                        {rotulo}
+                      </span>
+                      <span className="sr-only">
+                        {atual ? "(etapa atual)" : currentStep > etapa ? "(concluída)" : ""}
+                      </span>
+                    </div>
+                  </li>
+                );
+              },
+            )}
+          </ol>
+        </nav>
       )}
 
       {!showSuccessAlert && !loadingData && (
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8"
+          className="panel p-5 sm:p-6 md:p-8"
         >
           {currentStep === 1 && (
             <Step1DadosBasicos
@@ -666,14 +652,14 @@ export function ChecklistWizard() {
             />
           )}
 
-          <div className="flex flex-col md:flex-row items-center justify-between mt-6 md:mt-8 pt-4 md:pt-6 border-t-2 border-gray-200 gap-3">
+          <div className="mt-8 flex flex-col-reverse items-center justify-between gap-3 border-t border-dashed border-primor-line pt-6 md:flex-row">
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={handleBack}
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-base md:text-lg"
+                className="btn btn-outline btn-lg w-full md:w-auto"
               >
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                <ChevronLeft aria-hidden="true" className="h-5 w-5" />
                 Voltar
               </button>
             ) : (
@@ -688,28 +674,30 @@ export function ChecklistWizard() {
                   e.preventDefault();
                   handleNext();
                 }}
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition text-base md:text-lg md:ml-auto"
+                className="btn btn-primary btn-lg w-full md:ml-auto md:w-auto"
               >
                 Avançar
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                <ChevronRight aria-hidden="true" className="h-5 w-5" />
               </button>
             ) : (
               <button
                 key="btn-salvar"
                 type="submit"
                 disabled={loading}
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 md:px-8 h-12 md:h-14 bg-primor-secondary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition text-base md:text-lg md:ml-auto shadow-md"
+                className="btn btn-secondary btn-lg w-full md:ml-auto md:w-auto"
               >
                 {loading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {loadingMessage ||
-                      (isEditMode ? "Atualizando..." : "Salvando...")}
+                    <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-on-secondary border-t-transparent" />
+                    <span aria-live="polite">
+                      {loadingMessage ||
+                        (isEditMode ? "Atualizando..." : "Salvando...")}
+                    </span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5 md:w-6 md:h-6" />
-                    {isEditMode ? "Salvar Alterações" : "Salvar Briefing"}
+                    <Save aria-hidden="true" className="h-5 w-5" />
+                    {isEditMode ? "Salvar alterações" : "Salvar briefing"}
                   </>
                 )}
               </button>
@@ -730,7 +718,8 @@ export function ChecklistWizard() {
             zIndex: -10,
           }}
         >
-          <div ref={pdfRef} className="w-[210mm] bg-white p-8">
+          {/* tema-claro: papel branco e tinta escura mesmo com o app no modo escuro */}
+          <div ref={pdfRef} className="tema-claro w-[210mm] bg-white p-8">
             <div className="space-y-6">
               <div
                 className="text-center border-b-2 border-gray-300 pb-4"

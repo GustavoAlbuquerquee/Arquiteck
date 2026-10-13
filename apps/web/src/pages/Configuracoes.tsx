@@ -28,8 +28,11 @@ import {
   Building2,
   Upload,
   KeyRound,
+  SunMoon,
+  X,
 } from "lucide-react";
 import { NovaSenhaForm } from "@/components/NovaSenhaForm";
+import { SeletorTema } from "@/components/SeletorTema";
 
 // Interfaces precisam estar antes do cache, então declaramos antes do componente
 interface Profile {
@@ -258,69 +261,83 @@ export function Configuracoes() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primor-primary border-t-transparent rounded-full animate-spin" />
+      <div role="status" aria-label="Carregando configurações" className="space-y-8">
+        <div className="space-y-3">
+          <div className="esqueleto h-3 w-32" />
+          <div className="esqueleto h-10 w-72 max-w-full" />
+        </div>
+        <div className="esqueleto h-56 w-full" />
+        <div className="esqueleto h-48 w-full" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
+      <header className="entrada">
+        <p className="etiqueta">Oficina</p>
+        <h1 className="titulo-pagina mt-2">Configurações</h1>
+        <p className="mt-2 text-primor-muted">Empresa, equipe, acesso e aparência</p>
+        <div aria-hidden="true" className="regua mt-8" />
+      </header>
+
       {/* ── SEÇÃO: DADOS DA EMPRESA (apenas admin) ── */}
       {currentUserRole === "admin" && (
-        <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
-          <h2 className="text-xl font-bold text-primor-text-light mb-5 flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-primor-primary" />
-              Dados da Empresa
-            </span>
+        <section aria-labelledby="titulo-empresa" className="panel fita py-6 pl-7 pr-6 md:py-7 md:pl-9 md:pr-8">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p className="etiqueta">01</p>
+              <h2 id="titulo-empresa" className="titulo-secao mt-1 flex items-center gap-2.5">
+                <Building2 aria-hidden="true" strokeWidth={1.75} className="h-6 w-6 text-primor-primary-ink" />
+                Dados da empresa
+              </h2>
+            </div>
             {currentUserRole === 'admin' && !isEditingCompany && (
               <button
                 type="button"
                 onClick={() => setIsEditingCompany(true)}
-                className="text-sm font-semibold px-4 h-9 bg-primor-primary hover:brightness-110 text-primor-text-dark rounded-lg transition"
+                className="btn btn-outline btn-sm"
               >
                 Editar
               </button>
             )}
-          </h2>
+          </div>
 
-          {tenantError && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3 mb-4">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-700 text-sm">{tenantError}</p>
-            </div>
-          )}
-          {tenantSuccess && (
-            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3 mb-4">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-green-700 text-sm">{tenantSuccess}</p>
-            </div>
-          )}
+          <div aria-live="polite">
+            {tenantError && (
+              <div className="alerta alerta-erro mb-5">
+                <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                <p>{tenantError}</p>
+              </div>
+            )}
+            {tenantSuccess && (
+              <div className="alerta alerta-sucesso mb-5">
+                <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                <p>{tenantSuccess}</p>
+              </div>
+            )}
+          </div>
 
-          <form onSubmit={handleSaveTenant} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSaveTenant} className="space-y-6">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-primor-text-light mb-2">
-                  Nome Fantasia *
+                <label htmlFor="empresa-nome" className="field-label">
+                  Nome fantasia <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                 </label>
                 <input
+                  id="empresa-nome"
                   type="text"
                   value={tenantForm.nome_fantasia}
                   onChange={(e) =>
                     setTenantForm((f) => ({ ...f, nome_fantasia: e.target.value }))
                   }
-                  className={`w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg outline-none transition ${
-                    !isEditingCompany
-                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-70'
-                      : 'focus:border-primor-primary'
-                  }`}
+                  className="field"
                   required
                   disabled={savingTenant || !isEditingCompany}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primor-text-light mb-2">
+                <label htmlFor="empresa-cnpj" className="field-label">
                   CNPJ
                 </label>
                 <InputMask
@@ -334,19 +351,17 @@ export function Configuracoes() {
                   {(inputProps: any) => (
                     <input
                       {...inputProps}
+                      id="empresa-cnpj"
                       type="text"
+                      inputMode="numeric"
                       placeholder="00.000.000/0000-00"
-                      className={`w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg outline-none transition ${
-                        !isEditingCompany
-                          ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-70'
-                          : 'focus:border-primor-primary'
-                      }`}
+                      className={`field font-mono tabular ${!isEditingCompany ? "cursor-not-allowed !border-primor-line !bg-primor-paper-deep !text-primor-muted" : ""}`}
                     />
                   )}
                 </InputMask>
               </div>
               <div>
-                <label className="block text-sm font-medium text-primor-text-light mb-2">
+                <label htmlFor="empresa-telefone" className="field-label">
                   Telefone
                 </label>
                 <InputMask
@@ -360,13 +375,11 @@ export function Configuracoes() {
                   {(inputProps: any) => (
                     <input
                       {...inputProps}
+                      id="empresa-telefone"
                       type="text"
+                      inputMode="tel"
                       placeholder="(00) 00000-0000"
-                      className={`w-full h-12 px-4 border-2 border-primor-gray-medium rounded-lg outline-none transition ${
-                        !isEditingCompany
-                          ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-70'
-                          : 'focus:border-primor-primary'
-                      }`}
+                      className={`field font-mono tabular ${!isEditingCompany ? "cursor-not-allowed !border-primor-line !bg-primor-paper-deep !text-primor-muted" : ""}`}
                     />
                   )}
                 </InputMask>
@@ -374,44 +387,48 @@ export function Configuracoes() {
 
               {/* Upload de Logo */}
               <div>
-                <label className="block text-sm font-medium text-primor-text-light mb-2">
-                  Logo da Empresa
-                </label>
+                <p id="empresa-logo-rotulo" className="field-label">
+                  Logo da empresa
+                </p>
                 <div className="flex items-center gap-3">
                   {logoPreview && (
+                    // Fundo branco nos dois temas: logos costumam ter tinta escura e fundo transparente
                     <img
                       src={logoPreview}
-                      alt="Logo"
-                      className="h-12 w-auto max-w-[120px] object-contain rounded border border-primor-gray-medium"
+                      alt="Logo da empresa"
+                      className="h-12 w-auto max-w-[120px] rounded-md border border-primor-line bg-white object-contain p-1"
                     />
                   )}
-                  {isEditingCompany && (
-                    <label className="flex-1 flex items-center justify-center gap-2 h-12 border-2 border-dashed border-primor-gray-medium rounded-lg cursor-pointer hover:border-primor-primary transition text-sm text-primor-gray-dark">
-                      <Upload className="w-4 h-4" />
-                      {logoFile ? logoFile.name : 'Selecionar imagem'}
+                  {isEditingCompany ? (
+                    <label className="flex min-h-[48px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-primor-surface px-3 text-sm font-medium text-primor-secondary transition-colors hover:border-primor-secondary hover:bg-primor-bg-light has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary dark:has-[:focus-visible]:outline-primor-primary">
+                      <Upload aria-hidden="true" className="h-4 w-4" />
+                      <span className="truncate">{logoFile ? logoFile.name : 'Selecionar imagem'}</span>
                       <input
                         type="file"
                         accept="image/*"
-                        className="hidden"
+                        aria-labelledby="empresa-logo-rotulo"
+                        className="sr-only"
                         onChange={handleLogoChange}
                         disabled={savingTenant}
                       />
                     </label>
+                  ) : (
+                    !logoPreview && <p className="text-sm text-primor-muted">Nenhum logo enviado</p>
                   )}
                 </div>
               </div>
             </div>
 
             {isEditingCompany && (
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3 border-t border-dashed border-primor-line pt-5">
                 <button
                   type="submit"
                   disabled={savingTenant}
-                  className="h-12 px-8 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center gap-2"
+                  className="btn btn-primary"
                 >
                   {savingTenant ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />
+                      <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primor-on-primary border-t-transparent" />
                       Salvando...
                     </>
                   ) : (
@@ -429,132 +446,137 @@ export function Configuracoes() {
                     }
                   }}
                   disabled={savingTenant}
-                  className="h-12 px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
+                  className="btn btn-outline"
                 >
                   Cancelar
                 </button>
               </div>
             )}
           </form>
-        </div>
+        </section>
       )}
 
       {/* ── SEÇÃO: GESTÃO DE EQUIPE ── */}
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <section aria-labelledby="titulo-equipe" className="space-y-5">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light flex items-center gap-3">
-              <Users className="w-8 h-8 text-primor-primary" />
-              Gestão de Equipe
-            </h1>
-            <p className="text-primor-gray-dark mt-1">
+            <p className="etiqueta">{currentUserRole === "admin" ? "02" : "01"}</p>
+            <h2 id="titulo-equipe" className="titulo-secao mt-1 flex items-center gap-2.5">
+              <Users aria-hidden="true" strokeWidth={1.75} className="h-6 w-6 text-primor-primary-ink" />
+              Gestão de equipe
+            </h2>
+            <p className="mt-1 text-primor-muted">
               Gerencie os membros da sua organização
             </p>
           </div>
           {currentUserRole === "admin" && (
             <button
+              type="button"
               onClick={() => { setError(''); setIsAddMemberModalOpen(true); }}
-              className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
+              className="btn btn-primary w-full md:w-auto"
             >
-              <UserPlus className="w-5 h-5" />
-              Adicionar Membro
+              <UserPlus aria-hidden="true" className="h-5 w-5" />
+              Adicionar membro
             </button>
           )}
         </div>
 
-        {error && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-green-700 text-sm">{success}</p>
-          </div>
-        )}
+        <div aria-live="polite" className="space-y-3">
+          {error && (
+            <div className="alerta alerta-erro">
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              <p>{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="alerta alerta-sucesso">
+              <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              <p>{success}</p>
+            </div>
+          )}
+        </div>
 
         {/* Formulário movido para modal — ver createPortal abaixo */}
 
-        <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium overflow-hidden">
+        <div className="panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-primor-primary/10 border-b-2 border-primor-primary/20">
+            <table className="w-full min-w-[40rem]">
+              <caption className="sr-only">Membros da equipe</caption>
+              <thead className="border-b border-primor-line bg-primor-bg-light">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                  <th scope="col" className="etiqueta px-6 py-3.5 text-left">
                     Nome
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                  <th scope="col" className="etiqueta px-6 py-3.5 text-left">
                     Cargo
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
+                  <th scope="col" className="etiqueta px-6 py-3.5 text-left">
                     Função
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-primor-text-light">
-                    Data de Entrada
+                  <th scope="col" className="etiqueta px-6 py-3.5 text-left">
+                    Data de entrada
                   </th>
                   {currentUserRole === "admin" && (
-                    <th className="px-6 py-4 text-center text-sm font-bold text-primor-text-light">
+                    <th scope="col" className="etiqueta px-6 py-3.5 text-center">
                       Ações
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-primor-gray-medium">
+              <tbody className="divide-y divide-primor-line">
                 {profiles.map((profile) => (
                   <tr
                     key={profile.id}
-                    className="hover:bg-primor-bg-light transition"
+                    className="transition-colors hover:bg-primor-bg-light"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primor-primary/20 rounded-full flex items-center justify-center">
-                          <span className="text-primor-primary font-bold text-lg">
-                            {profile.nome_completo?.charAt(0).toUpperCase() ||
-                              "?"}
-                          </span>
+                        <div aria-hidden="true" className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-primor-madeira font-display text-lg font-semibold text-primor-primary">
+                          {profile.nome_completo?.charAt(0).toUpperCase() ||
+                            "?"}
                         </div>
                         <div>
-                          <p className="font-semibold text-primor-text-light">
+                          <p className="font-semibold text-primor-secondary">
                             {profile.nome_completo || "Sem nome"}
                           </p>
                           {profile.id === user?.id && (
-                            <span className="text-xs text-primor-primary font-medium">
+                            <span className="text-xs font-medium text-primor-primary-ink">
                               (Você)
                             </span>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-primor-gray-dark">
+                    <td className="px-6 py-3.5 text-primor-muted">
                       {profile.cargo || "-"}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3.5">
                       {profile.role === 'admin' ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primor-primary/20 text-primor-secondary">
-                          <Shield className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 rounded-sm bg-primor-primary px-2 py-0.5 text-xs font-semibold text-primor-on-primary">
+                          <Shield aria-hidden="true" className="h-3 w-3" />
                           Administrador
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">
+                        <span className="inline-flex items-center rounded-sm border border-primor-line-strong px-2 py-0.5 text-xs font-semibold text-primor-secondary">
                           Membro
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-primor-gray-dark text-sm">
+                    <td className="px-6 py-3.5 font-mono text-sm text-primor-muted tabular">
                       {new Date(profile.created_at).toLocaleDateString("pt-BR")}
                     </td>
                     {currentUserRole === "admin" && (
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-2 text-center">
                         {profile.id !== user?.id &&
                           profile.role !== "admin" && (
                             <button
+                              type="button"
                               onClick={() => setMemberToDelete(profile.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                              className="btn-icon text-primor-erro hover:bg-primor-erro-bg"
                               title="Remover membro"
+                              aria-label={`Remover ${profile.nome_completo || "membro"}`}
                             >
-                              <Trash2 className="w-5 h-5" />
+                              <Trash2 aria-hidden="true" className="h-5 w-5" />
                             </button>
                           )}
                       </td>
@@ -565,48 +587,72 @@ export function Configuracoes() {
             </table>
           </div>
           {profiles.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-primor-gray-dark mx-auto mb-4 opacity-50" />
-              <p className="text-primor-gray-dark">Nenhum membro encontrado</p>
+            <div className="py-12 text-center">
+              <Users aria-hidden="true" strokeWidth={1.5} className="mx-auto mb-4 h-12 w-12 text-primor-line-strong" />
+              <p className="text-primor-muted">Nenhum membro encontrado</p>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {/* ── SEÇÃO: MINHA CONTA (todos os usuários) ── */}
-      <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-6 shadow-md">
-        <h2 className="text-xl font-bold text-primor-text-light mb-1 flex items-center gap-2">
-          <KeyRound className="w-6 h-6 text-primor-primary" />
-          Alterar Senha
+      <section aria-labelledby="titulo-senha" className="panel fita py-6 pl-7 pr-6 md:py-7 md:pl-9 md:pr-8">
+        <p className="etiqueta">{currentUserRole === "admin" ? "03" : "02"}</p>
+        <h2 id="titulo-senha" className="titulo-secao mt-1 flex items-center gap-2.5">
+          <KeyRound aria-hidden="true" strokeWidth={1.75} className="h-6 w-6 text-primor-primary-ink" />
+          Alterar senha
         </h2>
-        <p className="text-primor-gray-dark text-sm mb-5">
+        <p className="mb-6 mt-1 max-w-prose text-primor-muted">
           Membros cadastrados com senha inicial devem trocá-la aqui no primeiro acesso.
         </p>
         <div className="max-w-md">
           <NovaSenhaForm />
         </div>
-      </div>
+      </section>
+
+      {/* ── SEÇÃO: APARÊNCIA (preferência deste aparelho) ── */}
+      <section aria-labelledby="titulo-aparencia" className="panel fita py-6 pl-7 pr-6 md:py-7 md:pl-9 md:pr-8">
+        <p className="etiqueta">{currentUserRole === "admin" ? "04" : "03"}</p>
+        <h2 id="titulo-aparencia" className="titulo-secao mt-1 flex items-center gap-2.5">
+          <SunMoon aria-hidden="true" strokeWidth={1.75} className="h-6 w-6 text-primor-primary-ink" />
+          Aparência
+        </h2>
+        <p className="mb-6 mt-1 max-w-prose text-primor-muted">
+          Tema da interface neste aparelho. Os PDFs continuam em papel branco.
+        </p>
+        <SeletorTema variante="papel" />
+      </section>
 
       {/* Modal de confirmação de remoção de membro */}
       {memberToDelete && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Remover Membro</h3>
-            <p className="text-gray-600 text-sm">
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-primor-veu/60 p-4 animate-fade-in">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="titulo-remover-membro"
+            aria-describedby="texto-remover-membro"
+            className="w-full max-w-md space-y-4 rounded-lg border-t-4 border-primor-erro bg-primor-surface p-6 shadow-chapa-lg dark:ring-1 dark:ring-primor-line"
+          >
+            <h3 id="titulo-remover-membro" className="font-display text-xl font-semibold text-primor-secondary">
+              Remover membro
+            </h3>
+            <p id="texto-remover-membro" className="text-primor-muted">
               Tem certeza que deseja remover este membro da organização? Esta ação não pode ser desfeita.
             </p>
             <div className="flex gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setMemberToDelete(null)}
-                className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+                className="btn btn-outline flex-1"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handleDeleteMember}
-                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+                className="btn btn-danger flex-1"
               >
-                Confirmar Remoção
+                Confirmar remoção
               </button>
             </div>
           </div>
@@ -616,31 +662,44 @@ export function Configuracoes() {
 
       {/* Modal: Adicionar Membro */}
       {isAddMemberModalOpen && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-primor-primary" />
-                Adicionar Novo Membro
-              </h3>
+        <div className="fixed inset-0 z-modal flex items-end justify-center bg-primor-veu/60 animate-fade-in sm:items-center sm:p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-novo-membro"
+            className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-xl bg-primor-surface p-6 shadow-chapa-lg dark:ring-1 dark:ring-primor-line sm:rounded-lg"
+          >
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="etiqueta">Equipe</p>
+                <h3 id="titulo-novo-membro" className="mt-1 flex items-center gap-2 font-display text-xl font-semibold text-primor-secondary">
+                  <UserPlus aria-hidden="true" strokeWidth={1.75} className="h-5 w-5 text-primor-primary-ink" />
+                  Adicionar novo membro
+                </h3>
+              </div>
               <button
+                type="button"
                 onClick={() => setIsAddMemberModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                aria-label="Fechar"
+                className="btn-icon -mr-2 -mt-1 text-primor-secondary hover:bg-primor-paper-deep"
                 disabled={submitting}
               >
-                ×
+                <X aria-hidden="true" className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleAddMember} className="space-y-4">
+            <form onSubmit={handleAddMember} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <label htmlFor="membro-email" className="field-label">
+                  Email <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+                </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail aria-hidden="true" className="field-icon-slot" />
                   <input
+                    id="membro-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-11 pl-10 pr-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition"
+                    className="field field-icon"
                     placeholder="membro@empresa.com"
                     required
                     disabled={submitting}
@@ -648,23 +707,29 @@ export function Configuracoes() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
+                <label htmlFor="membro-nome" className="field-label">
+                  Nome completo <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+                </label>
                 <input
+                  id="membro-nome"
                   type="text"
                   value={nomeCompleto}
                   onChange={(e) => setNomeCompleto(e.target.value)}
-                  className="w-full h-11 px-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition"
-                  placeholder="João Silva"
+                  className="field"
+                  placeholder="Carlos Eduardo Ramos"
                   required
                   disabled={submitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cargo (opcional)</label>
+                <label htmlFor="membro-cargo" className="field-label">
+                  Cargo <span className="font-normal text-primor-muted">(opcional)</span>
+                </label>
                 <select
+                  id="membro-cargo"
                   value={cargo}
                   onChange={(e) => setCargo(e.target.value)}
-                  className="w-full h-11 px-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition bg-white"
+                  className="field"
                   disabled={submitting}
                 >
                   <option value="">Selecione um cargo</option>
@@ -677,45 +742,51 @@ export function Configuracoes() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Inicial *</label>
+                <label htmlFor="membro-senha" className="field-label">
+                  Senha inicial <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+                </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock aria-hidden="true" className="field-icon-slot" />
                   <input
+                    id="membro-senha"
                     type="text"
+                    aria-describedby="membro-senha-dica"
                     value={senhaInicial}
                     onChange={(e) => setSenhaInicial(e.target.value)}
-                    className="w-full h-11 pl-10 pr-4 border-2 border-gray-200 rounded-lg focus:border-primor-primary outline-none transition font-mono"
+                    className="field field-icon font-mono tracking-wide"
                     minLength={8}
                     required
                     disabled={submitting}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p id="membro-senha-dica" className="field-hint">
                   Gerada automaticamente. Repasse ao membro; ele troca em Configurações no primeiro acesso.
                 </p>
               </div>
-              {error && (
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-700 text-sm">{error}</p>
-                </div>
-              )}
+              <div aria-live="polite">
+                {error && (
+                  <div className="alerta alerta-erro">
+                    <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <p>{error}</p>
+                  </div>
+                )}
+              </div>
               <div className="flex gap-3 pt-1">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 h-11 bg-primor-primary hover:brightness-110 disabled:opacity-50 text-primor-text-dark font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                  className="btn btn-primary flex-1"
                 >
                   {submitting ? (
-                    <><div className="w-4 h-4 border-2 border-primor-text-dark border-t-transparent rounded-full animate-spin" />Adicionando...</>
+                    <><span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-primor-on-primary border-t-transparent" />Adicionando...</>
                   ) : (
-                    <><UserPlus className="w-4 h-4" />Adicionar</>  
+                    <><UserPlus aria-hidden="true" className="h-4 w-4" />Adicionar</>
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAddMemberModalOpen(false)}
-                  className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+                  className="btn btn-outline flex-1"
                   disabled={submitting}
                 >
                   Cancelar

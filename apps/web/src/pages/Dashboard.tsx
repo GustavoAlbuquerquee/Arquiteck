@@ -2,31 +2,25 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { FolderOpen, Users, TrendingUp, Plus, ArrowRight, Loader2, Calendar } from 'lucide-react';
+import { FolderOpen, Users, TrendingUp, Plus, ArrowRight } from 'lucide-react';
+import { Contador } from '@/components/marca/Contador';
+import { MedidorEtapa } from '@/components/marca/Etapas';
+import { SimboloEncaixe } from '@/components/marca/Marca';
+import { ROTULO_ETAPA } from '@/lib/jornada/etapas';
 
 interface ProjetoRecente {
   id: string;
-  titulo_ambiente: string;
+  titulo_ambiente: string | null;
   status: string | null;
   created_at: string | null;
   clients: { nome: string } | null;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  orcamento: 'Orçamento',
-  pre_producao: 'Pré-Produção',
-  producao: 'Produção',
-  instalacao: 'Instalação',
-  concluido: 'Concluído',
-};
+// Rótulos das 9 etapas da jornada (fonte única em lib/jornada/etapas)
+const STATUS_LABEL: Record<string, string> = ROTULO_ETAPA;
 
-const STATUS_COLOR: Record<string, string> = {
-  orcamento: 'bg-amber-100 text-amber-700',
-  pre_producao: 'bg-orange-100 text-orange-700',
-  producao: 'bg-blue-100 text-blue-700',
-  instalacao: 'bg-yellow-100 text-yellow-700',
-  concluido: 'bg-green-100 text-green-700',
-};
+const dataDeHoje = () =>
+  new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -98,120 +92,142 @@ export function Dashboard() {
     d ? new Date(d).toLocaleDateString('pt-BR') : '—';
 
   if (loading) {
+    // Esqueleto no formato da tela, no lugar do spinner genérico
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 text-primor-primary animate-spin" />
+      <div role="status" aria-label="Carregando painel" className="space-y-10">
+        <div className="space-y-3">
+          <div className="esqueleto h-3 w-40" />
+          <div className="esqueleto h-10 w-72 max-w-full" />
+        </div>
+        <div className="esqueleto h-32 w-full" />
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="esqueleto h-16 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
+  const metricas = [
+    { rotulo: 'Total de projetos', valor: totalProjetos, icone: FolderOpen },
+    { rotulo: 'Projetos este mês', valor: projetosMes, icone: TrendingUp },
+    { rotulo: 'Membros da equipe', valor: totalMembros, icone: Users },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light">
-            {nomeEmpresa ? `Olá, ${nomeEmpresa}` : 'Dashboard'}
-          </h1>
-          <p className="text-primor-gray-dark mt-1">Visão geral da sua operação</p>
-        </div>
-        <button
-          onClick={() => navigate('/nova-visita')}
-          className="w-full md:w-auto flex items-center justify-center gap-2 px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Briefing
-        </button>
-      </div>
-
-      {/* Cards de Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium p-6 flex items-center gap-4">
-          <div className="w-14 h-14 bg-primor-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <FolderOpen className="w-7 h-7 text-primor-primary" />
-          </div>
+      <header className="entrada">
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <p className="text-sm text-primor-gray-dark">Total de Projetos</p>
-            <p className="text-3xl font-bold text-primor-text-light">{totalProjetos}</p>
+            <p className="etiqueta first-letter:uppercase">{dataDeHoje()}</p>
+            <h1 className="titulo-pagina mt-2">
+              {nomeEmpresa ? `Olá, ${nomeEmpresa}` : 'Dashboard'}
+            </h1>
+            <p className="mt-2 text-primor-muted">Visão geral da sua operação</p>
           </div>
+          <button
+            type="button"
+            onClick={() => navigate('/nova-visita')}
+            className="btn btn-primary btn-lg w-full md:w-auto"
+          >
+            <Plus aria-hidden="true" className="h-5 w-5" />
+            Novo briefing
+          </button>
         </div>
+        <div aria-hidden="true" className="regua mt-8" />
+      </header>
 
-        <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium p-6 flex items-center gap-4">
-          <div className="w-14 h-14 bg-primor-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Users className="w-7 h-7 text-primor-primary" />
-          </div>
-          <div>
-            <p className="text-sm text-primor-gray-dark">Membros da Equipe</p>
-            <p className="text-3xl font-bold text-primor-text-light">{totalMembros}</p>
-          </div>
-        </div>
-
-        <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium p-6 flex items-center gap-4">
-          <div className="w-14 h-14 bg-primor-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <TrendingUp className="w-7 h-7 text-primor-primary" />
-          </div>
-          <div>
-            <p className="text-sm text-primor-gray-dark">Projetos este Mês</p>
-            <p className="text-3xl font-bold text-primor-text-light">{projetosMes}</p>
-          </div>
-        </div>
-      </div>
+      {/* Métricas: uma ficha só, dividida em cotas, em vez de três cards iguais */}
+      <section aria-label="Indicadores" className="panel fita entrada overflow-hidden" style={{ ['--i' as string]: 1 }}>
+        <dl className="grid grid-cols-3 divide-x divide-primor-line">
+          {metricas.map(({ rotulo, valor, icone: Icone }) => (
+            <div key={rotulo} className="flex items-start justify-between gap-4 py-4 pl-4 pr-2 sm:px-7 sm:py-6">
+              <div>
+                <dt className="etiqueta">{rotulo}</dt>
+                <dd className="mt-2 font-mono text-3xl font-medium tracking-tight text-primor-secondary tabular sm:text-4xl md:text-5xl">
+                  <Contador valor={valor} />
+                </dd>
+              </div>
+              <Icone aria-hidden="true" strokeWidth={1.5} className="mt-1 hidden h-6 w-6 text-primor-primary-ink sm:block" />
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {/* Últimos Briefings */}
-      <div className="bg-primor-bg rounded-xl shadow-md border border-primor-gray-medium overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-primor-gray-medium">
-          <h2 className="text-lg font-bold text-primor-text-light">Últimos Briefings</h2>
+      <section aria-labelledby="titulo-ultimos" className="entrada" style={{ ['--i' as string]: 2 }}>
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <p className="etiqueta">Clientes recentes</p>
+            <h2 id="titulo-ultimos" className="titulo-secao mt-1">
+              Últimos briefings
+            </h2>
+          </div>
           <button
+            type="button"
             onClick={() => navigate('/historico')}
-            className="flex items-center gap-1 text-sm text-primor-primary hover:underline font-medium"
+            className="btn btn-quiet btn-sm -mr-2 text-primor-primary-ink"
           >
-            Ver todos <ArrowRight className="w-4 h-4" />
+            Ver todos <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
 
         {projetosRecentes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-            <FolderOpen className="w-14 h-14 text-primor-gray-dark opacity-40 mb-4" />
-            <p className="text-primor-text-light font-semibold mb-1">Nenhum projeto criado ainda</p>
-            <p className="text-primor-gray-dark text-sm mb-5">Comece registrando seu primeiro briefing</p>
+          <div className="panel flex flex-col items-center px-6 py-14 text-center">
+            <SimboloEncaixe className="h-12 w-12 text-primor-line-strong" />
+            <p className="mt-5 font-display text-xl font-semibold text-primor-secondary">
+              Nenhum projeto criado ainda
+            </p>
+            <p className="mt-1 max-w-sm text-primor-muted">
+              Comece registrando seu primeiro briefing
+            </p>
             <button
+              type="button"
               onClick={() => navigate('/nova-visita')}
-              className="flex items-center gap-2 px-6 h-10 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition"
+              className="btn btn-primary mt-6"
             >
-              <Plus className="w-4 h-4" />
-              Criar Primeiro Briefing
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Criar primeiro briefing
             </button>
           </div>
         ) : (
-          <ul className="divide-y divide-primor-gray-medium">
+          <ul className="panel divide-y divide-primor-line overflow-hidden">
             {projetosRecentes.map((projeto) => (
-              <li key={projeto.id} className="flex items-center justify-between px-6 py-4 hover:bg-primor-bg-light transition gap-4">
+              <li
+                key={projeto.id}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-4 transition-colors hover:bg-primor-bg-light sm:grid-cols-[minmax(0,1fr)_10rem_6.5rem_auto] sm:px-6"
+              >
                 <div className="min-w-0">
-                  <p className="font-semibold text-primor-text-light truncate">
+                  <p className="truncate font-semibold text-primor-secondary">
                     {projeto.clients?.nome ?? '—'}
                   </p>
-                  <p className="text-sm text-primor-gray-dark truncate">{projeto.titulo_ambiente}</p>
+                  <p className="truncate text-sm text-primor-muted">{projeto.titulo_ambiente}</p>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className={`hidden sm:inline-flex px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[projeto.status ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {STATUS_LABEL[projeto.status ?? ''] ?? projeto.status ?? '—'}
-                  </span>
-                  <span className="hidden md:flex items-center gap-1 text-xs text-primor-gray-dark">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {formatDate(projeto.created_at)}
-                  </span>
-                  <button
-                    onClick={() => navigate(`/historico?projetoId=${projeto.id}`)}
-                    className="flex items-center gap-1 text-xs font-semibold text-primor-primary hover:underline"
-                  >
-                    Ver <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                <div className="col-start-1 row-start-2 sm:col-start-auto sm:row-start-auto">
+                  <MedidorEtapa
+                    status={projeto.status}
+                    rotulo={STATUS_LABEL[projeto.status ?? ''] ?? projeto.status ?? '—'}
+                    compacto
+                  />
                 </div>
+                <span className="hidden font-mono text-xs text-primor-muted tabular sm:block">
+                  {formatDate(projeto.created_at)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/historico?projetoId=${projeto.id}`)}
+                  aria-label={`Ver briefing de ${projeto.clients?.nome ?? projeto.titulo_ambiente}`}
+                  className="btn btn-outline btn-sm row-span-2 sm:row-span-1"
+                >
+                  Ver <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                </button>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </div>
   );
 }

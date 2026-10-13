@@ -156,251 +156,289 @@ export function Step2Levantamento({
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 w-full overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">
-        Levantamento Técnico
-      </h2>
+    <div className="w-full space-y-10">
+      <div>
+        <p className="etiqueta">Etapa 02</p>
+        <h2 className="titulo-secao mt-1">Levantamento técnico</h2>
+      </div>
 
       {/* Móveis e Medidas Dinâmicas */}
-      <div className="bg-primor-bg border-2 border-primor-primary/30 rounded-xl p-4 md:p-6 shadow-sm w-full">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4">
-          <h3 className="flex items-center gap-2 text-lg md:text-xl font-bold text-primor-text-light">
-            <Ruler className="w-5 h-5 md:w-6 md:h-6" />
-            Móveis e Especificações
-          </h3>
+      <section aria-labelledby="secao-moveis" className="w-full">
+        <div className="mb-5 flex flex-col items-start justify-between gap-3 md:flex-row md:items-end">
+          <div>
+            <p className="etiqueta">A · Plano de peças</p>
+            <h3 id="secao-moveis" className="mt-1 flex items-center gap-2 text-lg font-semibold text-primor-secondary md:text-xl">
+              <Ruler aria-hidden="true" strokeWidth={1.75} className="h-5 w-5 text-primor-primary-ink" />
+              Móveis e especificações
+            </h3>
+          </div>
           <button
             type="button"
             onClick={handleAddMovel}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 md:px-6 h-10 md:h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-medium rounded-lg transition shadow-md text-sm md:text-base"
+            className="btn btn-primary w-full md:w-auto"
           >
-            <Plus className="w-5 h-5" />
-            Adicionar Móvel
+            <Plus aria-hidden="true" className="h-5 w-5" />
+            Adicionar móvel
           </button>
         </div>
 
         {moveisFields.length === 0 && (
-          <p className="text-gray-500 text-center py-4">
-            Nenhum móvel adicionado. Clique em "Adicionar Móvel"
-          </p>
+          <div className="flex flex-col items-center rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-primor-bg-light px-4 py-8 text-center">
+            <Package aria-hidden="true" strokeWidth={1.5} className="h-9 w-9 text-primor-line-strong" />
+            <p className="mt-3 text-primor-muted">
+              Nenhum móvel adicionado. Clique em "Adicionar Móvel"
+            </p>
+          </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {moveisFields.map((field, index) => {
             const movel = watchedMoveis[index] || field;
+            const pid = `movel-${index}`;
+            const temMedida = movel?.largura || movel?.altura || movel?.profundidade;
 
             return (
               <div
                 key={field.id}
-                className="border-2 border-gray-300 rounded-xl p-6 bg-gray-50"
+                className="fita rounded-lg border border-primor-line bg-primor-surface py-5 pl-6 pr-4 shadow-chapa md:py-6 md:pl-8 md:pr-6"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-bold text-gray-700">
-                    Móvel {index + 1}
-                  </h4>
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="etiqueta">Peça {String(index + 1).padStart(2, "0")}</p>
+                    <h4 className="mt-0.5 truncate font-display text-lg font-semibold text-primor-secondary">
+                      {movel?.nome || `Móvel ${index + 1}`}
+                    </h4>
+                    {/* Cota ao vivo: L × A × P, como numa etiqueta de plano de corte */}
+                    <p aria-hidden="true" className="mt-1 font-mono text-xs text-primor-muted tabular">
+                      {temMedida
+                        ? `L ${movel?.largura || "—"} × A ${movel?.altura || "—"} × P ${movel?.profundidade || "—"} mm`
+                        : "L — × A — × P — mm"}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeMovel(index)}
-                    className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition"
+                    aria-label={`Remover ${movel?.nome || `móvel ${index + 1}`}`}
+                    className="btn-icon text-primor-erro hover:bg-primor-erro-bg"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 aria-hidden="true" className="h-5 w-5" />
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Nome do Móvel */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome do Móvel *
+                    <label htmlFor={`${pid}-nome`} className="field-label">
+                      Nome do móvel <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                     </label>
                     <input
+                      id={`${pid}-nome`}
                       type="text"
+                      aria-invalid={!!errors.moveis?.[index]?.nome}
                       {...register(`moveis.${index}.nome`)}
-                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                      className="field"
                       placeholder="Ex: Armário Aéreo, Balcão"
                     />
                     {errors.moveis?.[index]?.nome && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="field-error">
                         {errors.moveis[index]?.nome?.message}
                       </p>
                     )}
                   </div>
 
                   {/* Medidas em MM */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Largura (mm) *
-                      </label>
-                      <input
-                        type="text"
-                        {...register(`moveis.${index}.largura`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                        placeholder="3000"
-                      />
+                  <fieldset>
+                    <legend className="field-label">Medidas</legend>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div>
+                        <label htmlFor={`${pid}-largura`} className="mb-1 block text-sm text-primor-muted">
+                          Largura <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id={`${pid}-largura`}
+                            type="text"
+                            inputMode="numeric"
+                            {...register(`moveis.${index}.largura`)}
+                            className="field pr-12 font-mono tabular"
+                            placeholder="3000"
+                          />
+                          <span aria-hidden="true" className="field-unit">mm</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor={`${pid}-altura`} className="mb-1 block text-sm text-primor-muted">
+                          Altura <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id={`${pid}-altura`}
+                            type="text"
+                            inputMode="numeric"
+                            {...register(`moveis.${index}.altura`)}
+                            className="field pr-12 font-mono tabular"
+                            placeholder="2800"
+                          />
+                          <span aria-hidden="true" className="field-unit">mm</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor={`${pid}-profundidade`} className="mb-1 block text-sm text-primor-muted">
+                          Profundidade <span aria-hidden="true" className="text-primor-primary-ink">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id={`${pid}-profundidade`}
+                            type="text"
+                            inputMode="numeric"
+                            aria-invalid={!!errors.moveis?.[index]?.profundidade}
+                            {...register(`moveis.${index}.profundidade`)}
+                            className="field pr-12 font-mono tabular"
+                            placeholder="600"
+                          />
+                          <span aria-hidden="true" className="field-unit">mm</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Altura (mm) *
-                      </label>
-                      <input
-                        type="text"
-                        {...register(`moveis.${index}.altura`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                        placeholder="2800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Profundidade (mm) *
-                      </label>
-                      <input
-                        type="text"
-                        {...register(`moveis.${index}.profundidade`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                        placeholder="600"
-                      />
-                      {errors.moveis?.[index]?.profundidade && (
-                        <p className="text-red-500 text-xs mt-1 font-bold">
-                          ⚠️ {errors.moveis[index]?.profundidade?.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                    <p className="sr-only">Medidas em milímetros.</p>
+                    {errors.moveis?.[index]?.profundidade && (
+                      <p className="field-error">
+                        {errors.moveis[index]?.profundidade?.message}
+                      </p>
+                    )}
+                  </fieldset>
 
                   {/* Cores do MDF */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cor MDF Interno *
+                      <label htmlFor={`${pid}-mdf-interno`} className="field-label">
+                        Cor MDF interno <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                       </label>
                       <input
+                        id={`${pid}-mdf-interno`}
                         type="text"
                         {...register(`moveis.${index}.corMdfInterna`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        className="field"
                         placeholder="Ex: Branco Cristal"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cor MDF Externo *
+                      <label htmlFor={`${pid}-mdf-externo`} className="field-label">
+                        Cor MDF externo <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                       </label>
                       <input
+                        id={`${pid}-mdf-externo`}
                         type="text"
                         {...register(`moveis.${index}.corMdfExterna`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        className="field"
                         placeholder="Ex: Nogueira"
                       />
                     </div>
                   </div>
 
                   {/* Checkboxes Condicionais */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                    {/* Tem Puxador */}
-                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
-                      <input
-                        type="checkbox"
-                        {...register(`moveis.${index}.temPuxador`, {
-                          onChange: (e) => {
-                            const checked = e.target.checked;
-                            if (!checked) {
-                              setValue(`moveis.${index}.tipoPuxador`, "");
-                              setValue(`moveis.${index}.detalhesPuxador`, "");
-                            }
-                          },
-                        })}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium">Tem Puxador?</span>
-                    </label>
+                  <fieldset>
+                    <legend className="field-label">Ferragens e acabamentos</legend>
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                      {/* Tem Puxador */}
+                      <label className="opcao">
+                        <input
+                          type="checkbox"
+                          {...register(`moveis.${index}.temPuxador`, {
+                            onChange: (e) => {
+                              const checked = e.target.checked;
+                              if (!checked) {
+                                setValue(`moveis.${index}.tipoPuxador`, "");
+                                setValue(`moveis.${index}.detalhesPuxador`, "");
+                              }
+                            },
+                          })}
+                        />
+                        <span>Tem puxador?</span>
+                      </label>
 
-                    {/* Tem Corrediças */}
-                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
-                      <input
-                        type="checkbox"
-                        {...register(`moveis.${index}.temCorredicas`, {
-                          onChange: (e) => {
-                            const checked = e.target.checked;
-                            if (!checked) {
-                              setValue(`moveis.${index}.tipoCorredica`, "");
-                              setValue(
-                                `moveis.${index}.finalidadeCorredica`,
-                                "",
-                              );
-                            }
-                          },
-                        })}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium">
-                        Tem Corrediças?
-                      </span>
-                    </label>
+                      {/* Tem Corrediças */}
+                      <label className="opcao">
+                        <input
+                          type="checkbox"
+                          {...register(`moveis.${index}.temCorredicas`, {
+                            onChange: (e) => {
+                              const checked = e.target.checked;
+                              if (!checked) {
+                                setValue(`moveis.${index}.tipoCorredica`, "");
+                                setValue(
+                                  `moveis.${index}.finalidadeCorredica`,
+                                  "",
+                                );
+                              }
+                            },
+                          })}
+                        />
+                        <span>Tem corrediças?</span>
+                      </label>
 
-                    {/* Tem Báscula */}
-                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
-                      <input
-                        type="checkbox"
-                        {...register(`moveis.${index}.temBascula`, {
-                          onChange: (e) => {
-                            const checked = e.target.checked;
-                            if (!checked) {
-                              setValue(`moveis.${index}.tipoBascula`, "");
-                            }
-                          },
-                        })}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium">Tem Báscula?</span>
-                    </label>
+                      {/* Tem Báscula */}
+                      <label className="opcao">
+                        <input
+                          type="checkbox"
+                          {...register(`moveis.${index}.temBascula`, {
+                            onChange: (e) => {
+                              const checked = e.target.checked;
+                              if (!checked) {
+                                setValue(`moveis.${index}.tipoBascula`, "");
+                              }
+                            },
+                          })}
+                        />
+                        <span>Tem báscula?</span>
+                      </label>
 
-                    {/* Tem Porta de Vidro */}
-                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
-                      <input
-                        type="checkbox"
-                        {...register(`moveis.${index}.temPortaVidro`, {
-                          onChange: (e) => {
-                            const checked = e.target.checked;
-                            if (!checked) {
-                              setValue(`moveis.${index}.tipoPortaVidro`, "");
-                            }
-                          },
-                        })}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium">
-                        Tem Porta Vidro?
-                      </span>
-                    </label>
+                      {/* Tem Porta de Vidro */}
+                      <label className="opcao">
+                        <input
+                          type="checkbox"
+                          {...register(`moveis.${index}.temPortaVidro`, {
+                            onChange: (e) => {
+                              const checked = e.target.checked;
+                              if (!checked) {
+                                setValue(`moveis.${index}.tipoPortaVidro`, "");
+                              }
+                            },
+                          })}
+                        />
+                        <span>Tem porta de vidro?</span>
+                      </label>
 
-                    {/* Tem Fita LED */}
-                    <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
-                      <input
-                        type="checkbox"
-                        {...register(`moveis.${index}.temFitaLed`, {
-                          onChange: (e) => {
-                            const checked = e.target.checked;
-                            if (!checked) {
-                              setValue(`moveis.${index}.tipoFitaLed`, "");
-                            }
-                          },
-                        })}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium">Tem Fita LED?</span>
-                    </label>
-                  </div>
+                      {/* Tem Fita LED */}
+                      <label className="opcao">
+                        <input
+                          type="checkbox"
+                          {...register(`moveis.${index}.temFitaLed`, {
+                            onChange: (e) => {
+                              const checked = e.target.checked;
+                              if (!checked) {
+                                setValue(`moveis.${index}.tipoFitaLed`, "");
+                              }
+                            },
+                          })}
+                        />
+                        <span>Tem fita LED?</span>
+                      </label>
+                    </div>
+                  </fieldset>
 
                   {/* Campos Condicionais - Puxador */}
                   <div
-                    className={`flex flex-col w-full gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200 mt-3 ${!movel?.temPuxador ? "hidden" : ""}`}
+                    className={`subpainel grid w-full gap-3 sm:grid-cols-2 ${!movel?.temPuxador ? "hidden" : ""}`}
                   >
                     <div className="w-full">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Puxador *
+                      <label htmlFor={`${pid}-tipo-puxador`} className="field-label">
+                        Tipo de puxador <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                       </label>
                       <select
+                        id={`${pid}-tipo-puxador`}
                         {...register(`moveis.${index}.tipoPuxador`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition bg-white"
+                        className="field"
                       >
                         <option value="">Selecione</option>
                         {tipoPuxadorOptions.map((tipo) => (
@@ -411,13 +449,14 @@ export function Step2Levantamento({
                       </select>
                     </div>
                     <div className="w-full">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Detalhes do Puxador *
+                      <label htmlFor={`${pid}-detalhes-puxador`} className="field-label">
+                        Detalhes do puxador <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                       </label>
                       <input
+                        id={`${pid}-detalhes-puxador`}
                         type="text"
                         {...register(`moveis.${index}.detalhesPuxador`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition"
+                        className="field"
                         placeholder="Ex: Preto Fosco, 128mm"
                       />
                     </div>
@@ -425,15 +464,16 @@ export function Step2Levantamento({
 
                   {/* Campos Condicionais - Corrediças */}
                   <div
-                    className={`flex flex-col w-full gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200 mt-3 ${!movel?.temCorredicas ? "hidden" : ""}`}
+                    className={`subpainel grid w-full gap-3 sm:grid-cols-2 ${!movel?.temCorredicas ? "hidden" : ""}`}
                   >
                     <div className="w-full">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Corrediça *
+                      <label htmlFor={`${pid}-tipo-corredica`} className="field-label">
+                        Tipo de corrediça <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                       </label>
                       <select
+                        id={`${pid}-tipo-corredica`}
                         {...register(`moveis.${index}.tipoCorredica`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition bg-white"
+                        className="field"
                       >
                         <option value="">Selecione</option>
                         {tipoCorredicas.map((tipo) => (
@@ -444,13 +484,14 @@ export function Step2Levantamento({
                       </select>
                     </div>
                     <div className="w-full">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Para qual finalidade/gaveta? *
+                      <label htmlFor={`${pid}-finalidade-corredica`} className="field-label">
+                        Para qual finalidade/gaveta? <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                       </label>
                       <input
+                        id={`${pid}-finalidade-corredica`}
                         type="text"
                         {...register(`moveis.${index}.finalidadeCorredica`)}
-                        className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none transition"
+                        className="field"
                         placeholder="Ex: Gaveta de talheres, Gaveta de panelas"
                       />
                     </div>
@@ -458,14 +499,15 @@ export function Step2Levantamento({
 
                   {/* Campos Condicionais - Báscula */}
                   <div
-                    className={`flex flex-col w-full p-4 bg-green-50 rounded-lg border border-green-200 mt-3 ${!movel?.temBascula ? "hidden" : ""}`}
+                    className={`subpainel w-full ${!movel?.temBascula ? "hidden" : ""}`}
                   >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Báscula *
+                    <label htmlFor={`${pid}-tipo-bascula`} className="field-label">
+                      Tipo de báscula <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                     </label>
                     <select
+                      id={`${pid}-tipo-bascula`}
                       {...register(`moveis.${index}.tipoBascula`)}
-                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition bg-white"
+                      className="field"
                     >
                       <option value="">Selecione</option>
                       <option value="comum">Comum</option>
@@ -475,14 +517,15 @@ export function Step2Levantamento({
 
                   {/* Campos Condicionais - Porta de Vidro */}
                   <div
-                    className={`flex flex-col w-full p-4 bg-yellow-50 rounded-lg border border-yellow-200 mt-3 ${!movel?.temPortaVidro ? "hidden" : ""}`}
+                    className={`subpainel w-full ${!movel?.temPortaVidro ? "hidden" : ""}`}
                   >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Porta de Vidro *
+                    <label htmlFor={`${pid}-tipo-porta-vidro`} className="field-label">
+                      Tipo de porta de vidro <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                     </label>
                     <select
+                      id={`${pid}-tipo-porta-vidro`}
                       {...register(`moveis.${index}.tipoPortaVidro`)}
-                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-yellow-500 outline-none transition bg-white"
+                      className="field"
                     >
                       <option value="">Selecione</option>
                       {tipoPortaVidroOptions.map((tipo) => (
@@ -495,14 +538,15 @@ export function Step2Levantamento({
 
                   {/* Campos Condicionais - Fita LED */}
                   <div
-                    className={`flex flex-col w-full p-4 bg-indigo-50 rounded-lg border border-indigo-200 mt-3 ${!movel?.temFitaLed ? "hidden" : ""}`}
+                    className={`subpainel w-full ${!movel?.temFitaLed ? "hidden" : ""}`}
                   >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Fita LED *
+                    <label htmlFor={`${pid}-tipo-fita-led`} className="field-label">
+                      Tipo de fita LED <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                     </label>
                     <select
+                      id={`${pid}-tipo-fita-led`}
                       {...register(`moveis.${index}.tipoFitaLed`)}
-                      className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-indigo-500 outline-none transition bg-white"
+                      className="field"
                     >
                       <option value="">Selecione</option>
                       {tipoFitaLedOptions.map((tipo) => (
@@ -515,13 +559,14 @@ export function Step2Levantamento({
 
                   {/* Observações do Móvel */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Observações do Móvel
+                    <label htmlFor={`${pid}-observacoes`} className="field-label">
+                      Observações do móvel
                     </label>
                     <textarea
+                      id={`${pid}-observacoes`}
                       {...register(`moveis.${index}.observacoesMovel`)}
                       rows={3}
-                      className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none transition resize-none"
+                      className="field resize-none"
                       placeholder="Observações específicas deste móvel..."
                     />
                   </div>
@@ -534,114 +579,126 @@ export function Step2Levantamento({
         {errors.moveis &&
           typeof errors.moveis === "object" &&
           "message" in errors.moveis && (
-            <p className="text-red-500 text-sm mt-2">
+            <p className="field-error">
               {errors.moveis.message as string}
             </p>
           )}
-      </div>
+      </section>
 
       {/* Especificações do Ambiente (NOVO) */}
-      <div className="bg-white border-2 border-green-300 rounded-xl p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
-          <Building2 className="w-6 h-6" />
-          Especificações do Ambiente
+      <section aria-labelledby="secao-ambiente" className="border-t border-dashed border-primor-line pt-8">
+        <p className="etiqueta">B · Local da obra</p>
+        <h3 id="secao-ambiente" className="mb-5 mt-1 flex items-center gap-2 text-lg font-semibold text-primor-secondary md:text-xl">
+          <Building2 aria-hidden="true" strokeWidth={1.75} className="h-5 w-5 text-primor-primary-ink" />
+          Especificações do ambiente
         </h3>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Rodapé */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rodapé (Material)
+            <label htmlFor="ambiente-rodape" className="field-label">
+              Rodapé (material)
             </label>
             <input
+              id="ambiente-rodape"
               type="text"
               {...register("especificacoesAmbiente.rodape")}
-              className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+              className="field"
               placeholder="Ex: Madeira, MDF, Gesso"
             />
           </div>
 
           {/* Campos Condicionais - Rodapé */}
           {especificacoes?.rodape && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="subpainel grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Altura do Rodapé (mm)
+                <label htmlFor="ambiente-altura-rodape" className="field-label">
+                  Altura do rodapé
                 </label>
-                <input
-                  type="number"
-                  {...register("especificacoesAmbiente.alturaRodape")}
-                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
-                  placeholder="70"
-                />
+                <div className="relative">
+                  <input
+                    id="ambiente-altura-rodape"
+                    type="number"
+                    {...register("especificacoesAmbiente.alturaRodape")}
+                    className="field pr-12 font-mono tabular"
+                    placeholder="70"
+                  />
+                  <span aria-hidden="true" className="field-unit">mm</span>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profundidade do Rodapé (mm)
+                <label htmlFor="ambiente-profundidade-rodape" className="field-label">
+                  Profundidade do rodapé
                 </label>
-                <input
-                  type="number"
-                  {...register("especificacoesAmbiente.profundidadeRodape")}
-                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
-                  placeholder="15"
-                />
+                <div className="relative">
+                  <input
+                    id="ambiente-profundidade-rodape"
+                    type="number"
+                    {...register("especificacoesAmbiente.profundidadeRodape")}
+                    className="field pr-12 font-mono tabular"
+                    placeholder="15"
+                  />
+                  <span aria-hidden="true" className="field-unit">mm</span>
+                </div>
               </div>
             </div>
           )}
 
           {/* Tipo de Parede */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Parede
+            <label htmlFor="ambiente-parede" className="field-label">
+              Tipo de parede
             </label>
             <input
+              id="ambiente-parede"
               type="text"
               {...register("especificacoesAmbiente.tipoParede")}
-              className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
+              className="field"
               placeholder="Ex: Alvenaria, Drywall, Concreto"
             />
           </div>
 
           {/* Checkboxes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
-              <input
-                type="checkbox"
-                {...register("especificacoesAmbiente.tubulacoesParede")}
-                className="w-5 h-5 flex-shrink-0"
-              />
-              <span className="text-sm font-medium">Tubulações na Parede?</span>
-            </label>
+          <fieldset>
+            <legend className="field-label">Condições do local</legend>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              <label className="opcao">
+                <input
+                  type="checkbox"
+                  {...register("especificacoesAmbiente.tubulacoesParede")}
+                />
+                <span>Tubulações na parede?</span>
+              </label>
 
-            <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
-              <input
-                type="checkbox"
-                {...register("especificacoesAmbiente.temEstacionamento")}
-                className="w-5 h-5 flex-shrink-0"
-              />
-              <span className="text-sm font-medium">Tem Estacionamento?</span>
-            </label>
+              <label className="opcao">
+                <input
+                  type="checkbox"
+                  {...register("especificacoesAmbiente.temEstacionamento")}
+                />
+                <span>Tem estacionamento?</span>
+              </label>
 
-            <label className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 transition">
-              <input
-                type="checkbox"
-                {...register("especificacoesAmbiente.temElevador")}
-                className="w-5 h-5 flex-shrink-0"
-              />
-              <span className="text-sm font-medium">Tem Elevador?</span>
-            </label>
-          </div>
+              <label className="opcao">
+                <input
+                  type="checkbox"
+                  {...register("especificacoesAmbiente.temElevador")}
+                />
+                <span>Tem elevador?</span>
+              </label>
+            </div>
+          </fieldset>
 
           {/* Campos Condicionais - Tubulações */}
           {especificacoes?.tubulacoesParede && (
-            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Indique o local exato *
+            <div className="subpainel">
+              <label htmlFor="ambiente-local-tubulacao" className="field-label">
+                Indique o local exato <span aria-hidden="true" className="text-primor-primary-ink">*</span>
               </label>
               <input
+                id="ambiente-local-tubulacao"
                 type="text"
                 {...register("especificacoesAmbiente.localTubulacao")}
-                className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none transition"
+                className="field"
                 placeholder="Ex: Parede esquerda, próximo à janela"
               />
             </div>
@@ -649,41 +706,50 @@ export function Step2Levantamento({
 
           {/* Campos Condicionais - Elevador */}
           {especificacoes?.temElevador && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="subpainel grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Altura do Elevador (mm) *
+                <label htmlFor="ambiente-altura-elevador" className="field-label">
+                  Altura do elevador <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                 </label>
-                <input
-                  type="number"
-                  {...register("especificacoesAmbiente.alturaElevador")}
-                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
-                  placeholder="2100"
-                />
+                <div className="relative">
+                  <input
+                    id="ambiente-altura-elevador"
+                    type="number"
+                    {...register("especificacoesAmbiente.alturaElevador")}
+                    className="field pr-12 font-mono tabular"
+                    placeholder="2100"
+                  />
+                  <span aria-hidden="true" className="field-unit">mm</span>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profundidade do Elevador (mm) *
+                <label htmlFor="ambiente-profundidade-elevador" className="field-label">
+                  Profundidade do elevador <span aria-hidden="true" className="text-primor-primary-ink">*</span>
                 </label>
-                <input
-                  type="number"
-                  {...register("especificacoesAmbiente.profundidadeElevador")}
-                  className="w-full h-12 px-4 text-base border-2 border-gray-300 rounded-lg focus:border-green-500 outline-none transition"
-                  placeholder="1400"
-                />
+                <div className="relative">
+                  <input
+                    id="ambiente-profundidade-elevador"
+                    type="number"
+                    {...register("especificacoesAmbiente.profundidadeElevador")}
+                    className="field pr-12 font-mono tabular"
+                    placeholder="1400"
+                  />
+                  <span aria-hidden="true" className="field-unit">mm</span>
+                </div>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Eletrodomésticos com Modelos */}
-      <div className="bg-white border-2 border-purple-300 rounded-xl p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
-          <Zap className="w-6 h-6" />
-          Eletrodomésticos a Embutir
+      <section aria-labelledby="secao-eletro" className="border-t border-dashed border-primor-line pt-8">
+        <p className="etiqueta">C · Embutidos</p>
+        <h3 id="secao-eletro" className="mb-5 mt-1 flex items-center gap-2 text-lg font-semibold text-primor-secondary md:text-xl">
+          <Zap aria-hidden="true" strokeWidth={1.75} className="h-5 w-5 text-primor-primary-ink" />
+          Eletrodomésticos a embutir
         </h3>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
           {eletrodomesticosOptions.map((eletro) => {
             const eletroSelecionado = eletrodomesticosSelecionados.find(
               (e) => e.nome === eletro,
@@ -696,24 +762,26 @@ export function Step2Levantamento({
             return (
               <div
                 key={eletro}
-                className="border-2 border-gray-200 rounded-lg p-4"
+                className={`rounded-md border-[1.5px] transition-colors ${
+                  isChecked ? "border-primor-secondary bg-primor-realce" : "border-primor-line bg-primor-surface"
+                } ${isChecked && index >= 0 ? "md:col-span-2" : ""}`}
               >
-                <label className="flex items-center gap-4 cursor-pointer">
+                <label className="flex min-h-[56px] cursor-pointer items-center gap-3 rounded-md px-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary dark:has-[:focus-visible]:outline-primor-primary">
                   <input
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => toggleEletrodomestico(eletro)}
-                    className="hidden"
+                    className="sr-only"
                   />
-                  <div className="flex-shrink-0">
+                  <span aria-hidden="true" className="flex-shrink-0">
                     {isChecked ? (
-                      <CheckCircle2 className="w-8 h-8 text-purple-600" />
+                      <CheckCircle2 className="h-7 w-7 text-primor-secondary" />
                     ) : (
-                      <Circle className="w-8 h-8 text-gray-400" />
+                      <Circle className="h-7 w-7 text-primor-line-strong" />
                     )}
-                  </div>
+                  </span>
                   <span
-                    className={`text-lg flex-1 ${isChecked ? "text-gray-900 font-medium" : "text-gray-700"}`}
+                    className={`flex-1 text-base ${isChecked ? "font-semibold text-primor-secondary" : "text-primor-secondary"}`}
                   >
                     {eletro}
                   </span>
@@ -721,16 +789,17 @@ export function Step2Levantamento({
 
                 {/* Input de Modelo (renderizado condicionalmente) */}
                 {isChecked && index >= 0 && (
-                  <div className="mt-3 ml-12">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="px-4 pb-4 pl-14">
+                    <label htmlFor={`eletro-${index}-modelo`} className="mb-1 block text-sm font-medium text-primor-muted">
                       {eletro === "Outros"
-                        ? "Nome do Eletrodoméstico"
+                        ? "Nome do eletrodoméstico"
                         : "Qual o modelo?"}
                     </label>
                     <input
+                      id={`eletro-${index}-modelo`}
                       type="text"
                       {...register(`eletrodomesticos.${index}.modelo`)}
-                      className="w-full h-10 px-3 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition"
+                      className="field"
                       placeholder={
                         eletro === "Outros"
                           ? "Ex: Purificador de Água"
@@ -743,40 +812,44 @@ export function Step2Levantamento({
             );
           })}
         </div>
-      </div>
+      </section>
 
       {/* Pontos Críticos */}
-      <div className="bg-white border-2 border-orange-300 rounded-xl p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
-          <AlertCircle className="w-6 h-6" />
-          Pontos Críticos
+      <section aria-labelledby="secao-criticos" className="border-t border-dashed border-primor-line pt-8">
+        <p className="etiqueta">D · Atenção na montagem</p>
+        <h3 id="secao-criticos" className="mb-5 mt-1 flex items-center gap-2 text-lg font-semibold text-primor-secondary md:text-xl">
+          <AlertCircle aria-hidden="true" strokeWidth={1.75} className="h-5 w-5 text-primor-primary-ink" />
+          Pontos críticos
         </h3>
-        <label className="block text-base font-medium text-gray-700 mb-3">
-          Posição de Tomadas, Registros de Água e Gás
+        <label htmlFor="pontos-criticos" className="field-label">
+          Posição de tomadas, registros de água e gás
         </label>
         <textarea
+          id="pontos-criticos"
+          aria-describedby="pontos-criticos-dica"
           {...register("pontosCriticos")}
           rows={5}
-          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition resize-none"
+          className="field resize-none text-base md:text-lg"
           placeholder="Descreva a localização de tomadas, pontos de água, gás, etc..."
         />
-        <p className="text-sm text-gray-500 mt-2">Campo opcional</p>
-      </div>
+        <p id="pontos-criticos-dica" className="field-hint">Campo opcional</p>
+      </section>
 
       {/* Fotos do Ambiente e Anotações Manuais */}
-      <div className="bg-white border-2 border-pink-300 rounded-xl p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-4">
-          <Camera className="w-6 h-6" />
+      <section aria-labelledby="secao-fotos" className="border-t border-dashed border-primor-line pt-8">
+        <p className="etiqueta">E · Registro visual</p>
+        <h3 id="secao-fotos" className="mb-5 mt-1 flex items-center gap-2 text-lg font-semibold text-primor-secondary md:text-xl">
+          <Camera aria-hidden="true" strokeWidth={1.75} className="h-5 w-5 text-primor-primary-ink" />
           Fotos do ambiente e anotações manuais
         </h3>
 
-        <label className="block">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-400 hover:bg-pink-50 transition">
-            <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-700 font-medium mb-1">
+        <label className="block cursor-pointer rounded-md has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primor-secondary dark:has-[:focus-visible]:outline-primor-primary">
+          <div className="rounded-md border-[1.5px] border-dashed border-primor-line-strong bg-primor-bg-light px-6 py-9 text-center transition-colors hover:border-primor-secondary hover:bg-primor-realce">
+            <Camera aria-hidden="true" strokeWidth={1.5} className="mx-auto mb-3 h-10 w-10 text-primor-primary-ink" />
+            <p className="font-semibold text-primor-secondary">
               Clique para adicionar fotos
             </p>
-            <p className="text-sm text-gray-500">
+            <p aria-live="polite" className="mt-1 text-sm text-primor-muted">
               {processandoFotos
                 ? "Processando fotos..."
                 : "Você pode escolher várias fotos de uma vez"}
@@ -787,52 +860,52 @@ export function Step2Levantamento({
               accept="image/*"
               onChange={handleFotosChange}
               disabled={processandoFotos}
-              className="hidden"
+              className="sr-only"
             />
           </div>
         </label>
 
-        {fotoErro && <p className="text-red-500 text-sm mt-2">{fotoErro}</p>}
+        {fotoErro && <p role="alert" className="field-error">{fotoErro}</p>}
 
         {/* Preview das Fotos */}
         {fotosAmbiente.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              {fotosAmbiente.length}{" "}
+          <div className="mt-5">
+            <p className="etiqueta mb-3">
+              <span className="tabular">{fotosAmbiente.length}</span>{" "}
               {fotosAmbiente.length === 1
                 ? "foto adicionada"
                 : "fotos adicionadas"}
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {fotosAmbiente.map((foto, index) => (
-                <div
+                <li
                   key={index}
-                  className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group"
+                  className="group relative aspect-square overflow-hidden rounded-md border border-primor-line bg-primor-paper-deep"
                 >
                   <img
                     src={urlDaFoto(foto)}
                     alt={`Foto ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                   <button
                     type="button"
                     onClick={() => handleRemoveFoto(index)}
-                    className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
+                    className="btn-icon absolute right-1.5 top-1.5 bg-[#b42318] text-white shadow-chapa transition-opacity hover:bg-[#912018] focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
                     title="Remover foto"
-                    aria-label="Remover foto"
+                    aria-label={`Remover foto ${index + 1}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
                   </button>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
 
-        <p className="text-sm text-gray-500 mt-3">
+        <p className="field-hint mt-3">
           Campo opcional - As fotos serão enviadas para o Supabase Storage
         </p>
-      </div>
+      </section>
     </div>
   );
 }
