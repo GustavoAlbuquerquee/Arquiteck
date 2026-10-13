@@ -6,17 +6,17 @@ import { useUrlsAssinadas } from "@/lib/useUrlsAssinadas";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Calendar,
-  User,
   Home,
   FileText,
-  Loader2,
   FolderOpen,
   Plus,
   Eye,
   FileDown,
   Edit,
   Trash2,
+  X,
 } from "lucide-react";
+import { classeSeloEtapa } from "@/components/marca/Etapas";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { formatarData } from "@/lib/date";
@@ -223,18 +223,7 @@ export function Historico() {
     return formatarData(dateString);
   };
 
-  const getStatusColor = (status: string | null) => {
-    if (!status) return "bg-gray-100 text-gray-800 border-gray-300";
-    const colors: Record<string, string> = {
-      orcamento: "bg-amber-100 text-amber-800 border-amber-300",
-      pre_producao: "bg-orange-100 text-orange-800 border-orange-300",
-      producao:
-        "bg-primor-primary/20 text-primor-secondary border-primor-primary",
-      instalacao: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      concluido: "bg-green-100 text-green-800 border-green-300",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800 border-gray-300";
-  };
+  const getStatusColor = (status: string | null) => classeSeloEtapa(status);
 
   const getStatusLabel = (status: string | null) => {
     if (!status) return "Sem Status";
@@ -251,12 +240,15 @@ export function Historico() {
   // Loading State
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-16 h-16 text-primor-primary animate-spin mx-auto mb-4" />
-          <p className="text-xl text-primor-gray-dark">
-            Carregando briefings...
-          </p>
+      <div role="status" aria-label="Carregando briefings" className="space-y-8">
+        <div className="space-y-3">
+          <div className="esqueleto h-3 w-32" />
+          <div className="esqueleto h-10 w-80 max-w-full" />
+        </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="esqueleto h-56 w-full" />
+          ))}
         </div>
       </div>
     );
@@ -265,23 +257,23 @@ export function Historico() {
   // Empty State
   if (projetos.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-md">
-          <div className="bg-gray-100 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
-            <FolderOpen className="w-16 h-16 text-gray-400" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="max-w-md text-center">
+          <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-lg border border-primor-line bg-white shadow-chapa">
+            <FolderOpen aria-hidden="true" strokeWidth={1.5} className="h-12 w-12 text-primor-line-strong" />
+            <div aria-hidden="true" className="regua absolute -bottom-5 left-0" />
           </div>
-          <h2 className="text-2xl font-bold text-primor-text-light mb-3">
-            Nenhum briefing encontrado
-          </h2>
-          <p className="text-primor-gray-dark mb-6">
+          <h1 className="titulo-secao mt-10">Nenhum briefing encontrado</h1>
+          <p className="mb-7 mt-2 text-primor-muted">
             Que tal registrar sua primeira visita?
           </p>
           <button
+            type="button"
             onClick={() => navigate("/nova-visita")}
-            className="flex items-center gap-2 px-8 h-14 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition text-lg mx-auto shadow-md"
+            className="btn btn-primary btn-lg"
           >
-            <Plus className="w-6 h-6" />
-            Criar Primeiro Briefing
+            <Plus aria-hidden="true" className="h-5 w-5" />
+            Criar primeiro briefing
           </button>
         </div>
       </div>
@@ -291,203 +283,219 @@ export function Historico() {
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="mb-6 md:mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light">
-            Histórico de Briefings
-          </h1>
-          <p className="text-sm md:text-base text-primor-gray-dark mt-2">
-            {projetos.length}{" "}
-            {projetos.length === 1
-              ? "briefing encontrado"
-              : "briefings encontrados"}
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/nova-visita")}
-          className="w-full md:w-auto flex items-center justify-center gap-2 px-4 md:px-6 h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Briefing
-        </button>
-      </div>
-
-      {/* Lista de Projetos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {projetos.map((projeto) => (
-          <div
-            key={projeto.id}
-            className="bg-primor-bg rounded-xl shadow-md border-2 border-primor-gray-medium hover:border-primor-primary transition-all p-4 md:p-6"
+      <header className="entrada mb-8">
+        <div className="flex flex-col items-start justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <p className="etiqueta">Arquivo de clientes</p>
+            <h1 className="titulo-pagina mt-2">Histórico de briefings</h1>
+            <p className="mt-2 text-primor-muted">
+              <span className="font-mono tabular">{projetos.length}</span>{" "}
+              {projetos.length === 1
+                ? "briefing encontrado"
+                : "briefings encontrados"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/nova-visita")}
+            className="btn btn-primary btn-lg w-full md:w-auto"
           >
-            {/* Status Badge */}
-            <div className="flex items-center justify-between mb-4">
+            <Plus aria-hidden="true" className="h-5 w-5" />
+            Novo briefing
+          </button>
+        </div>
+        <div aria-hidden="true" className="regua mt-8" />
+      </header>
+
+      {/* Lista de Projetos: cada briefing como uma ficha de peça */}
+      <ul className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {projetos.map((projeto, i) => (
+          <li
+            key={projeto.id}
+            className="panel fita entrada group flex flex-col transition-shadow hover:shadow-chapa-lg"
+            style={{ ["--i" as string]: Math.min(i, 8) }}
+          >
+            {/* Etiqueta: status e data de criação */}
+            <div className="flex items-center justify-between gap-3 border-b border-dashed border-primor-line py-3 pl-6 pr-5">
               <span
-                className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold ${getStatusColor(
                   projeto.status,
                 )}`}
               >
                 {getStatusLabel(projeto.status)}
               </span>
-              <span className="text-sm text-primor-gray-dark">
+              <span className="font-mono text-xs text-primor-muted tabular">
                 {formatDate(projeto.created_at)}
               </span>
             </div>
 
             {/* Informações Principais */}
-            <div className="space-y-3 mb-4">
-              <div className="flex items-start gap-3">
-                <User className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-primor-gray-dark">Cliente</p>
-                  <p className="text-lg font-semibold text-primor-text-light">
-                    {projeto.clients.nome}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Home className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-primor-gray-dark">Ambiente</p>
-                  <p className="text-lg font-semibold text-primor-text-light">
-                    {projeto.titulo_ambiente}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-primor-gray-dark">
-                    Data do Atendimento
-                  </p>
-                  <p className="text-lg font-semibold text-primor-text-light">
-                    {formatDate(projeto.data_prevista_instalacao)}
-                  </p>
-                </div>
-              </div>
-
-              {projeto.checklists.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-primor-gray-dark flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-primor-gray-dark">Checklists</p>
-                    <p className="text-lg font-semibold text-primor-text-light">
-                      {projeto.checklists.length}{" "}
-                      {projeto.checklists.length === 1
-                        ? "checklist"
-                        : "checklists"}
-                    </p>
+            <div className="flex-1 py-5 pl-6 pr-5">
+              <h2 className="font-display text-xl font-semibold leading-snug text-primor-secondary">
+                {projeto.clients.nome}
+              </h2>
+              <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                <div className="flex items-start gap-2.5">
+                  <Home aria-hidden="true" strokeWidth={1.75} className="mt-0.5 h-4 w-4 flex-shrink-0 text-primor-muted" />
+                  <div className="min-w-0">
+                    <dt className="etiqueta">Ambiente</dt>
+                    <dd className="mt-0.5 font-medium text-primor-secondary">
+                      {projeto.titulo_ambiente}
+                    </dd>
                   </div>
                 </div>
-              )}
+
+                <div className="flex items-start gap-2.5">
+                  <Calendar aria-hidden="true" strokeWidth={1.75} className="mt-0.5 h-4 w-4 flex-shrink-0 text-primor-muted" />
+                  <div>
+                    <dt className="etiqueta">Data do atendimento</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-medium text-primor-secondary tabular">
+                      {formatDate(projeto.data_prevista_instalacao)}
+                    </dd>
+                  </div>
+                </div>
+
+                {projeto.checklists.length > 0 && (
+                  <div className="flex items-start gap-2.5">
+                    <FileText aria-hidden="true" strokeWidth={1.75} className="mt-0.5 h-4 w-4 flex-shrink-0 text-primor-muted" />
+                    <div>
+                      <dt className="etiqueta">Checklists</dt>
+                      <dd className="mt-0.5 font-medium text-primor-secondary">
+                        {projeto.checklists.length}{" "}
+                        {projeto.checklists.length === 1
+                          ? "checklist"
+                          : "checklists"}
+                      </dd>
+                    </div>
+                  </div>
+                )}
+              </dl>
             </div>
 
             {/* Botão Ver Detalhes */}
-            <button
-              onClick={() => handleVerDetalhes(projeto)}
-              className="w-full flex items-center justify-center gap-2 h-10 md:h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md text-sm md:text-base"
-            >
-              <Eye className="w-5 h-5" />
-              Ver Detalhes
-            </button>
-          </div>
+            <div className="pb-5 pl-6 pr-5">
+              <button
+                type="button"
+                onClick={() => handleVerDetalhes(projeto)}
+                className="btn btn-outline w-full group-hover:border-primor-secondary"
+              >
+                <Eye aria-hidden="true" className="h-5 w-5" />
+                Ver detalhes
+                <span className="sr-only"> de {projeto.clients.nome}</span>
+              </button>
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* Modal de Detalhes */}
       {showModal && selectedProjeto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-primor-bg rounded-xl shadow-2xl w-[95%] md:w-[90%] lg:w-3/4 max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-modal flex items-end justify-center bg-primor-secondary-deep/60 p-0 animate-fade-in sm:items-center sm:p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-detalhes"
+            className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-xl bg-primor-bg shadow-chapa-lg sm:rounded-xl"
+          >
             {/* Header do Modal */}
-            <div className="sticky top-0 bg-primor-bg border-b-2 border-primor-gray-medium p-4 md:p-6 flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-bold text-primor-text-light">
-                Detalhes do Briefing
-              </h2>
+            <div className="flex items-start justify-between gap-4 border-b border-primor-line px-5 py-4 md:px-7 md:py-5">
+              <div className="min-w-0">
+                <p className="etiqueta">Detalhes do briefing</p>
+                <h2 id="titulo-detalhes" className="mt-1 truncate font-display text-2xl font-semibold text-primor-secondary">
+                  {selectedProjeto.clients.nome}
+                </h2>
+              </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="text-primor-gray-dark hover:text-primor-text-light text-2xl font-bold"
+                aria-label="Fechar detalhes"
+                className="btn-icon -mr-2 text-primor-secondary hover:bg-primor-paper-deep"
               >
-                ×
+                <X aria-hidden="true" className="h-6 w-6" />
               </button>
             </div>
 
             {/* Conteúdo do Modal */}
-            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-              {/* Informações do Cliente */}
-              <div>
-                <h3 className="text-lg font-bold text-primor-text-light mb-3">
-                  Cliente
-                </h3>
-                <div className="bg-primor-bg-light rounded-lg p-4 space-y-2">
-                  <p>
-                    <strong>Nome:</strong> {selectedProjeto.clients.nome}
-                  </p>
-                  {selectedProjeto.clients.telefone && (
-                    <p>
-                      <strong>Telefone:</strong>{" "}
-                      {selectedProjeto.clients.telefone}
-                    </p>
-                  )}
-                  {selectedProjeto.clients.endereco && (
-                    <p>
-                      <strong>Endereço:</strong>{" "}
-                      {selectedProjeto.clients.endereco}
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="flex-1 space-y-7 overflow-y-auto px-5 py-6 md:px-7">
+              <div className="grid gap-5 md:grid-cols-2">
+                {/* Informações do Cliente */}
+                <section>
+                  <h3 className="etiqueta mb-2">Cliente</h3>
+                  <dl className="space-y-2.5 rounded-md bg-primor-bg-light p-4 text-[15px]">
+                    <div>
+                      <dt className="text-sm text-primor-muted">Nome</dt>
+                      <dd className="font-medium">{selectedProjeto.clients.nome}</dd>
+                    </div>
+                    {selectedProjeto.clients.telefone && (
+                      <div>
+                        <dt className="text-sm text-primor-muted">Telefone</dt>
+                        <dd className="font-mono tabular">{selectedProjeto.clients.telefone}</dd>
+                      </div>
+                    )}
+                    {selectedProjeto.clients.endereco && (
+                      <div>
+                        <dt className="text-sm text-primor-muted">Endereço</dt>
+                        <dd>{selectedProjeto.clients.endereco}</dd>
+                      </div>
+                    )}
+                  </dl>
+                </section>
 
-              {/* Informações do Projeto */}
-              <div>
-                <h3 className="text-lg font-bold text-primor-text-light mb-3">
-                  Projeto
-                </h3>
-                <div className="bg-primor-bg-light rounded-lg p-4 space-y-2">
-                  <p>
-                    <strong>Ambiente:</strong> {selectedProjeto.titulo_ambiente}
-                  </p>
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    <span
-                      className={`px-2 py-1 rounded text-sm ${getStatusColor(
-                        selectedProjeto.status,
-                      )}`}
-                    >
-                      {getStatusLabel(selectedProjeto.status)}
-                    </span>
-                  </p>
-                  <p>
-                    <strong>Data do Atendimento:</strong>{" "}
-                    {formatDate(selectedProjeto.data_prevista_instalacao)}
-                  </p>
-                  <p>
-                    <strong>Criado em:</strong>{" "}
-                    {formatDate(selectedProjeto.created_at)}
-                  </p>
-                </div>
+                {/* Informações do Projeto */}
+                <section>
+                  <h3 className="etiqueta mb-2">Projeto</h3>
+                  <dl className="space-y-2.5 rounded-md bg-primor-bg-light p-4 text-[15px]">
+                    <div>
+                      <dt className="text-sm text-primor-muted">Ambiente</dt>
+                      <dd className="font-medium">{selectedProjeto.titulo_ambiente}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-primor-muted">Status</dt>
+                      <dd className="mt-1">
+                        <span
+                          className={`inline-flex rounded-sm border px-2 py-0.5 text-xs font-semibold ${getStatusColor(
+                            selectedProjeto.status,
+                          )}`}
+                        >
+                          {getStatusLabel(selectedProjeto.status)}
+                        </span>
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <dt className="text-sm text-primor-muted">Atendimento</dt>
+                        <dd className="font-mono text-sm tabular">
+                          {formatDate(selectedProjeto.data_prevista_instalacao)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm text-primor-muted">Criado em</dt>
+                        <dd className="font-mono text-sm tabular">
+                          {formatDate(selectedProjeto.created_at)}
+                        </dd>
+                      </div>
+                    </div>
+                  </dl>
+                </section>
               </div>
 
               {/* Checklists */}
               {selectedProjeto.checklists.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-bold text-primor-text-light mb-3">
-                    Checklists
-                  </h3>
+                <section>
+                  <h3 className="etiqueta mb-2">Checklists</h3>
                   {selectedProjeto.checklists.map((checklist) => (
                     <div
                       key={checklist.id}
-                      className="bg-primor-bg-light rounded-lg p-4 mb-3"
+                      className="mb-3 rounded-md border border-primor-line bg-primor-bg-light p-4 md:p-5"
                     >
-                      <p className="mb-2">
-                        <strong>Tipo:</strong>{" "}
-                        <span className="capitalize">
+                      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="font-semibold capitalize">
                           {checklist.tipo_etapa.replace("_", " ")}
-                        </span>
-                      </p>
-                      <p className="text-sm text-primor-gray-dark mb-3">
-                        Criado em: {formatDate(checklist.created_at)}
-                      </p>
+                        </p>
+                        <p className="font-mono text-xs text-primor-muted tabular">
+                          Criado em {formatDate(checklist.created_at)}
+                        </p>
+                      </div>
 
                       {/* Payload do Checklist */}
                       {checklist.payload && (
@@ -496,20 +504,20 @@ export function Historico() {
                           {checklist.payload.moveis &&
                             checklist.payload.moveis.length > 0 && (
                               <div>
-                                <p className="font-semibold mb-2">Móveis:</p>
+                                <p className="mb-2 font-semibold">Móveis</p>
                                 <div className="space-y-2">
                                   {checklist.payload.moveis.map(
                                     (movel: any, idx: number) => (
                                       <div
                                         key={idx}
-                                        className="bg-primor-bg p-3 rounded border border-primor-gray-medium"
+                                        className="fita flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md border border-primor-line bg-white py-3 pl-5 pr-4"
                                       >
-                                        <p className="font-medium text-primor-text-light">
+                                        <p className="font-medium text-primor-secondary">
                                           {movel.nome}
                                         </p>
-                                        <p className="text-sm text-primor-gray-dark">
-                                          {movel.largura}cm × {movel.altura}cm ×{" "}
-                                          {movel.profundidade}cm
+                                        <p className="font-mono text-sm text-primor-muted tabular">
+                                          {movel.largura} × {movel.altura} ×{" "}
+                                          {movel.profundidade} mm
                                         </p>
                                       </div>
                                     ),
@@ -522,8 +530,8 @@ export function Historico() {
                           {checklist.payload.eletrodomesticos &&
                             checklist.payload.eletrodomesticos.length > 0 && (
                               <div>
-                                <p className="font-semibold mb-2">
-                                  Eletrodomésticos:
+                                <p className="mb-2 font-semibold">
+                                  Eletrodomésticos
                                 </p>
                                 <ul className="list-disc list-inside space-y-1">
                                   {checklist.payload.eletrodomesticos.map(
@@ -541,7 +549,7 @@ export function Historico() {
                           {/* Materiais */}
                           {checklist.payload.preferenciaMateriais && (
                             <div>
-                              <p className="font-semibold mb-2">Materiais:</p>
+                              <p className="mb-2 font-semibold">Materiais</p>
                               <p className="text-sm">
                                 <strong>MDF:</strong>{" "}
                                 {
@@ -562,10 +570,10 @@ export function Historico() {
                           {/* Pontos Críticos */}
                           {checklist.payload.pontosCriticos && (
                             <div>
-                              <p className="font-semibold mb-2 text-red-600">
-                                Pontos Críticos / Atenção:
+                              <p className="mb-2 font-semibold text-[#b42318]">
+                                Pontos críticos / atenção
                               </p>
-                              <p className="text-sm whitespace-pre-wrap bg-red-50 p-3 rounded border border-red-200 text-red-800">
+                              <p className="alerta alerta-erro whitespace-pre-wrap">
                                 {checklist.payload.pontosCriticos}
                               </p>
                             </div>
@@ -574,7 +582,7 @@ export function Historico() {
                           {/* Observações */}
                           {checklist.payload.observacoes && (
                             <div>
-                              <p className="font-semibold mb-2">Observações:</p>
+                              <p className="mb-2 font-semibold">Observações</p>
                               <p className="text-sm whitespace-pre-wrap">
                                 {checklist.payload.observacoes}
                               </p>
@@ -588,17 +596,17 @@ export function Historico() {
                               checklist.payload.fotosAmbiente.length > 0) ||
                             (checklist.payload.fotos &&
                               checklist.payload.fotos.length > 0)) && (
-                            <div className="pt-4 mt-4 border-t border-gray-200">
-                              <h4 className="text-md font-bold text-gray-800 mb-4">
-                                Mídias e Anexos
+                            <div className="mt-4 border-t border-dashed border-primor-line pt-4">
+                              <h4 className="etiqueta mb-4">
+                                Mídias e anexos
                               </h4>
 
                               {/* Assinatura */}
                               {(checklist.payload.assinatura_url ||
                                 checklist.payload.assinatura) && (
                                 <div className="mb-5">
-                                  <p className="font-medium text-sm text-gray-600 mb-2">
-                                    Assinatura do Cliente:
+                                  <p className="mb-2 text-sm font-medium text-primor-muted">
+                                    Assinatura do cliente
                                   </p>
                                   <img
                                     src={urlDaImagem(
@@ -606,7 +614,7 @@ export function Historico() {
                                         checklist.payload.assinatura,
                                     )}
                                     alt="Assinatura do Cliente"
-                                    className="max-h-32 object-contain border bg-white rounded p-2"
+                                    className="max-h-32 rounded-md border border-primor-line bg-white object-contain p-2"
                                   />
                                 </div>
                               )}
@@ -617,8 +625,8 @@ export function Historico() {
                                 (checklist.payload.fotos &&
                                   checklist.payload.fotos.length > 0)) && (
                                 <div>
-                                  <p className="font-medium text-sm text-gray-600 mb-2">
-                                    Fotos do Ambiente:
+                                  <p className="mb-2 text-sm font-medium text-primor-muted">
+                                    Fotos do ambiente
                                   </p>
                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                                     {(
@@ -631,12 +639,12 @@ export function Historico() {
                                         target="_blank"
                                         rel="noreferrer"
                                         key={idx}
-                                        className="block transition hover:opacity-80"
+                                        className="block overflow-hidden rounded-md transition-opacity hover:opacity-85"
                                       >
                                         <img
                                           src={urlDaImagem(fotoUrl)}
-                                          alt={`Foto do ambiente ${idx + 1}`}
-                                          className="w-full h-32 object-cover rounded-lg shadow-sm border border-gray-200"
+                                          alt={`Foto do ambiente ${idx + 1} (abre em nova aba)`}
+                                          className="h-32 w-full rounded-md border border-primor-line object-cover"
                                         />
                                       </a>
                                     ))}
@@ -649,39 +657,43 @@ export function Historico() {
                       )}
                     </div>
                   ))}
-                </div>
+                </section>
               )}
             </div>
 
             {/* Footer do Modal com Ações */}
-            <div className="sticky bottom-0 bg-primor-bg border-t-2 border-primor-gray-medium p-4 md:p-6">
-              <div className="flex flex-col sm:flex-row gap-3">
+            <div className="border-t border-primor-line bg-primor-bg-light px-5 py-4 md:px-7">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                 <button
+                  type="button"
                   onClick={handleDownloadPDF}
-                  className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-primor-primary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md text-sm md:text-base"
+                  className="btn btn-primary w-full sm:w-auto"
                 >
-                  <FileDown className="w-5 h-5" />
+                  <FileDown aria-hidden="true" className="h-5 w-5" />
                   Baixar PDF
                 </button>
                 <button
+                  type="button"
                   onClick={handleEdit}
-                  className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-primor-secondary hover:brightness-110 text-primor-text-dark font-semibold rounded-lg transition shadow-md text-sm md:text-base"
+                  className="btn btn-secondary w-full sm:w-auto"
                 >
-                  <Edit className="w-5 h-5" />
+                  <Edit aria-hidden="true" className="h-5 w-5" />
                   Editar
                 </button>
                 {userRole === 'admin' && (
                   <button
+                    type="button"
                     onClick={() => setBriefingToDelete(selectedProjeto.id)}
-                    className="w-full sm:flex-1 flex items-center justify-center gap-2 h-10 md:h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition shadow-md text-sm md:text-base"
+                    className="btn btn-outline w-full border-[#b42318]/50 text-[#b42318] hover:!border-[#b42318] hover:!bg-[#fdf1ef] sm:w-auto"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 aria-hidden="true" className="h-5 w-5" />
                     Excluir
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => setShowModal(false)}
-                  className="w-full sm:flex-1 h-10 md:h-12 bg-primor-gray-medium hover:brightness-95 text-primor-text-light font-semibold rounded-lg transition text-sm md:text-base"
+                  className="btn btn-quiet w-full sm:ml-auto sm:w-auto"
                 >
                   Fechar
                 </button>
@@ -974,24 +986,34 @@ export function Historico() {
       )}
       {/* Modal de confirmação de exclusão de briefing */}
       {briefingToDelete && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Excluir Briefing</h3>
-            <p className="text-gray-600 text-sm">
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-primor-secondary-deep/60 p-4 animate-fade-in">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="titulo-excluir-briefing"
+            aria-describedby="texto-excluir-briefing"
+            className="w-full max-w-md space-y-4 rounded-lg border-t-4 border-[#b42318] bg-white p-6 shadow-chapa-lg"
+          >
+            <h3 id="titulo-excluir-briefing" className="font-display text-xl font-semibold text-primor-secondary">
+              Excluir briefing
+            </h3>
+            <p id="texto-excluir-briefing" className="text-primor-muted">
               Tem certeza que deseja excluir este briefing definitivamente? Todos os dados serão perdidos.
             </p>
             <div className="flex gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setBriefingToDelete(null)}
-                className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+                className="btn btn-outline flex-1"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handleDelete}
-                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+                className="btn btn-danger flex-1"
               >
-                Sim, Excluir
+                Sim, excluir
               </button>
             </div>
           </div>
