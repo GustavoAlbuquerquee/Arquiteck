@@ -6,8 +6,17 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Helper para obter o tenant_id do usuário logado
+// Helper para obter o tenant_id do usuário logado.
+// Lê de profiles (fonte usada pela RLS); user_metadata pode ser editado pelo próprio usuário.
 export const getCurrentTenantId = async (): Promise<string | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.user_metadata?.tenant_id || null;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', session.user.id)
+    .maybeSingle();
+
+  return data?.tenant_id ?? null;
 };

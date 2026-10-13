@@ -14,8 +14,7 @@ import {
   FileDown,
   Loader2,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase, getCurrentTenantId } from "@/lib/supabase";
 import html2pdf from "html2pdf.js";
 import {
   uploadBase64Image,
@@ -40,7 +39,6 @@ export function ChecklistWizard() {
     null,
   );
   const pdfRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
 
   const {
     register,
@@ -326,11 +324,11 @@ export function ChecklistWizard() {
     setError("");
 
     try {
-      const tenant_id = user?.user_metadata?.tenant_id;
+      const tenant_id = await getCurrentTenantId();
 
       if (!tenant_id) {
         throw new Error(
-          "Tenant ID não encontrado. Faça logout e login novamente.",
+          "Perfil sem empresa vinculada. Fale com o administrador da conta.",
         );
       }
 

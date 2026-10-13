@@ -37,6 +37,9 @@ if (missingEnv.length > 0) {
     </div>,
   );
 } else {
+  // Limpa o cache antigo de respostas da API (ver clearApiCache)
+  if ('caches' in window) caches.delete('supabase-cache').catch(() => {});
+
   import('./App.tsx').then(({ default: App }) => {
     root.render(
       <StrictMode>

@@ -35,15 +35,18 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        // Apenas arquivos públicos do Storage (fotos, assinaturas, logos).
+        // Respostas da API (REST/Auth) não são cacheadas: a chave do cache é só a URL,
+        // então dados de um usuário poderiam ser servidos a outro no mesmo aparelho.
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'supabase-cache',
+              cacheName: 'supabase-storage',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 horas
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 dias
               },
               cacheableResponse: {
                 statuses: [0, 200]
