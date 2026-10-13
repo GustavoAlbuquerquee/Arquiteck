@@ -27,7 +27,7 @@ export function Sidebar() {
   return (
     <>
       {/* Barra superior - Mobile */}
-      <header className="on-dark fixed inset-x-0 top-0 z-topbar flex h-16 items-center justify-between overflow-hidden bg-primor-secondary px-4 text-white shadow-chapa md:hidden">
+      <header className="on-dark fixed inset-x-0 top-0 z-topbar flex h-16 items-center justify-between overflow-hidden bg-primor-secondary px-4 text-white shadow-chapa lg:hidden">
         <VeioMadeira opacidade={0.1} />
         <div className="relative">
           <Marca tom="claro" subtitulo={null} />
@@ -48,7 +48,7 @@ export function Sidebar() {
       {isOpen && (
         <div
           aria-hidden="true"
-          className="fixed inset-0 z-drawer bg-primor-secondary-deep/60 animate-fade-in md:hidden"
+          className="fixed inset-0 z-drawer bg-primor-secondary-deep/60 animate-fade-in lg:hidden"
           onClick={closeSidebar}
         />
       )}
@@ -60,8 +60,8 @@ export function Sidebar() {
         className={`
           on-dark fixed inset-y-0 left-0 z-modal flex w-72 flex-col overflow-hidden bg-primor-secondary text-white shadow-chapa-lg
           transform transition-[transform,visibility] duration-300 ease-out
-          md:sticky md:top-0 md:z-auto md:h-[100dvh] md:translate-x-0 md:shadow-none
-          ${isOpen ? 'visible translate-x-0' : 'invisible -translate-x-full md:visible md:translate-x-0'}
+          lg:sticky lg:top-0 lg:z-auto lg:h-[100dvh] lg:translate-x-0 lg:shadow-none
+          ${isOpen ? 'visible translate-x-0' : 'invisible -translate-x-full lg:visible lg:translate-x-0'}
         `}
       >
         <VeioMadeira opacidade={0.1} />
@@ -73,7 +73,7 @@ export function Sidebar() {
             type="button"
             onClick={closeSidebar}
             aria-label="Fechar menu"
-            className="btn-icon -mr-2 -mt-2 text-primor-primary hover:bg-white/10 md:hidden"
+            className="btn-icon -mr-2 -mt-2 text-primor-primary hover:bg-white/10 lg:hidden"
           >
             <X aria-hidden="true" className="h-6 w-6" />
           </button>
