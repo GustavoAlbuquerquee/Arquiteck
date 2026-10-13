@@ -16,14 +16,38 @@ import {
 } from "lucide-react";
 import { supabase, getCurrentTenantId } from "@/lib/supabase";
 import html2pdf from "html2pdf.js";
-import {
-  uploadBase64Image,
-  uploadMultipleBase64Images,
-} from "@/lib/supabase/storage";
+import { uploadBase64Image, storagePathFromPublicUrl } from "@/lib/supabase/storage";
 import { useSearchParams } from "react-router-dom";
+import { formatarData } from "@/lib/date";
+
+const BUCKET_VISTORIAS = "vistorias";
+
+const valoresIniciais: ChecklistFormData = {
+  nomeCliente: "",
+  telefone: "",
+  endereco: "",
+  tituloAmbiente: "",
+  dataAtendimento: "",
+  horarioVisita: "",
+  moveis: [],
+  eletrodomesticos: [],
+  especificacoesAmbiente: {
+    rodape: "",
+    tipoParede: "",
+    tubulacoesParede: false,
+    temEstacionamento: false,
+    temElevador: false,
+    alturaElevador: "",
+    profundidadeElevador: "",
+  },
+  pontosCriticos: "",
+  fotosAmbiente: [],
+  observacoes: "",
+  assinatura: "",
+};
 
 export function ChecklistWizard() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const projectId = searchParams.get("edit");
   const isEditMode = !!projectId;
 
@@ -34,11 +58,14 @@ export function ChecklistWizard() {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [loadingData, setLoadingData] = useState(false);
   const [savedData, setSavedData] = useState<ChecklistFormData | null>(null);
-  const [existingClientId, setExistingClientId] = useState<string | null>(null);
-  const [existingChecklistId, setExistingChecklistId] = useState<string | null>(
-    null,
-  );
+  // Arquivos do briefing como estavam no banco ao abrir a edição; os que o
+  // usuário remover são apagados do Storage depois de salvar
+  const [arquivosOriginais, setArquivosOriginais] = useState<string[]>([]);
+  const [assinaturaOriginal, setAssinaturaOriginal] = useState("");
   const pdfRef = useRef<HTMLDivElement>(null);
+  // Trava síncrona contra duplo toque no "Salvar": o state `loading` só
+  // muda depois da validação assíncrona, tarde demais para o segundo clique
+  const salvandoRef = useRef(false);
 
   const {
     register,
@@ -49,31 +76,10 @@ export function ChecklistWizard() {
     formState: { errors },
     trigger,
     reset,
+    getValues,
   } = useForm<ChecklistFormData>({
     resolver: zodResolver(checklistSchema),
-    defaultValues: {
-      nomeCliente: "",
-      telefone: "",
-      endereco: "",
-      tituloAmbiente: "",
-      dataAtendimento: "",
-      horarioVisita: "",
-      moveis: [],
-      eletrodomesticos: [],
-      especificacoesAmbiente: {
-        rodape: "",
-        tipoParede: "",
-        tubulacoesParede: false,
-        temEstacionamento: false,
-        temElevador: false,
-        alturaElevador: "",
-        profundidadeElevador: "",
-      },
-      pontosCriticos: "",
-      fotosAmbiente: [],
-      observacoes: "",
-      assinatura: "",
-    },
+    defaultValues: valoresIniciais,
   });
 
   const handleNext = async () => {
@@ -221,12 +227,29 @@ export function ChecklistWizard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Buscar dados do projeto para edição
+  const limparFormulario = () => {
+    // reset() sem argumento voltaria aos dados do último reset(formData) da
+    // edição; por isso os valores iniciais são passados explicitamente
+    reset(valoresIniciais);
+    setArquivosOriginais([]);
+    setAssinaturaOriginal("");
+    setSavedData(null);
+    setShowSuccessAlert(false);
+    setError("");
+    setCurrentStep(1);
+  };
+
+  // Buscar dados do projeto para edição. Ao sair do modo edição sem remontar
+  // a tela (ex.: menu "Briefing/Visita" a partir de ?edit=X), limpa o form
+  // para o próximo salvamento não ir para o projeto anterior.
   useEffect(() => {
-    if (isEditMode && projectId) {
+    if (projectId) {
       loadProjectData(projectId);
+    } else {
+      limparFormulario();
     }
-  }, [isEditMode, projectId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   const loadProjectData = async (id: string) => {
     try {
@@ -246,8 +269,11 @@ export function ChecklistWizard() {
       if (error) throw error;
       if (!data) throw new Error("Projeto não encontrado");
 
-      // Mapear dados para o formato do formulário
-      const checklist = data.checklists[0];
+      // Mapear dados para o formato do formulário. O briefing é o checklist
+      // de pré-produção; o projeto pode ter também os de saída e instalação.
+      const checklist =
+        data.checklists.find((c) => c.tipo_etapa === "pre_producao") ??
+        data.checklists[0];
       const payload = (checklist?.payload as any) || {};
 
       // Mapear móveis com compatibilidade de campos antigos
@@ -307,9 +333,10 @@ export function ChecklistWizard() {
         assinatura: payload.assinatura_url || "",
       };
 
-
-      setExistingClientId(data.clients.id);
-      setExistingChecklistId(checklist?.id || null);
+      setArquivosOriginais(
+        [...(formData.fotosAmbiente ?? []), formData.assinatura].filter(Boolean),
+      );
+      setAssinaturaOriginal(formData.assinatura);
       reset(formData);
     } catch (err: any) {
       console.error("Erro ao carregar dados:", err);
@@ -320,8 +347,24 @@ export function ChecklistWizard() {
   };
 
   const onSubmit = async (data: ChecklistFormData) => {
+    if (salvandoRef.current) return;
+    salvandoRef.current = true;
     setLoading(true);
     setError("");
+
+    // Arquivos enviados nesta tentativa. Se algo falhar, são apagados para
+    // não ficarem órfãos no Storage.
+    const enviados: string[] = [];
+    const enviar = async (base64: string, path: string) => {
+      const url = await uploadBase64Image(base64, path, BUCKET_VISTORIAS);
+      if (!url) {
+        throw new Error(
+          "Não foi possível enviar as fotos ou a assinatura. Verifique a conexão e tente de novo. Nada foi salvo.",
+        );
+      }
+      enviados.push(path);
+      return url;
+    };
 
     try {
       const tenant_id = await getCurrentTenantId();
@@ -332,167 +375,47 @@ export function ChecklistWizard() {
         );
       }
 
-      if (isEditMode && projectId) {
-        // MODO DE EDIÇÃO (UPDATE)
-        setLoadingMessage("A processar imagens...");
-
-        // Processar assinatura (nova ou existente)
-        let assinaturaUrl = data.assinatura;
-        if (data.assinatura && data.assinatura.startsWith("data:")) {
-          const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
-          const uploadedUrl = await uploadBase64Image(
+      // 1. Assinatura (nova vem em base64; na edição pode ser a URL já salva)
+      setLoadingMessage("A enviar assinatura...");
+      const assinaturaUrl = data.assinatura.startsWith("data:")
+        ? await enviar(
             data.assinatura,
-            assinaturaPath,
-          );
-          if (uploadedUrl) assinaturaUrl = uploadedUrl;
-        }
+            `${tenant_id}/assinaturas/assinatura-${crypto.randomUUID()}.png`,
+          )
+        : data.assinatura;
 
-        // Processar fotos (novas ou existentes)
-        setLoadingMessage("A enviar fotos...");
-        const fotosUrls: string[] = [];
-        if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
-          for (let i = 0; i < data.fotosAmbiente.length; i++) {
-            const foto = data.fotosAmbiente[i];
-            if (foto.startsWith("data:")) {
-              // Nova foto Base64 - fazer upload
-              const fotoPath = `${tenant_id}/fotos/foto-${Date.now()}-${i}.jpg`;
-              const uploadedUrl = await uploadBase64Image(foto, fotoPath);
-              if (uploadedUrl) fotosUrls.push(uploadedUrl);
-            } else {
-              // Foto já existente (URL) - manter
-              fotosUrls.push(foto);
-            }
-          }
-        }
+      // 2. Fotos novas (base64). As que já são URL ficam como estão.
+      setLoadingMessage("A enviar fotos...");
+      const resultados = await Promise.allSettled(
+        (data.fotosAmbiente ?? []).map((foto) =>
+          foto.startsWith("data:")
+            ? enviar(foto, `${tenant_id}/fotos/foto-${crypto.randomUUID()}.jpg`)
+            : Promise.resolve(foto),
+        ),
+      );
+      const falha = resultados.find((r) => r.status === "rejected");
+      if (falha) throw (falha as PromiseRejectedResult).reason;
+      const fotosUrls = resultados.map(
+        (r) => (r as PromiseFulfilledResult<string>).value,
+      );
 
-        // Atualizar cliente
-        if (existingClientId) {
-          setLoadingMessage("A atualizar dados do cliente...");
-          const { error: clientError } = await supabase
-            .from("clients")
-            .update({
-              nome: data.nomeCliente,
-              telefone: data.telefone,
-              endereco: data.endereco,
-            })
-            .eq("id", existingClientId);
-
-          if (clientError) throw clientError;
-        }
-
-        // Atualizar projeto
-        if (projectId) {
-          setLoadingMessage("A atualizar projeto...");
-          const { error: projectError } = await supabase
-            .from("projects")
-            .update({
-              titulo_ambiente: data.tituloAmbiente,
-              data_prevista_instalacao: data.dataAtendimento,
-            })
-            .eq("id", projectId);
-
-          if (projectError) throw projectError;
-        }
-
-        // Atualizar checklist
-        if (existingChecklistId) {
-          setLoadingMessage("A finalizar...");
-          const payload = {
-            horarioVisita: data.horarioVisita,
-            moveis: data.moveis,
-            eletrodomesticos: data.eletrodomesticos,
-            especificacoesAmbiente: data.especificacoesAmbiente,
-            pontosCriticos: data.pontosCriticos,
-            fotosAmbiente: fotosUrls,
-            observacoes: data.observacoes,
-            assinatura_url: assinaturaUrl,
-          };
-
-          const { error: checklistError } = await supabase
-            .from("checklists")
-            .update({ payload })
-            .eq("id", existingChecklistId);
-
-          if (checklistError) throw checklistError;
-        }
-
-
-        const dataComUrls = {
-          ...data,
-          fotosAmbiente: fotosUrls,
-          assinatura: assinaturaUrl,
-        };
-
-        setSavedData(dataComUrls);
-        setShowSuccessAlert(true);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        // MODO DE CRIAÇÃO (INSERT)
-        // 1. Upload da assinatura
-        setLoadingMessage("A enviar assinatura...");
-        let assinaturaUrl = "";
-        if (data.assinatura) {
-          const assinaturaPath = `${tenant_id}/assinaturas/assinatura-${Date.now()}.png`;
-          const uploadedUrl = await uploadBase64Image(
-            data.assinatura,
-            assinaturaPath,
-          );
-          if (!uploadedUrl) {
-            throw new Error("Erro ao fazer upload da assinatura");
-          }
-          assinaturaUrl = uploadedUrl;
-        }
-
-        // 2. Upload das fotos do ambiente
-        setLoadingMessage("A enviar fotos...");
-        let fotosUrls: string[] = [];
-        if (data.fotosAmbiente && data.fotosAmbiente.length > 0) {
-          const fotosPathPrefix = `${tenant_id}/fotos`;
-          fotosUrls = await uploadMultipleBase64Images(
-            data.fotosAmbiente,
-            fotosPathPrefix,
-          );
-          if (fotosUrls.length !== data.fotosAmbiente.length) {
-            console.warn("Algumas fotos falharam no upload");
-          }
-        }
-
-        // 3. Criar cliente com telefone e endereço
-        setLoadingMessage("A guardar dados do cliente...");
-        const { data: cliente, error: clientError } = await supabase
-          .from("clients")
-          .insert({
-            tenant_id: tenant_id,
-            nome: data.nomeCliente,
-            telefone: data.telefone,
-            endereco: data.endereco,
-          })
-          .select()
-          .single();
-
-        if (clientError) throw clientError;
-        if (!cliente) throw new Error("Erro ao criar cliente");
-
-        // 4. Criar projeto
-        setLoadingMessage("A criar projeto...");
-        const { data: projeto, error: projectError } = await supabase
-          .from("projects")
-          .insert({
-            tenant_id: tenant_id,
-            client_id: cliente.id,
-            titulo_ambiente: data.tituloAmbiente,
-            data_prevista_instalacao: data.dataAtendimento,
-            status: "orcamento",
-          })
-          .select()
-          .single();
-
-        if (projectError) throw projectError;
-        if (!projeto) throw new Error("Erro ao criar projeto");
-
-        // 5. Criar checklist com URLs ao invés de Base64
-        setLoadingMessage("A finalizar...");
-        const payload = {
+      // 3. Cliente, projeto e checklist numa transação só (ver
+      // supabase/migrations/20261014120000_salvar_briefing.sql)
+      setLoadingMessage(
+        isEditMode ? "A atualizar briefing..." : "A guardar briefing...",
+      );
+      const { error: rpcError } = await supabase.rpc("salvar_briefing", {
+        p_project_id: isEditMode && projectId ? projectId : null,
+        p_cliente: {
+          nome: data.nomeCliente,
+          telefone: data.telefone,
+          endereco: data.endereco,
+        },
+        p_projeto: {
+          titulo_ambiente: data.tituloAmbiente,
+          data_prevista_instalacao: data.dataAtendimento,
+        },
+        p_payload: {
           horarioVisita: data.horarioVisita,
           moveis: data.moveis,
           eletrodomesticos: data.eletrodomesticos,
@@ -501,36 +424,37 @@ export function ChecklistWizard() {
           fotosAmbiente: fotosUrls,
           observacoes: data.observacoes,
           assinatura_url: assinaturaUrl,
-        };
+        },
+      });
 
-        const { error: checklistError } = await supabase
-          .from("checklists")
-          .insert({
-            tenant_id: tenant_id,
-            project_id: projeto.id,
-            tipo_etapa: "pre_producao",
-            payload: payload,
-          });
+      if (rpcError) throw rpcError;
 
-        if (checklistError) throw checklistError;
-
-
-        // Atualizar savedData com URLs para o PDF
-        const dataComUrls = {
-          ...data,
-          fotosAmbiente: fotosUrls,
-          assinatura: assinaturaUrl,
-        };
-
-        setSavedData(dataComUrls);
-        setShowSuccessAlert(true);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      // 4. Na edição, apaga do Storage as fotos/assinatura que saíram do
+      // briefing. Falhar aqui não desfaz o que já foi salvo.
+      const removidos = arquivosOriginais
+        .filter((url) => url !== assinaturaUrl && !fotosUrls.includes(url))
+        .map((url) => storagePathFromPublicUrl(url, BUCKET_VISTORIAS))
+        .filter((path): path is string => !!path);
+      if (removidos.length > 0) {
+        await supabase.storage.from(BUCKET_VISTORIAS).remove(removidos);
       }
+
+      setSavedData({
+        ...data,
+        fotosAmbiente: fotosUrls,
+        assinatura: assinaturaUrl,
+      });
+      setShowSuccessAlert(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
       console.error("Erro ao salvar briefing:", err);
+      if (enviados.length > 0) {
+        await supabase.storage.from(BUCKET_VISTORIAS).remove(enviados);
+      }
       setError(err.message || "Erro ao salvar briefing. Tente novamente.");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
+      salvandoRef.current = false;
       setLoading(false);
       setLoadingMessage("");
     }
@@ -565,10 +489,14 @@ export function ChecklistWizard() {
   };
 
   const handleNovoFormulario = () => {
-    reset();
-    setSavedData(null);
-    setShowSuccessAlert(false);
-    setCurrentStep(1);
+    // Sai do modo edição: sem isso, o próximo "Salvar" sobrescrevia o
+    // projeto que acabou de ser editado. Sem ?edit, o efeito acima limpa o
+    // form; se já não havia ?edit, limpa aqui.
+    if (projectId) {
+      setSearchParams({});
+    } else {
+      limparFormulario();
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -717,6 +645,7 @@ export function ChecklistWizard() {
               errors={errors}
               control={control}
               setValue={setValue}
+              getValues={getValues}
             />
           )}
           {currentStep === 3 && (
@@ -724,6 +653,8 @@ export function ChecklistWizard() {
               register={register}
               setValue={setValue}
               errors={errors}
+              assinaturaAtual={watch("assinatura")}
+              assinaturaOriginal={assinaturaOriginal}
             />
           )}
 
@@ -821,9 +752,7 @@ export function ChecklistWizard() {
                 </p>
                 <p>
                   <strong>Data:</strong>{" "}
-                  {new Date(savedData.dataAtendimento).toLocaleDateString(
-                    "pt-BR",
-                  )}
+                  {formatarData(savedData.dataAtendimento)}
                 </p>
                 <p>
                   <strong>Horário:</strong> {savedData.horarioVisita}

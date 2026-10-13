@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { UseFormRegister, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import SignatureCanvas from 'react-signature-canvas';
 import { ChecklistFormData } from '@/schemas/checklistSchema';
@@ -8,14 +8,31 @@ interface Step3Props {
   register: UseFormRegister<ChecklistFormData>;
   setValue: UseFormSetValue<ChecklistFormData>;
   errors: FieldErrors<ChecklistFormData>;
+  /** Valor atual do campo (data URL de uma assinatura feita agora, ou URL já salva) */
+  assinaturaAtual: string;
+  /** Assinatura já salva no banco (modo edição); "Limpar" volta para ela */
+  assinaturaOriginal: string;
 }
 
-export function Step3Finalizacao({ register, setValue, errors }: Step3Props) {
+export function Step3Finalizacao({ register, setValue, errors, assinaturaAtual, assinaturaOriginal }: Step3Props) {
   const signatureRef = useRef<SignatureCanvas>(null);
+  // Assinatura já salva no banco (modo edição): mostrada à parte, porque
+  // desenhar uma imagem de outro domínio no canvas impede exportá-lo depois
+  const assinaturaSalva = assinaturaAtual && !assinaturaAtual.startsWith('data:') ? assinaturaAtual : '';
+
+  // O passo desmonta ao voltar para o passo 2; ao remontar, redesenha a
+  // assinatura que continua no formulário
+  useEffect(() => {
+    if (assinaturaAtual.startsWith('data:')) {
+      signatureRef.current?.fromDataURL(assinaturaAtual);
+    }
+    // só na montagem
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleClearSignature = () => {
     signatureRef.current?.clear();
-    setValue('assinatura', '');
+    setValue('assinatura', assinaturaOriginal);
   };
 
   const handleEndSignature = () => {
@@ -51,9 +68,21 @@ export function Step3Finalizacao({ register, setValue, errors }: Step3Props) {
           Termo de Aceite - Assinatura Digital
         </label>
         
+        {assinaturaSalva && (
+          <div className="mb-3">
+            <p className="text-sm text-gray-600 mb-2">Assinatura atual. Assine abaixo apenas se quiser substituí-la.</p>
+            <img
+              src={assinaturaSalva}
+              alt="Assinatura atual"
+              className="max-h-32 border-2 border-gray-200 rounded-lg bg-white"
+            />
+          </div>
+        )}
+
         <div className="border-4 border-gray-300 rounded-lg bg-white p-2">
           <SignatureCanvas
             ref={signatureRef}
+            clearOnResize={false}
             canvasProps={{
               className: 'w-full h-64 touch-none',
               style: { border: '2px dashed #cbd5e1', borderRadius: '8px' }
