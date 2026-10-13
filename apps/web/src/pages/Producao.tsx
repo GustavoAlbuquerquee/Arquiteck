@@ -24,39 +24,13 @@ interface Projeto {
   clients: { nome: string; telefone: string | null } | null;
 }
 
-const COLUNAS: { status: Status; label: string; color: string; bg: string }[] =
-  [
-    {
-      status: "orcamento",
-      label: "Orçamento",
-      color: "text-amber-700",
-      bg: "bg-amber-50 border-amber-200",
-    },
-    {
-      status: "pre_producao",
-      label: "Pré-Produção",
-      color: "text-orange-700",
-      bg: "bg-orange-50 border-orange-200",
-    },
-    {
-      status: "producao",
-      label: "Produção",
-      color: "text-blue-700",
-      bg: "bg-blue-50 border-blue-200",
-    },
-    {
-      status: "instalacao",
-      label: "Instalação",
-      color: "text-yellow-700",
-      bg: "bg-yellow-50 border-yellow-200",
-    },
-    {
-      status: "concluido",
-      label: "Concluído",
-      color: "text-green-700",
-      bg: "bg-green-50 border-green-200",
-    },
-  ];
+const COLUNAS: { status: Status; label: string }[] = [
+  { status: "orcamento", label: "Orçamento" },
+  { status: "pre_producao", label: "Pré-Produção" },
+  { status: "producao", label: "Produção" },
+  { status: "instalacao", label: "Instalação" },
+  { status: "concluido", label: "Concluído" },
+];
 
 const STATUS_ORDER = COLUNAS.map((c) => c.status);
 
@@ -148,111 +122,133 @@ export function Producao() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 text-primor-primary animate-spin" />
+      <div role="status" aria-label="Carregando projetos" className="space-y-8">
+        <div className="space-y-3">
+          <div className="esqueleto h-3 w-32" />
+          <div className="esqueleto h-10 w-80 max-w-full" />
+        </div>
+        <div className="flex gap-4 overflow-hidden">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="esqueleto h-80 w-[17.5rem] flex-shrink-0" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-primor-text-light">
-          Pipeline de Produção
-        </h1>
-        <p className="text-primor-gray-dark mt-1">
+    <div className="space-y-8">
+      <header className="entrada">
+        <p className="etiqueta">Chão de fábrica</p>
+        <h1 className="titulo-pagina mt-2">Pipeline de produção</h1>
+        <p className="mt-2 text-primor-muted">
           Acompanhe o andamento dos projetos por etapa
         </p>
-      </div>
+        <div aria-hidden="true" className="regua mt-8" />
+      </header>
 
       {/* Board */}
-      <div className="overflow-x-auto pb-4">
-        <div className="flex gap-4 min-w-max">
-          {COLUNAS.map((coluna) => {
+      <div
+        role="region"
+        aria-label="Etapas de produção"
+        tabIndex={0}
+        className="-mx-4 snap-x snap-mandatory overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0"
+      >
+        <ol className="flex min-w-max gap-4">
+          {COLUNAS.map((coluna, colunaIdx) => {
             const cards = projetos.filter((p) => p.status === coluna.status);
+            const ultima = colunaIdx === COLUNAS.length - 1;
             return (
-              <div key={coluna.status} className="w-72 flex-shrink-0">
-                {/* Header da coluna */}
-                <div
-                  className={`flex items-center justify-between px-4 py-3 rounded-t-xl border-2 border-b-0 ${coluna.bg}`}
-                >
-                  <span className={`font-bold text-sm ${coluna.color}`}>
-                    {coluna.label}
-                  </span>
+              <li
+                key={coluna.status}
+                aria-labelledby={`coluna-${coluna.status}`}
+                className="flex w-[17.5rem] flex-shrink-0 snap-start flex-col rounded-lg bg-primor-paper-deep/70"
+              >
+                {/* Header da coluna: etiqueta de gaveta */}
+                <div className="flex items-center justify-between gap-2 border-b border-primor-line px-4 py-3">
+                  <h2 id={`coluna-${coluna.status}`} className="flex items-baseline gap-2">
+                    <span aria-hidden="true" className="font-mono text-xs text-primor-muted tabular">
+                      {String(colunaIdx + 1).padStart(2, "0")}
+                    </span>
+                    <span className="font-semibold text-primor-secondary">{coluna.label}</span>
+                  </h2>
                   <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-white/70 ${coluna.color}`}
+                    className={`min-w-[1.75rem] rounded-sm px-1.5 py-0.5 text-center font-mono text-xs font-medium tabular ${
+                      ultima ? "bg-[#eef7f1] text-[#05603a]" : "bg-white text-primor-secondary"
+                    }`}
                   >
+                    <span className="sr-only">Projetos nesta etapa: </span>
                     {cards.length}
                   </span>
                 </div>
 
                 {/* Cards */}
-                <div
-                  className={`min-h-[400px] rounded-b-xl border-2 border-t-0 ${coluna.bg} p-2 space-y-2`}
-                >
+                <ul className="min-h-[24rem] flex-1 space-y-2.5 p-2.5">
                   {cards.length === 0 && (
-                    <div className="flex items-center justify-center h-24 text-xs text-gray-400">
+                    <li className="flex h-24 items-center justify-center rounded-md border border-dashed border-primor-line-strong/60 text-sm text-primor-muted">
                       Nenhum projeto
-                    </div>
+                    </li>
                   )}
                   {cards.map((projeto) => {
                     const idx = STATUS_ORDER.indexOf(projeto.status);
                     const isUpdating = updating === projeto.id;
+                    const nome = projeto.clients?.nome ?? projeto.titulo_ambiente;
                     return (
-                      <div
-                        key={projeto.id}
-                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 space-y-2"
-                      >
+                      <li key={projeto.id} className="panel fita space-y-3 py-3 pl-4 pr-3">
                         <div className="flex items-start gap-2">
-                          <User className="w-4 h-4 text-primor-gray-dark flex-shrink-0 mt-0.5" />
+                          <User aria-hidden="true" strokeWidth={1.75} className="mt-0.5 h-4 w-4 flex-shrink-0 text-primor-muted" />
                           <div className="min-w-0">
-                            <p className="font-semibold text-primor-text-light text-sm truncate">
+                            <p className="truncate font-semibold text-primor-secondary">
                               {projeto.clients?.nome ?? "—"}
                             </p>
-                            <p className="text-xs text-primor-gray-dark truncate">
+                            <p className="truncate text-sm text-primor-muted">
                               {projeto.titulo_ambiente}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-primor-gray-dark">
-                          <Calendar className="w-3 h-3" />
+                        <div className="flex items-center gap-1.5 font-mono text-xs text-primor-muted tabular">
+                          <Calendar aria-hidden="true" className="h-3.5 w-3.5" />
                           {formatDate(projeto.created_at)}
                         </div>
                         {/* Controles de navegação */}
-                        <div className="flex gap-1 pt-1">
+                        <div className="grid grid-cols-2 gap-2">
                           <button
+                            type="button"
                             onClick={() => moverStatus(projeto, "voltar")}
                             disabled={idx === 0 || isUpdating}
-                            className="flex-1 flex items-center justify-center gap-1 h-7 text-xs font-medium rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                            aria-label={`Voltar ${nome} para a etapa anterior`}
+                            className="btn btn-outline btn-sm px-2 disabled:opacity-40"
                           >
-                            <ChevronLeft className="w-3.5 h-3.5" />
+                            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
                             Voltar
                           </button>
                           <button
+                            type="button"
                             onClick={() => moverStatus(projeto, "avancar")}
                             disabled={
                               idx === STATUS_ORDER.length - 1 || isUpdating
                             }
-                            className="flex-1 flex items-center justify-center gap-1 h-7 text-xs font-medium rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                            aria-label={`Avançar ${nome} para a próxima etapa`}
+                            className="btn btn-secondary btn-sm px-2 disabled:opacity-40"
                           >
                             {isUpdating ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
                             ) : (
                               <>
                                 <span>Avançar</span>
-                                <ChevronRight className="w-3.5 h-3.5" />
+                                <ChevronRight aria-hidden="true" className="h-4 w-4" />
                               </>
                             )}
                           </button>
                         </div>
-                      </div>
+                      </li>
                     );
                   })}
-                </div>
-              </div>
+                </ul>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </div>
     </div>
   );
