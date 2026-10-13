@@ -259,7 +259,7 @@ export function Historico() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="max-w-md text-center">
-          <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-lg border border-primor-line bg-white shadow-chapa">
+          <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-lg border border-primor-line bg-primor-surface shadow-chapa">
             <FolderOpen aria-hidden="true" strokeWidth={1.5} className="h-12 w-12 text-primor-line-strong" />
             <div aria-hidden="true" className="regua absolute -bottom-5 left-0" />
           </div>
@@ -390,12 +390,12 @@ export function Historico() {
 
       {/* Modal de Detalhes */}
       {showModal && selectedProjeto && (
-        <div className="fixed inset-0 z-modal flex items-end justify-center bg-primor-secondary-deep/60 p-0 animate-fade-in sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-modal flex items-end justify-center bg-primor-veu/60 p-0 animate-fade-in sm:items-center sm:p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="titulo-detalhes"
-            className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-xl bg-primor-bg shadow-chapa-lg sm:rounded-xl"
+            className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-xl bg-primor-bg shadow-chapa-lg dark:ring-1 dark:ring-primor-line sm:rounded-xl"
           >
             {/* Header do Modal */}
             <div className="flex items-start justify-between gap-4 border-b border-primor-line px-5 py-4 md:px-7 md:py-5">
@@ -510,7 +510,7 @@ export function Historico() {
                                     (movel: any, idx: number) => (
                                       <div
                                         key={idx}
-                                        className="fita flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md border border-primor-line bg-white py-3 pl-5 pr-4"
+                                        className="fita flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md border border-primor-line bg-primor-surface py-3 pl-5 pr-4"
                                       >
                                         <p className="font-medium text-primor-secondary">
                                           {movel.nome}
@@ -570,7 +570,7 @@ export function Historico() {
                           {/* Pontos Críticos */}
                           {checklist.payload.pontosCriticos && (
                             <div>
-                              <p className="mb-2 font-semibold text-[#b42318]">
+                              <p className="mb-2 font-semibold text-primor-erro">
                                 Pontos críticos / atenção
                               </p>
                               <p className="alerta alerta-erro whitespace-pre-wrap">
@@ -614,6 +614,7 @@ export function Historico() {
                                         checklist.payload.assinatura,
                                     )}
                                     alt="Assinatura do Cliente"
+                                    // Papel branco nos dois temas: o traço da assinatura é escuro
                                     className="max-h-32 rounded-md border border-primor-line bg-white object-contain p-2"
                                   />
                                 </div>
@@ -684,7 +685,7 @@ export function Historico() {
                   <button
                     type="button"
                     onClick={() => setBriefingToDelete(selectedProjeto.id)}
-                    className="btn btn-outline w-full border-[#b42318]/50 text-[#b42318] hover:!border-[#b42318] hover:!bg-[#fdf1ef] sm:w-auto"
+                    className="btn btn-outline w-full border-primor-erro/50 text-primor-erro hover:!border-primor-erro hover:!bg-primor-erro-bg sm:w-auto"
                   >
                     <Trash2 aria-hidden="true" className="h-5 w-5" />
                     Excluir
@@ -715,7 +716,8 @@ export function Historico() {
             zIndex: -10,
           }}
         >
-          <div ref={pdfRef} className="w-[210mm] bg-white p-8">
+          {/* tema-claro: papel branco e tinta escura mesmo com o app no modo escuro */}
+          <div ref={pdfRef} className="tema-claro w-[210mm] bg-white p-8">
             <div className="space-y-6">
               <div
                 className="flex items-center justify-between border-b-2 border-gray-300 pb-4"
@@ -986,13 +988,13 @@ export function Historico() {
       )}
       {/* Modal de confirmação de exclusão de briefing */}
       {briefingToDelete && createPortal(
-        <div className="fixed inset-0 z-modal flex items-center justify-center bg-primor-secondary-deep/60 p-4 animate-fade-in">
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-primor-veu/60 p-4 animate-fade-in">
           <div
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="titulo-excluir-briefing"
             aria-describedby="texto-excluir-briefing"
-            className="w-full max-w-md space-y-4 rounded-lg border-t-4 border-[#b42318] bg-white p-6 shadow-chapa-lg"
+            className="w-full max-w-md space-y-4 rounded-lg border-t-4 border-primor-erro bg-primor-surface p-6 shadow-chapa-lg dark:ring-1 dark:ring-primor-line"
           >
             <h3 id="titulo-excluir-briefing" className="font-display text-xl font-semibold text-primor-secondary">
               Excluir briefing
