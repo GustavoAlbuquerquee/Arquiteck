@@ -24,6 +24,17 @@ import type { ProjetoJornada, TipoContato } from '@/lib/jornada/dados';
 import { formatarData } from '@/lib/date';
 import { inicial } from './ganchos';
 
+/**
+ * Card estreito (coluna apertada no tablet ou na execução): o avatar sai para
+ * o nome caber e o relógio usa um corpo menor. Renderizado uma vez pela página.
+ */
+export const CSS_CARD = `
+.card-jornada { container-type: inline-size; }
+@container (max-width: 13.5rem) {
+  .card-jornada-avatar { display: none; }
+  .card-jornada-relogio { font-size: 0.75rem; }
+}`;
+
 export interface CardModelo {
   projeto: ProjetoJornada;
   situacao: Situacao;
@@ -192,7 +203,7 @@ export const CardJornada = forwardRef<HTMLElement, PropsCard & Omit<HTMLAttribut
         {...ouvintes}
         onClick={sobreposto ? undefined : aoClicar}
         aria-busy={ocupado || undefined}
-        className={`group/card relative isolate select-none rounded-lg border bg-primor-surface pl-4 pr-1.5 text-left ${
+        className={`card-jornada group/card relative isolate select-none rounded-lg border bg-primor-surface pl-4 pr-1.5 text-left ${
           compacto ? 'pb-2 pt-2' : 'pb-2.5 pt-3'
         } ${
           sobreposto
@@ -213,7 +224,7 @@ export const CardJornada = forwardRef<HTMLElement, PropsCard & Omit<HTMLAttribut
         <div className="flex items-start gap-3">
           <span
             aria-hidden="true"
-            className={`mt-0.5 grid shrink-0 place-items-center rounded-md bg-primor-madeira font-display font-semibold text-primor-primary shadow-[inset_0_-2px_0_rgba(0,0,0,0.28)] ${
+            className={`card-jornada-avatar mt-0.5 grid shrink-0 place-items-center rounded-md bg-primor-madeira font-display font-semibold text-primor-primary shadow-[inset_0_-2px_0_rgba(0,0,0,0.28)] ${
               compacto ? 'h-8 w-8 text-base' : 'h-10 w-10 text-lg'
             }`}
           >
@@ -268,7 +279,7 @@ export const CardJornada = forwardRef<HTMLElement, PropsCard & Omit<HTMLAttribut
         {/* Relógio / prazo */}
         <div className={`flex flex-wrap items-center gap-1.5 pr-2 ${compacto ? 'mt-2' : 'mt-3'}`}>
           <span
-            className={`inline-flex min-h-[28px] items-center gap-1.5 rounded-md px-2 py-0.5 font-mono text-[0.8125rem] font-medium tabular ${CLASSE_TOM[relogio.tom].chip}`}
+            className={`card-jornada-relogio inline-flex min-h-[28px] max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 font-mono text-[0.8125rem] font-medium tabular ${CLASSE_TOM[relogio.tom].chip}`}
           >
             <IconeRelogio aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
             {relogio.titulo}
@@ -285,13 +296,14 @@ export const CardJornada = forwardRef<HTMLElement, PropsCard & Omit<HTMLAttribut
         )}
 
         {/* Ação de contato + Voltar/Avançar (alternativa ao arraste) */}
-        <div className={`flex items-center gap-1.5 ${compacto ? 'mt-2' : 'mt-3'}`}>
+        {/* Sem espaço para os três na mesma linha, Voltar/Avançar descem para a linha de baixo */}
+        <div className={`flex flex-wrap items-center gap-1.5 ${compacto ? 'mt-2' : 'mt-3'}`}>
           {acao ? (
             <button
               type="button"
               disabled={ocupado || sobreposto}
               onClick={() => onAcao?.(acao.tipo)}
-              className={`btn btn-sm min-w-0 flex-1 !px-3 !text-[0.8125rem] ${urgente ? 'btn-secondary' : 'btn-outline'}`}
+              className={`btn btn-sm max-w-full flex-auto whitespace-nowrap !gap-1.5 !px-2.5 !text-[0.8125rem] ${urgente ? 'btn-secondary' : 'btn-outline'}`}
             >
               {ocupado ? (
                 <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
@@ -310,6 +322,7 @@ export const CardJornada = forwardRef<HTMLElement, PropsCard & Omit<HTMLAttribut
               ) : null}
             </span>
           )}
+          <div className="ml-auto flex gap-1.5">
           <BotaoMover
             direcao="voltar"
             destino={anterior}
@@ -328,6 +341,7 @@ export const CardJornada = forwardRef<HTMLElement, PropsCard & Omit<HTMLAttribut
           >
             <ChevronRight aria-hidden="true" className="h-5 w-5" />
           </BotaoMover>
+          </div>
         </div>
       </article>
     );

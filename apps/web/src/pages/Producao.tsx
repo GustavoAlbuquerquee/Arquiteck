@@ -51,7 +51,7 @@ import {
   type ProjetoJornada,
   type TipoContato,
 } from '@/lib/jornada/dados';
-import { CardArrastavel, CardJornada, type CardModelo } from '@/components/jornada/CardJornada';
+import { CSS_CARD, CardArrastavel, CardJornada, type CardModelo } from '@/components/jornada/CardJornada';
 import { ColunaJornada, FaixaJornada, idColuna, idElementoColuna } from '@/components/jornada/FaixaJornada';
 import { DicaBoard, FaixaAlerta, IndicadorAoVivo, LinhaMetricas, MiniMapa } from '@/components/jornada/TopoJornada';
 import { PainelDetalhes } from '@/components/jornada/PainelDetalhes';
@@ -160,7 +160,12 @@ export function Producao() {
   const [todosConcluidos, setTodosConcluidos] = useState(false);
   const [faixa, setFaixa] = usePreferencia<FaixaVisivel>('arquiteck-jornada-faixa', 'tudo', ['tudo', 'venda', 'execucao']);
   const [densidade, setDensidade] = usePreferencia('arquiteck-jornada-densidade', 'confortavel', ['confortavel', 'compacto']);
-  const [dica, setDica] = usePreferencia('arquiteck-jornada-dica', 'aberta', ['aberta', 'fechada']);
+  const [dica, setDica] = usePreferencia(
+    'arquiteck-jornada-dica',
+    // No celular a dica começa fechada para o board aparecer logo
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 'fechada' : 'aberta',
+    ['aberta', 'fechada'],
+  );
   const compacto = densidade === 'compacto';
 
   // Refs para os callbacks assíncronos lerem o estado atual
@@ -557,6 +562,7 @@ export function Producao() {
 
   return (
     <div className="space-y-6">
+      <style>{CSS_CARD}</style>
       {/* Cabeçalho */}
       <header className="entrada flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -762,6 +768,7 @@ export function Producao() {
                         colapsada={lista.length === 0}
                         arrastando={Boolean(arrastandoId)}
                         destacada={destacada === etapa.id}
+                        estreita={f.id === 'execucao'}
                         rodape={
                           limitar ? (
                             <div className="px-2 pb-2">

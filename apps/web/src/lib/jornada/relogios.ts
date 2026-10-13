@@ -318,7 +318,7 @@ export function situacaoDoCard(
     return { tipo: 'esperando', desde: nosso ?? desdeEtapa, proximoToque: null };
   }
 
-  if (definicaoEtapa(status)?.faixa === 'venda' && status !== 'fechado') {
+  if (definicaoEtapa(status)?.faixa === 'venda') {
     return {
       tipo: 'esperando',
       desde: nosso ?? desdeEtapa,

@@ -280,7 +280,7 @@ export function MiniMapa({
         {FAIXAS.map((faixa) => {
           const etapas = ETAPAS.filter((e) => e.faixa === faixa.id);
           return (
-            <div key={faixa.id} className="min-w-0 flex-1" style={{ flexGrow: etapas.length }}>
+            <div key={faixa.id} className="min-w-fit flex-1" style={{ flexGrow: etapas.length }}>
               <p className="etiqueta px-1">{faixa.rotulo}</p>
               <ol className="relative mt-1 flex">
                 {/* fita da trena passando pelos marcos */}
@@ -302,7 +302,7 @@ export function MiniMapa({
                       <button
                         type="button"
                         onClick={() => onIr(etapa.id)}
-                        className="group flex min-h-[44px] w-full flex-col items-center rounded-md px-0.5 pb-1.5 pt-2 text-center hover:bg-primor-paper-deep"
+                        className="group relative flex min-h-[44px] w-full flex-col items-center rounded-md px-0.5 pb-1.5 pt-2 text-center hover:bg-primor-paper-deep"
                       >
                         <span
                           aria-hidden="true"

@@ -71,7 +71,8 @@ export const ETAPAS: readonly DefinicaoEtapa[] = [
     id: 'fechado',
     rotulo: 'Fechado',
     curto: 'Fechado',
-    faixa: 'venda',
+    // Contrato assinado: o card passa da venda para a execução
+    faixa: 'execucao',
     avisaCliente: false,
     podeEsfriar: false,
     descricao: 'Contrato assinado, aguardando projeto',
@@ -115,8 +116,8 @@ export const ETAPAS: readonly DefinicaoEtapa[] = [
 ] as const;
 
 export const FAIXAS: readonly { id: Faixa; rotulo: string; descricao: string }[] = [
-  { id: 'venda', rotulo: 'Venda', descricao: 'Do primeiro contato ao contrato' },
-  { id: 'execucao', rotulo: 'Execução', descricao: 'Da pré-produção à entrega' },
+  { id: 'venda', rotulo: 'Venda', descricao: 'Do primeiro contato ao orçamento' },
+  { id: 'execucao', rotulo: 'Execução', descricao: 'Do contrato fechado à entrega' },
 ];
 
 export const ORDEM_ETAPAS: readonly Etapa[] = ETAPAS.map((e) => e.id);

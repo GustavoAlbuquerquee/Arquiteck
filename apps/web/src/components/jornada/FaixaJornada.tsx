@@ -19,6 +19,7 @@ export function ColunaJornada({
   colapsada,
   arrastando,
   destacada,
+  estreita = false,
   children,
   rodape,
 }: {
@@ -32,6 +33,8 @@ export function ColunaJornada({
   arrastando: boolean;
   /** Acabou de ser escolhida no mini-mapa */
   destacada: boolean;
+  /** Execução: cards sem botão de contato cabem numa coluna mais estreita */
+  estreita?: boolean;
   children: ReactNode;
   rodape?: ReactNode;
 }) {
@@ -86,7 +89,7 @@ export function ColunaJornada({
       id={idElementoColuna(etapa.id)}
       aria-labelledby={idTitulo}
       data-etapa={etapa.id}
-      className={`flex w-[84%] min-w-[16rem] shrink-0 snap-start flex-col rounded-xl border transition-[background-color,border-color,box-shadow] duration-200 sm:w-auto sm:min-w-[15.5rem] sm:flex-1 sm:basis-0 ${realce}`}
+      className={`relative flex w-[84%] min-w-[16rem] shrink-0 snap-start flex-col rounded-xl border transition-[background-color,border-color,box-shadow] duration-200 sm:w-auto sm:flex-1 sm:basis-0 ${estreita ? 'sm:min-w-[13rem]' : 'sm:min-w-[15.5rem]'} ${realce}`}
     >
       <header className="px-3 pb-2 pt-3">
         <div className="flex items-baseline gap-2">
