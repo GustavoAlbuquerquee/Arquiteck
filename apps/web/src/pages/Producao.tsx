@@ -63,6 +63,7 @@ type FiltroRapido = 'todos' | 'responder' | 'atrasados' | 'esfriando';
 type FaixaVisivel = 'tudo' | Faixa;
 
 const LIMITE_CONCLUIDOS = 8;
+const ETAPAS_ANTIGAS: readonly Etapa[] = ['orcamento', 'pre_producao', 'producao', 'instalacao', 'concluido'];
 
 const ROTULO_CONTATO: Record<TipoContato, string> = {
   resposta: 'resposta ao cliente',
@@ -355,6 +356,11 @@ export function Producao() {
 
   const mover = (projeto: ProjetoJornada, para: Etapa) => {
     if (updating.includes(projeto.id)) return;
+    // Sem a migração, o banco ainda não conhece as etapas de venda novas
+    if (legadoRef.current && !ETAPAS_ANTIGAS.includes(para)) {
+      setErro(`A etapa ${rotuloEtapa(para)} só fica disponível depois da atualização do banco.`);
+      return;
+    }
     const jaPendente = pendenteRef.current?.mov.projetoId === projeto.id ? pendenteRef.current : null;
     if (!jaPendente) confirmarPendente();
     const anterior = jaPendente?.anterior ?? projeto;
