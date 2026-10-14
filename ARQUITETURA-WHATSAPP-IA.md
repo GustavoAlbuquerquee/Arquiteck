@@ -163,7 +163,7 @@ Ponto em aberto da pesquisa: se as respostas livres dentro da janela passaram a 
 | O que manda WhatsApp hoje na mudança de etapa? | Nada automático; quando há aviso, é manual | Sem API não oficial em risco. O aviso de etapa (D5) vira **recurso novo**, já nasce na API oficial |
 | De onde a equipe responde? | **WhatsApp Web** na maioria, celular também | Teste da Fase 1 precisa provar que respostas pelo **WhatsApp Web** geram echo (nenhuma fonte confirma). Se não gerarem, o relógio "precisa responder" não para sozinho e a equipe teria que responder pelo celular ou clicar "Já respondi" |
 | Número para teste? | Existe um número secundário; o agente de IA da Meta roda no número principal | Teste de coexistência no **secundário**, ativando nele também a IA da Meta |
-| Usa Meta Verified? | "Acho que sim" | **Confirmar no número principal.** Uma fonte (Wati) diz que coexistência e Meta Verified não ficam ativos juntos; o selo azul não é suportado (360dialog). Pode obrigar a escolher entre o selo e a integração |
+| Usa Meta Verified? | Sim, paga (confirmado em 14/10) | Provavelmente mantém: a 360dialog diz que a verificação é mantida na coexistência e o respond.io (set/2026) diz que a Meta permite transferir a assinatura. Só a Wati diz "um ou outro" (limitação dela, sem data). O que não funciona é a Conta Comercial Oficial (selo azul antigo), que é outro produto. **Confirmar por escrito com o suporte da 360dialog antes de conectar o número principal** |
 | Topa o custo? Qual provedor? | Sim; perguntou qual provedor | **360dialog** (D1): €49/mês por número, tarifas da Meta repassadas, coexistência documentada, só API (o painel é o Arquiteck) |
 
 ## 12. O que precisa de resposta antes da Fase 2 (perguntas originais)
