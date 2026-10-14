@@ -28,7 +28,7 @@ Fora do escopo: a IA conversar com o cliente no lugar da equipe (isso continua c
 
 | # | Decisão | Escolha | Situação |
 |---|---|---|---|
-| D1 | Como conectar o número | WhatsApp Cloud API em **coexistência**, via provedor credenciado (360dialog: ~US$ 59/mês por número) | Aprovar com o Igor |
+| D1 | Como conectar o número | WhatsApp Cloud API em **coexistência**, via provedor credenciado (360dialog: ~US$ 59/mês por número) | Aprovado pelo Igor (13/10) |
 | D2 | Arquiteck como Tech Provider da Meta (zera a mensalidade do provedor) | Avaliar na Fase 5; requisitos ainda não pesquisados | Aberto |
 | D3 | IA da Meta que o Igor usa no app | Manter se sobreviver à coexistência; **decidido pelo teste da Fase 1** | Aberto (teste) |
 | D4 | Modelo de IA para classificar | Claude Haiku (custo ~R$ 1–15/mês), saída estruturada; Sonnet só se a qualidade pedir | Proposta |
@@ -156,7 +156,17 @@ Ponto em aberto da pesquisa: se as respostas livres dentro da janela passaram a 
 | 4. IA aplicando | Modo `automatica` só para os movimentos de baixo risco + follow-ups com aprovação | Igor satisfeito, sem movimento errado relevante |
 | 5. Escala | Arquiteck como Tech Provider, onboarding de novas marcenarias pelo próprio app | — |
 
-## 11. O que precisa de resposta antes da Fase 2
+## 11. Respostas do Igor (13/10/2026) e o que mudou
+
+| Pergunta | Resposta | Consequência |
+|---|---|---|
+| O que manda WhatsApp hoje na mudança de etapa? | Nada automático; quando há aviso, é manual | Sem API não oficial em risco. O aviso de etapa (D5) vira **recurso novo**, já nasce na API oficial |
+| De onde a equipe responde? | **WhatsApp Web** na maioria, celular também | Teste da Fase 1 precisa provar que respostas pelo **WhatsApp Web** geram echo (nenhuma fonte confirma). Se não gerarem, o relógio "precisa responder" não para sozinho e a equipe teria que responder pelo celular ou clicar "Já respondi" |
+| Número para teste? | Existe um número secundário; o agente de IA da Meta roda no número principal | Teste de coexistência no **secundário**, ativando nele também a IA da Meta |
+| Usa Meta Verified? | "Acho que sim" | **Confirmar no número principal.** Uma fonte (Wati) diz que coexistência e Meta Verified não ficam ativos juntos; o selo azul não é suportado (360dialog). Pode obrigar a escolher entre o selo e a integração |
+| Topa o custo? Qual provedor? | Sim; perguntou qual provedor | **360dialog** (D1): €49/mês por número, tarifas da Meta repassadas, coexistência documentada, só API (o painel é o Arquiteck) |
+
+## 12. O que precisa de resposta antes da Fase 2 (perguntas originais)
 
 1. **Igor topa a coexistência e o custo do provedor** (~R$ 296/mês) enquanto o Arquiteck não for Tech Provider? (D1)
 2. **Número para o teste** da Fase 1: existe um segundo chip/número com WhatsApp Business antigo? (contas novas não entram em coexistência na hora)
