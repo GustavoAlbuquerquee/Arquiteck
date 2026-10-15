@@ -277,6 +277,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      mover_etapa: {
+        Args: {
+          p_project_id: string
+          p_para: Database["public"]["Enums"]["project_status"]
+          p_origem?: string
+          p_motivo?: string | null
+        }
+        Returns: Database["public"]["Enums"]["project_status"]
+      }
       criar_lead: {
         Args: {
           p_nome: string
